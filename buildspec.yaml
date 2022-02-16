@@ -1,0 +1,87 @@
+version: 0.2
+
+  #env:
+  #variables:
+  # key: "value"
+  # key: "value"
+  #parameter-store:
+  # key: "value"
+  # key: "value"
+  #secrets-manager:
+  # key: secret-id:json-key:version-stage:version-id
+  # key: secret-id:json-key:version-stage:version-id
+  #exported-variables:
+  # - variable
+  # - variable
+  #git-credential-helper: yes
+  #batch:
+  #fast-fail: true
+  #build-list:
+  #build-matrix:
+#build-graph:
+phases:
+  #install:
+  #If you use the Ubuntu standard image 2.0 or later, you must specify runtime-versions.
+  #If you specify runtime-versions and use an image other than Ubuntu standard image 2.0, the build fails.
+  #runtime-versions:
+  # name: version
+  # name: version
+  #commands:
+  # - command
+  # - command
+  #pre_build:
+  #commands:
+  # - command
+  # - command
+  pre_build:
+    commands:
+      - aws --version
+      - jq --version
+      #- yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      - yum -y remove jq oniguruma-devel
+      - yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/o/oniguruma-6.8.2-1.el7.x86_64.rpm
+      - yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/o/oniguruma-devel-6.8.2-1.el7.x86_64.rpm
+      - yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/j/jq-1.6-2.el7.x86_64.rpm
+      - jq --version
+      - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      - unzip awscliv2.zip
+      - ./aws/install
+      - which aws
+      - ls -l /usr/local/bin/aws
+      - pip3 install awscliv2
+      - which awsv2
+      - cd data
+      - sh getResources.sh
+      - cd ..
+      - yum remove -y nodejs npm
+      - curl -sL https://rpm.nodesource.com/setup_14.x | bash -
+      - node --version
+      - npm -g install aws-cdk@latest
+      - npm install
+  build:
+    commands:
+      - cdk deploy --force
+    # - command
+    # - command
+    #post_build:
+    #commands:
+    # - command
+    # - command
+    #reports:
+    #report-name-or-arn:
+    #files:
+    # - location
+    # - location
+    #base-directory: location
+    #discard-paths: yes
+    #file-format: JunitXml | CucumberJson
+    #artifacts:
+    #files:
+    # - location
+    # - location
+    #name: $(date +%Y-%m-%d)
+    #discard-paths: yes
+    #base-directory: location
+    #cache:
+    #paths:
+    # - paths
