@@ -40,9 +40,10 @@ Currently supported services are:
 ## Getting started
 1. Check out the project.
 2. Change current directory to project directory.
-3. Edit `data/getResources.sh` and set TAG to tag key you want to use and TAGVALUE to value. Set REGIONS to include the regions that contain resources.
-4. Run `cd data; ./getResources.sh` to create configuration file `resources.json` in the `data` directory.
-5. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
+3. Run `npm install` to install dependencies.
+4. Edit `data/getResources.sh` and set TAG to tag key you want to use and TAGVALUE to value. Set REGIONS to include the regions that contain resources.
+5. Run `cd data; ./getResources.sh` to create configuration file `resources.json` in the `data` directory.
+6. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
 
 ## Tips
 
