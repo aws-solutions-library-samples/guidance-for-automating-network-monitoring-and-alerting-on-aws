@@ -23,7 +23,7 @@
     "aws-cdk-lib": "^2.8.0",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.17.0"
   },
   "peerDependencies": {}
 }
