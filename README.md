@@ -43,7 +43,8 @@ Currently supported services are:
 3. Run `npm install` to install dependencies.
 4. Edit `data/getResources.sh` and set TAG to tag key you want to use and TAGVALUE to value. Set REGIONS to include the regions that contain resources.
 5. Run `cd data; ./getResources.sh` to create configuration file `resources.json` in the `data` directory.
-6. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
+6. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard.
+7. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
 
 ## Tips
 
