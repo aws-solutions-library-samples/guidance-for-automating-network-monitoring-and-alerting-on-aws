@@ -5,7 +5,6 @@ IFS="
 
 TAG="iem"
 TAGVALUE="202202"
-#REGIONS="eu-west-1 eu-north-1"
 REGIONS="eu-west-1"
 TMPFILE=output.$$
 TMPFILE2=output2.$$
@@ -131,7 +130,7 @@ for region in ${REGIONS}; do
 IFS="
 "
     echo $region
-    for EC2ID in `grep ec2 resources.json| grep instance | awk -F'/' '{ print $2 }' | sed 's/".*$//g'`; do
+    for EC2ID in `grep ec2 resources.json| grep instance | grep $region | awk -F'/' '{ print $2 }' | sed 's/".*$//g'`; do
         echo "Finding EBS volumes for EC2 instance $EC2ID"
         output=`aws ec2 describe-volumes --region $region --filters Name=attachment.instance-id,Values=$EC2ID | jq -c '.Volumes' | sed 's/"/\\"/g'`
         cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"ec2\") and contains(\"$region\") and contains(\"$EC2ID\")) |=.+{\"Volumes\":$output}]" > $TMPFILE
@@ -146,19 +145,19 @@ for region in ${REGIONS}; do
 IFS="
 "
     echo $region
-    for ELB in `grep elasticloadbalancing resources.json| awk '{ print $2 }' | sed 's/,//g' | sed 's/"//g'`; do
+    for ELB in `grep elasticloadbalancing resources.json| grep $region | awk '{ print $2 }' | sed 's/,//g' | sed 's/"//g'`; do
       echo $ELB | grep -e '/net/' -e '/app/'
       if [ $? -eq 0 ]; then
         ELBID=`echo $ELB | awk -F'/' '{ print $4 }'`
-        output=`aws elbv2 describe-load-balancers --load-balancer-arns $ELB | jq '.LoadBalancers[]'`
+        output=`aws elbv2 describe-load-balancers --load-balancer-arns $ELB --region $region | jq '.LoadBalancers[]'`
         cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"elasticloadbalancing\") and contains(\"$region\") and contains(\"$ELBID\")) |=.+{\"Extras\":$output}]" >$TMPFILE
         mv $TMPFILE resources.json
-        output=`aws elbv2 describe-target-groups --load-balancer-arn $ELB | jq '.TargetGroups'`
+        output=`aws elbv2 describe-target-groups --load-balancer-arn $ELB --region $region | jq '.TargetGroups'`
         cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"elasticloadbalancing\") and contains(\"$region\") and contains(\"$ELBID\")) |=.+{\"TargetGroups\":$output}]" > $TMPFILE
         mv $TMPFILE resources.json
       else
         ELBID=`echo $ELB | awk -F'/' '{ print $2 }'`
-        output=`aws elb describe-load-balancers --load-balancer-names $ELBID | jq '.LoadBalancerDescriptions[]'`
+        output=`aws elb describe-load-balancers --load-balancer-names $ELBID --region $region | jq '.LoadBalancerDescriptions[]'`
         cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"elasticloadbalancing\") and contains(\"$region\") and contains(\"$ELBID\")) |=.+{\"Extras\":$output}]" >$TMPFILE
         mv $TMPFILE resources.json
       fi

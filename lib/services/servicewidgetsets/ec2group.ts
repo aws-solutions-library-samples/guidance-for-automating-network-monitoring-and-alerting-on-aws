@@ -1,6 +1,4 @@
 import {
-    Alarm, AlarmStatusWidget,
-    AlarmWidget,
     GraphWidget,
     MathExpression,
     Metric,
@@ -11,7 +9,6 @@ import {
 } from "aws-cdk-lib/aws-cloudwatch";
 import {WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
-import {aws_s3 as s3} from 'aws-cdk-lib';
 import {Construct} from "constructs";
 
 export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
@@ -57,8 +54,8 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
             width: 12
         })
 
-        const avgCpuAlarm = averageCpuMetric.createAlarm(this,'AvgEC2CpuAlarm',{
-            alarmName: 'Average EC2 CPU',
+        const avgCpuAlarm = averageCpuMetric.createAlarm(this,'AvgEC2CpuAlarm-' + region,{
+            alarmName: 'Average EC2 CPU (' + region + ')',
             alarmDescription: 'Average EC2 CPU is too high',
             threshold: 50,
             evaluationPeriods: 1,

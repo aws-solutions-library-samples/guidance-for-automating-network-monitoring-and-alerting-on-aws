@@ -1,6 +1,6 @@
 import {
     AlarmStatusWidget,
-    Dashboard, Row,
+    Dashboard,
     Spacer,
     TextWidget
 } from "aws-cdk-lib/aws-cloudwatch";
@@ -23,9 +23,6 @@ import {CapacityReservationsWidgetSet} from "./servicewidgetsets/capacityreserva
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
-    //mainDashboard:any = new Dashboard(this,'IEM-Dashboard-CDK',{
-    //    dashboardName: 'IEM-Dashboard-CDK'
-    //});
     EC2Dashboard:any = null;
 
     alarmSet:any = [];
@@ -55,7 +52,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }))
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let appsync = new AppsyncWidgetSet(this,'AppsyncWidgetSet' + resourcecounter,resource);
+                            let appsync = new AppsyncWidgetSet(this,'AppsyncWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of appsync.getWidgetSets()) {
                                 this.widgetArray.push(widget);
                             }
@@ -71,7 +68,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }))
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let apigw = new ApiGatewayV1WidgetSet(this, 'APIGWV1WidgetSet'+ resourcecounter,resource);
+                            let apigw = new ApiGatewayV1WidgetSet(this, 'APIGWV1WidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widgetSet of apigw.getWidgetSets()) {
                                 this.widgetArray.push(widgetSet);
                             }
@@ -89,9 +86,9 @@ export class GraphFactory extends Construct {
                         for (const resource of this.serviceArray[region][servicekey]) {
                             let gw;
                             if (resource.type === "WEBSOCKET"){
-                                gw = new ApiGatewayV2WebSocketWidgetSet(this, 'APIGWV2WebSocketWidgetSet'+ resourcecounter,resource);
+                                gw = new ApiGatewayV2WebSocketWidgetSet(this, 'APIGWV2WebSocketWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             } else {
-                                gw = new ApiGatewayV2HttpWidgetSet(this,'APIGWV2HTTPWidgetSet' + resourcecounter,resource);
+                                gw = new ApiGatewayV2HttpWidgetSet(this,'APIGWV2HTTPWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             }
                             for (const widgetSet of gw.getWidgetSets()){
                                 this.widgetArray.push(widgetSet)
@@ -109,7 +106,7 @@ export class GraphFactory extends Construct {
                         }))
                         this.widgetArray.push(DynamodbWidgetSet.getOverallWidget());
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let table = new DynamodbWidgetSet(this, 'DynamoDBWidgetSet'+resourcecounter,resource);
+                            let table = new DynamodbWidgetSet(this, 'DynamoDBWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of table.getWidgetSets()) {
                                 this.widgetArray.push(widget);
                             }
@@ -139,7 +136,7 @@ export class GraphFactory extends Construct {
 
                         //Push instances to new detail dashboard
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet'+resourcecounter,resource);
+                            let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of instance.getWidgetSets()){
                                 this.EC2Dashboard.addWidgets(widget);
                                 //this.widgetArray.push(widget);
@@ -148,7 +145,7 @@ export class GraphFactory extends Construct {
 
                         }
                         //This is doubling the info from above. Push aggregated view to main dashboard.
-                        let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet'+resourcecounter,this.serviceArray[region][servicekey])
+                        let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet' + this.getRandomString(6) + resourcecounter,this.serviceArray[region][servicekey])
                         for (const wdgt of instancegroup.getWidgetSets()){
                             this.widgetArray.push(wdgt);
                         }
@@ -163,7 +160,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }))
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let lambdas = new LambdaWidgetSet(this,'LambdaWidgetSet'+resourcecounter,resource);
+                            let lambdas = new LambdaWidgetSet(this,'LambdaWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of lambdas.getWidgetSets()) {
                                 this.widgetArray.push(widget);
                             }
@@ -180,7 +177,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }))
                         for (const resource of this.serviceArray[region][servicekey]) {
-                            let asg = new ASGWidgetSet(this,'ASGWidgetSet'+resourcecounter,resource);
+                            let asg = new ASGWidgetSet(this,'ASGWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of asg.getWidgetSets()){
                                 this.widgetArray.push(widget);
                             }
@@ -198,7 +195,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }))
                         for (const resource of this.serviceArray[region][servicekey]){
-                            let sqs = new SQSWidgetSet(this,'SQSWidgetSet'+resourcecounter,resource);
+                            let sqs = new SQSWidgetSet(this,'SQSWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of sqs.getWidgetSets()){
                                 this.widgetArray.push(widget);
                             }
@@ -214,7 +211,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }));
                         for (const resource of this.serviceArray[region][servicekey]){
-                            let aurora = new AuroraWidgetSet(this,'AuroraWidgetSet'+resourcecounter,resource);
+                            let aurora = new AuroraWidgetSet(this,'AuroraWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of aurora.getWidgetSets()){
                                 this.widgetArray.push(widget);
                             }
@@ -230,7 +227,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }));
                         for (const resource of this.serviceArray[region][servicekey]){
-                            let elbv2 = new ELBv2WidgetSet(this,'ELBv2WidgetSet'+resourcecounter,resource);
+                            let elbv2 = new ELBv2WidgetSet(this,'ELBv2WidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of elbv2.getWidgetSets()){
                                 console.log('GOT WIDGET FROM ELB2');
                                 this.widgetArray.push(widget);
@@ -248,7 +245,7 @@ export class GraphFactory extends Construct {
                             height: 1
                         }));
                         for (const resource of this.serviceArray[region][servicekey]){
-                            let elbv1 = new ELBv1WidgetSet(this,'ELBv1WidgetSet'+resourcecounter,resource);
+                            let elbv1 = new ELBv1WidgetSet(this,'ELBv1WidgetSet' + this.getRandomString(6) + resourcecounter,resource);
                             for (const widget of elbv1.getWidgetSets()){
                                 this.widgetArray.push(widget);
                             }
@@ -265,14 +262,14 @@ export class GraphFactory extends Construct {
                             height: 1
                         }));
 
-                        const odcrs = new CapacityReservationsWidgetSet(this,'Capacity' + resourcecounter, this.serviceArray[region][servicekey]);
+                        const odcrs = new CapacityReservationsWidgetSet(this,'Capacity' + this.getRandomString(6) + resourcecounter, this.serviceArray[region][servicekey]);
 
                         for ( const widget of odcrs.getWidgetSets()){
                             this.widgetArray.push(widget);
                         }
                         this.alarmSet = this.alarmSet.concat(odcrs.getAlarmSet());
                         resourcecounter += 1;
-
+                        break;
                     }
 
                     default: {
@@ -381,6 +378,16 @@ export class GraphFactory extends Construct {
                 }
             }
         }
+    }
+
+    private getRandomString(length:number){
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        for (let i = 0; i < length; i++) {
+            result += characters.charAt(Math.floor(Math.random() * charactersLength));
+        }
+        return result;
     }
 
     hasTagKey(data:any[],tagkey:string){
