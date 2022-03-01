@@ -13,16 +13,25 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
         super(scope, id);
         const instanceId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
+        const instanceType = resource.Instance.InstanceType;
+        let burstable = false;
+        let burstmodeLabel = ''
+        if ( instanceType.includes('t2') || instanceType.includes('t3') || instanceType.includes('t4')){
+            burstable = true;
+            burstmodeLabel = ` (${resource.CPUCreditSpecs.CpuCredits})`;
+        }
+        const instanceAz = resource.Instance.Placement.AvailabilityZone;
+        const coreCount = resource.Instance.CpuOptions.CoreCount;
+        const threadsPerCore = resource.Instance.CpuOptions.ThreadsPerCore;
         let instanceName = '';
-        let markDown = '**Instance [' + instanceId+'](https://' + region +'.console.aws.amazon.com/ec2/v2/home?region='+ region + '#InstanceDetails:instanceId='+ instanceId + ')**'
         if ( resource.Tags ){
             for ( let nameTag of resource.Tags ){
                 if ( nameTag.Key === "Name" ){
                     instanceName = nameTag.Value;
-                    markDown = '**Instance [' + instanceId+'](https://' + region +'.console.aws.amazon.com/ec2/v2/home?region='+ region + '#InstanceDetails:instanceId='+ instanceId + ')  ' + instanceName +'**'
                 }
             }
         }
+        let markDown = `### Instance [${instanceId}](https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#InstanceDetails:instanceId=${instanceId}) ${instanceName} ${instanceType}${burstmodeLabel}/${instanceAz}/Cores:${coreCount}/ThreadsPC:${threadsPerCore}`
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,
@@ -41,14 +50,6 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
-                metricName: 'EBSWriteOps',
-                dimensionsMap: {
-                    InstanceId: instanceId
-                },
-                statistic: Statistic.SUM,
-                period:Duration.minutes(1)
-            }),new Metric({
-                namespace: this.namespace,
                 metricName: 'EBSIOBalance%',
                 dimensionsMap: {
                     InstanceId: instanceId
@@ -58,6 +59,15 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'EBSReadBytes',
+                dimensionsMap: {
+                    InstanceId: instanceId
+                },
+                statistic: Statistic.SUM,
+                period:Duration.minutes(1)
+            })],
+            right: [new Metric({
+                namespace: this.namespace,
+                metricName: 'EBSWriteOps',
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
@@ -128,6 +138,62 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
             width: 6
         });
         this.widgetSet.push(new Row(widget,cpuwidget,networkWidget));
+
+        if ( burstable ){
+            const CPUCreditUsageMetric = new Metric({
+                namespace: this.namespace,
+                metricName: 'CPUCreditUsage',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+            const CPUCreditBalanceMetric = new Metric({
+                namespace: this.namespace,
+                metricName: 'CPUCreditBalance',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const CPUSurplusCreditBalance = new Metric({
+                namespace: this.namespace,
+                metricName: 'CPUSurplusCreditBalance',
+                dimensionsMap: {
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const CPUSurplusCreditsCharged = new Metric({
+                namespace: this.namespace,
+                metricName: 'CPUSurplusCreditsCharged',
+                dimensionsMap:{
+                    InstnaceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const creditWidget = new GraphWidget({
+                title: 'CpuCredits Usage/Balance',
+                left: [CPUCreditUsageMetric],
+                right: [CPUCreditBalanceMetric],
+                period: Duration.minutes(1),
+                region: region,
+                width:12
+            });
+
+            const surplusWidget = new GraphWidget({
+                title: 'CPUSurplusCredit Balance/Charged',
+                left:[CPUSurplusCreditBalance],
+                right:[CPUSurplusCreditsCharged],
+                period: Duration.minutes(1),
+                region: region,
+                width: 12
+            });
+            this.widgetSet.push(new Row(creditWidget,surplusWidget));
+        }
 
         for (const volume of resource.Volumes) {
             let vol = new EbsWidgetSet(this,'EBSWidgetSet'+volume.VolumeId,volume);

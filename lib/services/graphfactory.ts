@@ -19,6 +19,7 @@ import {Construct} from "constructs";
 import {ELBv2WidgetSet} from "./servicewidgetsets/elbv2";
 import {ELBv1WidgetSet} from "./servicewidgetsets/elbv1";
 import {CapacityReservationsWidgetSet} from "./servicewidgetsets/capacityreservations";
+import {EcsWidgetSet} from "./servicewidgetsets/ecs";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -272,6 +273,23 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "ecs": {
+                        this.widgetArray.push(new TextWidget({
+                            markdown: "## ECS Clusters",
+                            width: 24,
+                            height: 1
+                        }));
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const ecsCluster = new EcsWidgetSet(this, 'ECSCluster' + this.getRandomString(6) + resourcecounter, resource);
+                            for (const widget of ecsCluster.getWidgetSets()) {
+                                this.widgetArray.push(widget);
+                            }
+                            this.alarmSet = this.alarmSet.concat(ecsCluster.getAlarmSet());
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -375,6 +393,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["odcr"] = [resource];
                 } else {
                     this.serviceArray[region]["odcr"].push(resource);
+                }
+            } else if ( resource.ResourceARN.includes('ecs') && resource.ResourceARN.includes('cluster')){
+                if (!this.serviceArray[region]["ecs"]){
+                    this.serviceArray[region]["ecs"] = [resource];
+                } else {
+                    this.serviceArray[region]["ecs"].push(resource);
                 }
             }
         }

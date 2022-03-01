@@ -15,9 +15,10 @@ Currently supported services are:
 * On-Demand Capacity Reservations
 * DynamoDB
 * EBS (as part of EC2)
-* EC2
+* EC2 (support for t* burstable instances)
 * ELB v1 (ELB Classic)
 * ELB v2 (ALB, NLB)
+* ECS (EC2 and Fargate)
 * Lambda
 * RDS
 * SQS
