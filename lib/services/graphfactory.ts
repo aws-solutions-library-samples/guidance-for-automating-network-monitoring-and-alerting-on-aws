@@ -297,15 +297,17 @@ export class GraphFactory extends Construct {
                 }
             }
         }
-        const height = 1 + Math.floor(this.alarmSet.length/4) + (this.alarmSet.length%4!=0?1:0)
-        const alarmStatusWidget = new AlarmStatusWidget({
-            title: 'Alarms',
-            width: 24,
-            height: height,
-            alarms: this.alarmSet
-        })
+        if ( this.alarmSet.length > 0 ){
+            const height = 1 + Math.floor(this.alarmSet.length/4) + (this.alarmSet.length%4!=0?1:0)
+            const alarmStatusWidget = new AlarmStatusWidget({
+                title: 'Alarms',
+                width: 24,
+                height: height,
+                alarms: this.alarmSet
+            });
 
-        this.widgetArray = [alarmStatusWidget].concat(this.widgetArray)
+            this.widgetArray = [alarmStatusWidget].concat(this.widgetArray);
+        }
     }
 
 
