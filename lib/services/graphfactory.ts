@@ -20,11 +20,13 @@ import {ELBv2WidgetSet} from "./servicewidgetsets/elbv2";
 import {ELBv1WidgetSet} from "./servicewidgetsets/elbv1";
 import {CapacityReservationsWidgetSet} from "./servicewidgetsets/capacityreservations";
 import {EcsWidgetSet} from "./servicewidgetsets/ecs";
+import {TgwWidgetSet} from "./servicewidgetsets/tgw";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
     EC2Dashboard:any = null;
+    NetworkDashboard:any = null;
 
     alarmSet:any = [];
     config:any;
@@ -124,7 +126,6 @@ export class GraphFactory extends Construct {
                             this.EC2Dashboard = new Dashboard(this,config.BaseName + '-EC2-Dashboard',{
                                 dashboardName: config.BaseName + '-EC2-Dashboard'
                             });
-                            this.EC2Dashboard.get
                         }
                         const labelWidget = new TextWidget({
                             markdown: "## EC2 Instances " + region,
@@ -290,6 +291,29 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "tgw": {
+                        if (!this.NetworkDashboard){
+                            this.NetworkDashboard = new Dashboard(this,config.BaseName + '-Network-Dashboard',{
+                                dashboardName: config.BaseName + '-Network-Dashboard'
+                            });
+                        }
+                        const labelWidget = new TextWidget({
+                            markdown: "## Transit Gateways",
+                            width: 24,
+                            height: 1
+                        });
+                        this.NetworkDashboard.addWidgets(labelWidget)
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const tgw = new TgwWidgetSet(this, 'tgw' + this.getRandomString(6) + resourcecounter, resource);
+                            for (const widget of tgw.getWidgetSets()) {
+                                this.NetworkDashboard.addWidgets(widget);
+                            }
+                            this.alarmSet = this.alarmSet.concat(tgw.getAlarmSet());
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -401,6 +425,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["ecs"] = [resource];
                 } else {
                     this.serviceArray[region]["ecs"].push(resource);
+                }
+            } else if ( resource.ResourceARN.includes('transit-gateway') && resource.ResourceARN.includes(':ec2:')){
+                if (!this.serviceArray[region]["tgw"]){
+                    this.serviceArray[region]["tgw"] = [resource];
+                } else {
+                    this.serviceArray[region]["tgw"].push(resource);
                 }
             }
         }

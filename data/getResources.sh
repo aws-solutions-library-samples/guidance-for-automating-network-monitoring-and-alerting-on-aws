@@ -219,6 +219,23 @@ IFS="
       cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"$ECSCluster\"))|=.+{\"services\":[$service_def]}]" > $TMPFILE
       mv $TMPFILE resources.json
   done
-    #aws ecs describe-services --cluster arn:aws:ecs:eu-west-1:804485321675:cluster/IEMEc2Cluster --services "arn:aws:ecs:eu-west-1:804485321675:service/IEMEc2Cluster/TestStack-IEMEC2ServerServiceCD9BF7A3-4HGehnii8B0s" | jq 'del(.services[].events)'
+
 IFS=" "
 done
+
+
+### TGW decoration
+for region in ${REGIONS}; do
+IFS="
+"
+  echo "TGW in $region"
+  for TGW in `grep 'transit-gateway/tgw-' resources.json| grep $region | grep "arn:aws:ec2" | sed 's/,//g' | sed 's/"//g' | sed 's/^\ *//g'| awk '{ print $2 }' | awk -F'/' '{ print $2 }'`; do
+    output=`aws ec2 describe-transit-gateway-attachments --filters "Name=transit-gateway-id,Values=$TGW" | jq -r '[.TransitGatewayAttachments[]]'`
+    cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"$TGW\"))|=.+{\"attachments\":$output}]" > $TMPFILE
+    mv $TMPFILE resources.json
+  done
+
+
+IFS=" "
+done
+
