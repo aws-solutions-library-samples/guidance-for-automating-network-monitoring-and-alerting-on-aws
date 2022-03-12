@@ -22,6 +22,7 @@ Currently supported services are:
 * Lambda
 * RDS
 * SQS
+* Transit Gateway
 
 ## How it works
 
