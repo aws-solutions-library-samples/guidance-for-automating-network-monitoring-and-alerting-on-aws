@@ -20,6 +20,7 @@ Currently supported services are:
 * ELB v2 (ALB, NLB)
 * ECS (EC2 and Fargate)
 * Lambda
+* NAT Gateway
 * RDS
 * SQS
 * Transit Gateway

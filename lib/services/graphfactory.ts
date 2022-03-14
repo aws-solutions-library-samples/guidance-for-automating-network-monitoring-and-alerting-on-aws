@@ -21,6 +21,7 @@ import {ELBv1WidgetSet} from "./servicewidgetsets/elbv1";
 import {CapacityReservationsWidgetSet} from "./servicewidgetsets/capacityreservations";
 import {EcsWidgetSet} from "./servicewidgetsets/ecs";
 import {TgwWidgetSet} from "./servicewidgetsets/tgw";
+import {NatgwWidgetSet} from "./servicewidgetsets/natgw";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -314,6 +315,29 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "natgw": {
+                        if (!this.NetworkDashboard){
+                            this.NetworkDashboard = new Dashboard(this,config.BaseName + '-Network-Dashboard',{
+                                dashboardName: config.BaseName + '-Network-Dashboard'
+                            });
+                        }
+                        const labelWidget = new TextWidget({
+                            markdown: "## NAT Gateways",
+                            width: 24,
+                            height: 1
+                        });
+                        this.NetworkDashboard.addWidgets(labelWidget)
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const natgw = new NatgwWidgetSet(this, 'natgw' + this.getRandomString(6) + resourcecounter, resource);
+                            for (const widget of natgw.getWidgetSets()) {
+                                this.NetworkDashboard.addWidgets(widget);
+                            }
+                            this.alarmSet = this.alarmSet.concat(natgw.getAlarmSet());
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -431,6 +455,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["tgw"] = [resource];
                 } else {
                     this.serviceArray[region]["tgw"].push(resource);
+                }
+            } else if ( resource.ResourceARN.includes('natgateway') && resource.ResourceARN.includes(':ec2:')){
+                if (!this.serviceArray[region]["natgw"]){
+                    this.serviceArray[region]["natgw"] = [resource];
+                } else {
+                    this.serviceArray[region]["natgw"].push(resource);
                 }
             }
         }
