@@ -96,14 +96,15 @@ for region in ${REGIONS}; do
 IFS="
 "
     echo "Aurora region $region"
-    for AURORA in $(grep rds resources.json | grep $region | grep cluster | awk -F':' '{ print $8 }' | sed 's/".*//g'); do
+    for AURORA in `grep rds resources.json | grep $region | grep cluster | awk -F':' '{ print $8 }' | sed 's/".*//g'`; do
         echo "Decorating Aurora $AURORA"
-        output=$(aws rds describe-db-clusters --db-cluster-identifier $AURORA --region $region 2>/dev/null | jq -r '.DBClusters[]')
+        output=`aws rds describe-db-clusters --db-cluster-identifier $AURORA --region $region 2>/dev/null | jq -r '.DBClusters[]'`
         if [ ! -z "$output" ]; then
+            aws rds describe-db-clusters --db-cluster-identifier $AURORA --region $region 2>/dev/null | jq -r '.DBClusters[]' > aurora.$AURORA
             echo "Aurora $AURORA is the real cluster"
-            multiaz=$(echo $output | jq '.MultiAZ')
-            engine=$(echo $output | jq '.Engine' | sed 's/"//g')
-            members=$(echo $output | jq -c '.DBClusterMembers' | sed 's/"/\\"/g')
+            multiaz=`echo $output | jq '.MultiAZ'`
+            engine=`echo $output | jq '.Engine' | sed 's/"//g'`
+            members=`echo $output | jq -c '.DBClusterMembers' | sed 's/"/\\"/g'`
             cat resources.json | jq ". = [ .[] | select(.ResourceARN | contains(\"rds\") and contains(\"$region\") and contains(\"$AURORA\")) |=.+{\"MultiAZ\":$multiaz,\"Engine\":\"$engine\",\"DBClusterMembers\":$members}]" > $TMPFILE
             mv $TMPFILE resources.json
         else

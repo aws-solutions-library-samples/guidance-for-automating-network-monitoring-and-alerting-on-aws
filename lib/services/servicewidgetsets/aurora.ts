@@ -163,18 +163,19 @@ export class AuroraWidgetSet extends Construct  implements WidgetSet{
         })
         this.widgetSet.push(new Row(widget,latency,connsdisk));
         if ( resource.DBClusterMembers && resource.DBClusterMembers.length > 0 ){
+            let counter = 0;
             for (let member of resource.DBClusterMembers){
                 let dbid = member.DBInstanceIdentifier;
                 let arnarray = resource.ResourceARN.split(':');
                 arnarray[arnarray.length - 1]=dbid;
                 arnarray[arnarray.length - 2]="db";
-                let arnstring = arnarray.join(':');
-                member.ResourceARN = arnstring;
+                member.ResourceARN = arnarray.join(':');
                 member.Engine = resource.Engine;
-                let wgt = new RdsWidgetSet(this,'RDSWidgetSet',member);
+                let wgt = new RdsWidgetSet(this,'RDSWidgetSet' + counter,member);
                 for ( let row of wgt.getWidgetSets()){
                     this.widgetSet.push(row);
                 }
+                counter++;
             }
         }
     }
