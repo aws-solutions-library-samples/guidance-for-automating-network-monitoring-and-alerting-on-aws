@@ -15,7 +15,7 @@ Currently supported services are:
 * On-Demand Capacity Reservations
 * DynamoDB
 * EBS (as part of EC2)
-* EC2 (support for t* burstable instances)
+* EC2 (support for t* burstable instances, support for CloudWatch Agent)
 * ELB v1 (ELB Classic)
 * ELB v2 (ALB, NLB)
 * ECS (EC2 and Fargate)
@@ -27,14 +27,14 @@ Currently supported services are:
 
 ## How it works
 
-1. `data/getResources.sh` is used to call the Resource Groups Tagging API and to generate the configuration file.
+1. `data/resource_collector.py` is used to call the Resource Groups Tagging API and to generate the configuration file.
 2. CDK (v2) is used to generate CloudFormation template and deploy it
 
 ## Prerequisites
 
 ### To generate configuration:
-* AWS cli v2
-* jq v1.6
+* Python 3
+* Boto 3 (Python module. `python -m pip install boto3`)
 
 ### To generate the dashboard
 * NodeJS 14+ (required by CDK v2)
@@ -44,8 +44,8 @@ Currently supported services are:
 1. Check out the project.
 2. Change current directory to project directory.
 3. Run `npm install` to install dependencies.
-4. Edit `data/getResources.sh` and set TAG to tag key you want to use and TAGVALUE to value. Set REGIONS to include the regions that contain resources.
-5. Run `cd data; ./getResources.sh` to create configuration file `resources.json` in the `data` directory.
+4. Edit `lib/config.json` and set TagKey to tag key you want to use and TagValues to an array of values. Set Regions to include the regions that contain resources.
+5. Run `cd data; python3 resource_collector.py` to create configuration file `resources.json` in the `data` directory. IMPORTANT NOTICE: `data/getResources.sh`is now deprecated and will not be maintained. Use `data/resource_collector.py` instead.
 6. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard.
 7. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
 

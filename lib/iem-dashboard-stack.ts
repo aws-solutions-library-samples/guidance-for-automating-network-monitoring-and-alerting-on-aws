@@ -17,7 +17,7 @@ export class IemDashboardStack extends Stack {
     try {
       resources = require(config.ResourceFile);
     } catch {
-      console.log(`ERROR: ${config.ResourceFile} not found, run 'cd data; ./getResources.sh'`)
+      console.log(`ERROR: ${config.ResourceFile} not found, run 'cd data; python resource_collector.py'`)
     }
 
     const graphFactory = new GraphFactory(this,'GraphFactory',resources, config);

@@ -195,6 +195,91 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
             this.widgetSet.push(new Row(creditWidget,surplusWidget));
         }
 
+        if ( resource.CWAgent && resource.CWAgent === "True"){
+            const memusedMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'mem_used_percent',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const cpuIowaitMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'cpu_usage_iowait',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const netstatEstablishedMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'netstat_tcp_established',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const netstatTcpWaitMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'netstat_tcp_time_wait',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const diskUsedPercentMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'disk_used_percent',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const swapUsedPercentMetric = new Metric({
+                namespace: 'CWAgent',
+                metricName: 'swap_used_percent',
+                dimensionsMap:{
+                    InstanceId: instanceId
+                },
+                period: Duration.minutes(1)
+            });
+
+            const memoryUsageCpuIoWaitWidget = new GraphWidget({
+                title: 'MemoryUsed Percent/CPU Iowait',
+                left:[memusedMetric],
+                right:[cpuIowaitMetric],
+                period: Duration.minutes(1),
+                region: region,
+                width: 12
+            });
+
+            const networkConnWidget = new GraphWidget({
+                title: 'TCP Established / TCP Time Wait',
+                left:[netstatEstablishedMetric],
+                right:[netstatTcpWaitMetric],
+                period: Duration.minutes(1),
+                region: region,
+                width: 6
+            });
+
+            const diskUtilWidget = new GraphWidget({
+                title: 'Disk used / Swap used percent',
+                left:[diskUsedPercentMetric],
+                right:[swapUsedPercentMetric],
+                period: Duration.minutes(1),
+                region: region,
+                width: 6
+            });
+
+            this.widgetSet.push(new Row(memoryUsageCpuIoWaitWidget,networkConnWidget,diskUtilWidget));
+        }
+
         for (const volume of resource.Volumes) {
             let vol = new EbsWidgetSet(this,'EBSWidgetSet'+volume.VolumeId,volume);
             for (let w of vol.getWidgetSets()){

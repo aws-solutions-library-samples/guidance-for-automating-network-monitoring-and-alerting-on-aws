@@ -1,5 +1,16 @@
 #!/bin/bash
 #set -x
+cat << EOF
+****************************************************
+************** IMPORTANT NOTICE ********************
+** THIS SCRIPT IS BEING DEPRECATED! IT WILL BE    **
+** REMOVED. IF YOU ARE USING IT IN YOUR BUILD     **
+** JOBS, MIGRATE TO THE NEW PYTHON BASED          **
+** RESOURCE COLLECTOR. SEE DOCUMENTATION!         **
+**                                                **
+****************************************************
+****************************************************
+EOF
 IFS=" 
 "
 
@@ -242,3 +253,14 @@ IFS="
 IFS=" "
 done
 
+cat << EOF
+****************************************************
+************** IMPORTANT NOTICE ********************
+** THIS SCRIPT IS BEING DEPRECATED! IT WILL BE    **
+** REMOVED. IF YOU ARE USING IT IN YOUR BUILD     **
+** JOBS, MIGRATE TO THE NEW PYTHON BASED          **
+** RESOURCE COLLECTOR. SEE DOCUMENTATION!         **
+**                                                **
+****************************************************
+****************************************************
+EOF

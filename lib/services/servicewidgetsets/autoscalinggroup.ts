@@ -4,7 +4,7 @@ import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
 export class ASGWidgetSet extends Construct implements WidgetSet{
-    namespace:string='AWS/AutoScaling';
+    namespace:string='AWS/EC2';
     widgetSet:any=[];
     alarmSet:any = [];
 

@@ -12,6 +12,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
         super(scope,id);
         let apigw = resource.name;
         let region = resource.ResourceARN.split(':')[3];
+        let apiid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1]
         const trafficMetric = new Metric({
             namespace: this.namespace,
             metricName: 'Count',
@@ -30,8 +31,8 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
             width: 6
         })
 
-        const trafficCountAlarm = trafficMetric.createAlarm(this,'TrafficCountAlarm'+apigw,{
-            alarmName: 'Traffic ' + apigw,
+        const trafficCountAlarm = trafficMetric.createAlarm(this,`TrafficCountAlarm-${apigw}-${apiid}`,{
+            alarmName: `Traffic-${apigw}-${apiid}`,
             evaluationPeriods: 1,
             threshold: 10000,
             datapointsToAlarm: 1,
@@ -60,17 +61,17 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
             period:Duration.minutes(1)
         });
 
-        const error4xxAlarm = status4xxMetric.createAlarm(this, 'Error4xxAlarm'+apigw,{
+        const error4xxAlarm = status4xxMetric.createAlarm(this, `Error4xxAlarm-${apigw}-${apiid}`,{
             datapointsToAlarm: 1,
-            alarmName: 'Error4xx' + apigw,
+            alarmName: `Error4xx-${apigw}-${apiid}`,
             threshold: 1000,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 1
         })
 
-        const error5xxAlarm = status5xxMetric.createAlarm(this,'Error5xxAlarm'+apigw,{
+        const error5xxAlarm = status5xxMetric.createAlarm(this,`Error5xxAlarm-${apigw}-${apiid}`,{
             datapointsToAlarm: 1,
-            alarmName: 'Error5xx' + apigw,
+            alarmName: `Error5xx-${apigw}-${apiid}`,
             threshold: 1000,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 1
