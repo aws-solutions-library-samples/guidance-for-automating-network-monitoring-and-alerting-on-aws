@@ -38,7 +38,7 @@ Currently supported services are:
 
 ### To generate the dashboard
 * NodeJS 14+ (required by CDK v2)
-* CDK v2 (Installation: `npm -g install aws-cdk@latest``)
+* CDK v2 (Installation: `npm -g install aws-cdk@latest`)
 
 ## Getting started
 1. Check out the project.
