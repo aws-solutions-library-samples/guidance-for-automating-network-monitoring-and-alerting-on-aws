@@ -13,6 +13,7 @@ Currently supported services are:
 * Aurora
 * Autoscaling Groups
 * On-Demand Capacity Reservations
+* CloudFront
 * DynamoDB
 * EBS (as part of EC2)
 * EC2 (support for t* burstable instances, support for CloudWatch Agent)
@@ -22,8 +23,10 @@ Currently supported services are:
 * Lambda
 * NAT Gateway
 * RDS
+* SNS
 * SQS
 * Transit Gateway
+* WAFv2
 
 ## How it works
 

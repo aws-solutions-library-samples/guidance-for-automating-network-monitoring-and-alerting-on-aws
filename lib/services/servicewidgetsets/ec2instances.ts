@@ -1,4 +1,4 @@
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {EbsWidgetSet} from "./ebs";
@@ -35,7 +35,7 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 1
+            height: 2
         }))
         const widget = new GraphWidget({
             title: 'Disk '+instanceId,
@@ -174,6 +174,16 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 },
                 period: Duration.minutes(1)
             });
+
+            const CPUSurplusCreditBalanceAlarm = CPUSurplusCreditBalance.createAlarm(this,`${instanceId}-CPUCredit-Alarm`,{
+                alarmName: `${instanceId}-CPUCredit-Alarm`,
+                treatMissingData: TreatMissingData.NOT_BREACHING,
+                datapointsToAlarm: 1,
+                evaluationPeriods: 1,
+                threshold: 1
+            });
+
+            this.alarmSet.push(CPUSurplusCreditBalanceAlarm);
 
             const creditWidget = new GraphWidget({
                 title: 'CpuCredits Usage/Balance',

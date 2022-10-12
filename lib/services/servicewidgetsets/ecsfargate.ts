@@ -1,6 +1,13 @@
 import {Construct} from "constructs";
 import {WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {
+    GraphWidget,
+    Metric,
+    Row,
+    Statistic,
+    TextWidget,
+    TreatMissingData
+} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
 export class EcsFargateWidgetSet extends Construct implements WidgetSet{
@@ -33,6 +40,14 @@ export class EcsFargateWidgetSet extends Construct implements WidgetSet{
             statistic: Statistic.AVERAGE
         });
 
+        const cpuUtilAlarm = CPUUtilisationMetric.createAlarm(this,`CPU-${serviceName}-alrm`,{
+            alarmName:`CPU-Alarm-${serviceName}`,
+            datapointsToAlarm: 3,
+            threshold: 5,
+            evaluationPeriods: 3,
+            treatMissingData: TreatMissingData.NOT_BREACHING
+        });
+
         const MemoryUtilizationMetric = new Metric({
             namespace: this.namespace,
             metricName: 'MemoryUtilization',
@@ -56,7 +71,7 @@ export class EcsFargateWidgetSet extends Construct implements WidgetSet{
         });
 
         this.widgetSet.push(new Row(ServiceCPUUtilisation));
-
+        this.alarmSet.push(cpuUtilAlarm);
 
     }
 

@@ -2,6 +2,7 @@ import boto3
 import json
 from botocore.config import Config
 
+singletons = []
 
 def get_resources(tag_name, tag_values, config):
     """Get resources from resource groups and tagging API.
@@ -35,6 +36,8 @@ def get_resources(tag_name, tag_values, config):
         resources.extend(response['ResourceTagMappingList'])
 
     resources.extend(autoscaling_retriever(tag_name, tag_values, config))
+    resources.extend(waf_retriever(config))
+    resources.extend(cloudfront_retriever(config))
     return resources
 
 
@@ -76,6 +79,85 @@ def autoscaling_retriever(tag_name, tag_values, config):
 
     return resources
 
+def cw_custom_namespace_retriever(config):
+    """Retrieving all custom namespaces
+    """
+    cw = boto3.client('cloudwatch', config=config)
+    resources = []
+    response = cw.list_metrics()
+    for record in response['Metrics']:
+        if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
+            resources.append(record['Namespace'])
+            print(resources)
+
+    try:
+        while response['NextToken']:
+            response = cw.list_metrics(
+                NextToken = response['NextToken']
+            )
+            for record in response['Metrics']:
+                if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
+                    resources.append(record['Namespace'])
+                    print(resources)
+    except:
+        print(f'Done fetching cloudwatch namespaces')
+    return resources
+
+def waf_retriever(config):
+    """Retrieving waf config
+    """
+    waf = boto3.client('wafv2', config=config)
+    resources = []
+    response = waf.list_web_acls(
+        Scope='REGIONAL',
+        Limit=100
+    )
+    for resource in response['WebACLs']:
+        resource['ResourceARN'] = resource['ARN']
+        resources.append(resource)
+
+    try:
+        while response['NextMarker']:
+            response = waf.list_web_acls(
+                Scope='REGIONAL',
+                Limit=100,
+                NextMaker = response['NextMarker'])
+            for resource in response['WebACLs']:
+                    resource['ResourceARN'] = resource['ARN']
+                    resources.append(resource)
+    except:
+        print(f'Done fetching ACLs')
+
+    return resources
+
+def cloudfront_retriever(config):
+    """Retrieving cloudfront config
+    """
+    print('Fetching Cloudfront Distributions')
+    resources = []
+    f = open("../lib/config.json", "r")
+    main_config = json.load(f)
+    tag_name = main_config['TagKey']
+    tag_values = main_config['TagValues']
+    client = boto3.client('cloudfront', config=config)
+    response = client.list_distributions()
+    for x in response['DistributionList']['Items']:
+        arn = x['ARN']
+        tags = client.list_tags_for_resource(
+            Resource=arn
+        )
+        match = False
+        for t in tags['Tags']['Items']:
+            if t['Key'] in tag_name and t['Value'] in tag_values:
+                match = True
+        if match:
+            if x['Id'] not in singletons:
+                x['ResourceARN'] = x['ARN']
+                resources.append(x)
+                singletons.append(x['Id'])
+
+    return resources
+
 
 def router(resource, config):
     arn = resource['ResourceARN']
@@ -109,6 +191,8 @@ def router(resource, config):
         resource = tgw_decorator(resource, config)
     elif 'sqs' in arn:
         resource = sqs_decorator(resource, config)
+    elif 'sns' in arn:
+        resource = sns_decorator(resource, config)
     return resource
 
 
@@ -193,6 +277,22 @@ def odcr_decorator(resource, config):
 
 def dynamodb_decorator(resource, config):
     print(f'This resource is DynamoDB {resource["ResourceARN"]}')
+    tablename = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    ddb = boto3.client('dynamodb', config=config)
+    response = ddb.describe_table(
+        TableName=tablename
+    )
+    table = response['Table']
+    type = "provisioned"
+    if 'BillingModeSummary' in table:
+        type = "ondemand"
+
+    wcu = table['ProvisionedThroughput']['WriteCapacityUnits']
+    rcu = table['ProvisionedThroughput']['ReadCapacityUnits']
+
+    resource['type'] = type
+    resource['wcu'] = wcu
+    resource['rcu'] = rcu
     return resource
 
 
@@ -347,6 +447,17 @@ def sqs_decorator(resource, config):
     print(f'This resource is SQS {resource["ResourceARN"]}')
     return resource
 
+def sns_decorator(resource, config):
+    print(f'This resource is SNS {resource["ResourceARN"]}')
+#     sns = boto3.client('sns', config=config)
+#     response = sns.get_topic_attributes(
+#         TopicArn=resource['ResourceARN']
+#     )
+#
+#     debug(response)
+
+    return resource
+
 
 def tgw_decorator(resource, config):
     print(f'This resource is TGW {resource["ResourceARN"]}')
@@ -383,6 +494,7 @@ def handler():
     tag_values = ['202202', '202102']
     regions = ['eu-west-1', 'eu-north-1']
     output_file = "resources.json"
+    custom_namespace_file = "custom_namespaces.json"
     try:
         f = open("../lib/config.json", "r")
         main_config = json.load(f)
@@ -414,13 +526,24 @@ def handler():
     except:
         print('No regions configured')
 
+    try:
+        if main_config['CustomNamespaceFile']:
+            custom_namespace_file = main_config['CustomNamespaceFile']
+    except:
+        print('No custom namespaces configured')
+
     decorated_resources = []
+    region_namespaces = {'RegionNamespaces': []}
     for region in regions:
         config = get_config(region)
         resources = get_resources(tag_name, tag_values, config)
+        region_namespace = {'Region': region, 'Namespaces' : cw_custom_namespace_retriever(config) }
+        region_namespaces['RegionNamespaces'].append(region_namespace)
         for resource in resources:
             decorated_resources.append(router(resource, config))
-
+    cn = open(custom_namespace_file, "w")
+    cn.write(json.dumps(region_namespaces, indent=4, default=str))
+    cn.close()
     n = open(output_file, "w")
     n.write(json.dumps(decorated_resources, indent=4, default=str))
     n.close()

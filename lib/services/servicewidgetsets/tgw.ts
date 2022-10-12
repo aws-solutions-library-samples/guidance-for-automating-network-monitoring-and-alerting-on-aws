@@ -131,13 +131,17 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
 
         for ( let attachment of resource.attachments ){
             const attachmentId = attachment.TransitGatewayAttachmentId
-            let markDown = `**Attachment [${attachmentId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayAttachmentDetails:transitGatewayAttachmentId=${attachmentId}) Type:${attachment.ResourceType}**`
+            let vpcMarkup = '';
+            if ( attachment.ResourceType === 'vpc'){
+                vpcMarkup = ` - [${attachment.ResourceId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#VpcDetails:VpcId=${attachment.ResourceId})`
+            }
+            let markDown = `**Attachment [${attachmentId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayAttachmentDetails:transitGatewayAttachmentId=${attachmentId}) Type:${attachment.ResourceType}${vpcMarkup}**`
             this.widgetSet.push(new TextWidget({
                 markdown: markDown,
                 width: 24,
                 height: 1
             }));
-            const bytesOutMetric = new Metric({
+            const attBytesOutMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'BytesOut',
                 dimensionsMap: {
@@ -148,7 +152,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const bytesInMatric = new Metric({
+            const attBytesInMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'BytesIn',
                 dimensionsMap: {
@@ -159,7 +163,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const packetsOutMetric = new Metric({
+            const attPacketsOutMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'PacketsOut',
                 dimensionsMap: {
@@ -170,7 +174,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const packetsInMetric = new Metric({
+            const attPacketsInMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'PacketsIn',
                 dimensionsMap: {
@@ -181,7 +185,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const bytesDropCountBlackhole = new Metric({
+            const attBytesDropCountBlackhole = new Metric({
                 namespace: this.namespace,
                 metricName: 'BytesDropCountBlackhole',
                 dimensionsMap: {
@@ -192,7 +196,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const packetsDropCountBlackhole = new Metric({
+            const attPacketsDropCountBlackhole = new Metric({
                 namespace: this.namespace,
                 metricName: 'PacketsDropCountBlackhole',
                 dimensionsMap: {
@@ -203,7 +207,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const bytesDropCountNoRoute = new Metric({
+            const attBytesDropCountNoRoute = new Metric({
                 namespace: this.namespace,
                 metricName: 'BytesDropCountNoRoute',
                 dimensionsMap: {
@@ -214,7 +218,7 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const packetsDropCountNoRoute = new Metric({
+            const attPacketsDropCountNoRoute = new Metric({
                 namespace: this.namespace,
                 metricName: 'PacketsDropCountNoRoute',
                 dimensionsMap: {
@@ -225,34 +229,34 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const bytesWidget = new GraphWidget({
+            const attBytesWidget = new GraphWidget({
                 title: 'Bytes In/Out',
-                left:[bytesInMatric],
-                right:[bytesOutMetric],
+                left:[attBytesInMetric],
+                right:[attBytesOutMetric],
                 period: Duration.minutes(1),
                 region: region,
                 width: 8
             });
 
-            const packetsWidget = new GraphWidget({
+            const attPacketsWidget = new GraphWidget({
                 title: 'Packets In/Out',
-                left:[packetsInMetric],
-                right:[packetsOutMetric],
+                left:[attPacketsInMetric],
+                right:[attPacketsOutMetric],
                 period: Duration.minutes(1),
                 region: region,
                 width: 8
             });
 
-            const droppedWidget = new GraphWidget({
+            const attDroppedWidget = new GraphWidget({
                 title: 'Dropped packets/bytes',
-                left:[packetsDropCountNoRoute,packetsDropCountBlackhole],
-                right:[bytesDropCountNoRoute,bytesDropCountBlackhole],
+                left:[attPacketsDropCountNoRoute,attPacketsDropCountBlackhole],
+                right:[attBytesDropCountNoRoute,attBytesDropCountBlackhole],
                 period: Duration.minutes(1),
                 region: region,
                 width: 8
             });
 
-            this.widgetSet.push(new Row(bytesWidget,packetsWidget,droppedWidget));
+            this.widgetSet.push(new Row(attBytesWidget,attPacketsWidget,attDroppedWidget));
         }
 
     }
