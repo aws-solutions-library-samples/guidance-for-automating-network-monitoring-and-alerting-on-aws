@@ -404,7 +404,7 @@ export class GraphFactory extends Construct {
                             });
                         }
                         const labelWidget = new TextWidget({
-                            markdown: `## Cloudfront`,
+                            markdown: `## CloudFront`,
                             width: 24,
                             height: 1
                         });
