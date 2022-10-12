@@ -22,12 +22,16 @@ import {CapacityReservationsWidgetSet} from "./servicewidgetsets/capacityreserva
 import {EcsWidgetSet} from "./servicewidgetsets/ecs";
 import {TgwWidgetSet} from "./servicewidgetsets/tgw";
 import {NatgwWidgetSet} from "./servicewidgetsets/natgw";
+import {SNSWidgetSet} from "./servicewidgetsets/sns";
+import {WafV2WidgetSet} from "./servicewidgetsets/wafv2";
+import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
     EC2Dashboard:any = null;
     NetworkDashboard:any = null;
+    EdgeDashboard:any = null;
 
     alarmSet:any = [];
     config:any;
@@ -55,12 +59,18 @@ export class GraphFactory extends Construct {
                             width: 24,
                             height: 1
                         }))
+                        let resourceCount = 0;
                         for (const resource of this.serviceArray[region][servicekey]) {
                             let appsync = new AppsyncWidgetSet(this,'AppsyncWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
+                            if ( resourceCount === 0 ){
+                                this.widgetArray.push(appsync.getRegionalMetrics(region,this));
+                                resourceCount++
+                            }
                             for (const widget of appsync.getWidgetSets()) {
                                 this.widgetArray.push(widget);
                             }
                             this.widgetArray.push(new Spacer({width:24,height:2}));
+                            this.alarmSet = this.alarmSet.concat(appsync.getAlarmSet());
                             resourcecounter += 1;
                         }
                         break;
@@ -145,12 +155,12 @@ export class GraphFactory extends Construct {
                                 //this.widgetArray.push(widget);
                             }
                             resourcecounter += 1;
-
+                            this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
                         }
                         //This is doubling the info from above. Push aggregated view to main dashboard.
                         let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet' + this.getRandomString(6) + resourcecounter,this.serviceArray[region][servicekey])
                         for (const wdgt of instancegroup.getWidgetSets()){
-                            this.widgetArray.push(wdgt);
+                            //this.widgetArray.push(wdgt);
                         }
                         this.alarmSet = this.alarmSet.concat(instancegroup.getAlarmSet())
                         this.widgetArray.push(new Spacer({width:24,height:2}));
@@ -338,6 +348,83 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "sns": {
+                        const labelWidget = new TextWidget({
+                            markdown: `## SNS Topics`,
+                            width: 24,
+                            height: 1
+                        });
+
+                        this.widgetArray.push(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]){
+                            const sns = new SNSWidgetSet(this,'widgetSetDUB',resource);
+                            for (const widget of sns.getWidgetSets()){
+                                this.widgetArray.push(widget);
+                            }
+
+                            this.alarmSet = this.alarmSet.concat(sns.getAlarmSet());
+                            resourcecounter += 1
+                        }
+                        break;
+                    }
+
+                    case "wafv2":{
+                        if (!this.EdgeDashboard){
+                            this.EdgeDashboard = new Dashboard(this, `${config.BaseName}-Edge-Dashboard`,{
+                                dashboardName: `${config.BaseName}-Edge-Dashboard`
+                            });
+                        }
+                        const labelWidget = new TextWidget({
+                            markdown: `## WAF WebACLs`,
+                            width: 24,
+                            height: 1
+                        });
+
+                        //this.widgetArray.push(labelWidget);
+                        this.EdgeDashboard.addWidgets(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]){
+                            const webacl = new WafV2WidgetSet(this,`widgetSet-${resource.Name}`,resource);
+                            for (const widget of webacl.getWidgetSets()){
+                                //this.widgetArray.push(widget);
+                                this.EdgeDashboard.addWidgets(widget);
+                            }
+
+                            this.alarmSet = this.alarmSet.concat(webacl.getAlarmSet());
+                            resourcecounter += 1
+                        }
+                        break;
+                    }
+
+                    case "cloudfront":{
+                        if (!this.EdgeDashboard){
+                            this.EdgeDashboard = new Dashboard(this, `${config.BaseName}-Edge-Dashboard`,{
+                                dashboardName: `${config.BaseName}-Edge-Dashboard`
+                            });
+                        }
+                        const labelWidget = new TextWidget({
+                            markdown: `## Cloudfront`,
+                            width: 24,
+                            height: 1
+                        });
+
+                        //this.widgetArray.push(labelWidget);
+                        this.EdgeDashboard.addWidgets(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]){
+                            const cfws = new CloudfrontWidgetSet(this,`cloudfront-${this.getRandomString(5)}`,resource);
+                            for (const widget of cfws.getWidgetSets()){
+                                //this.widgetArray.push(widget);
+                                this.EdgeDashboard.addWidgets(widget);
+                            }
+
+                            this.alarmSet = this.alarmSet.concat(cfws.getAlarmSet());
+                            resourcecounter += 1
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -461,6 +548,24 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["natgw"] = [resource];
                 } else {
                     this.serviceArray[region]["natgw"].push(resource);
+                }
+            } else if ( resource.ResourceARN.includes(':sns:')){
+                if (!this.serviceArray[region]["sns"]){
+                    this.serviceArray[region]["sns"] = [resource];
+                } else {
+                    this.serviceArray[region]["sns"].push(resource);
+                }
+            } else if ( resource.ResourceARN.includes(':wafv2:')){
+                if (!this.serviceArray[region]["wafv2"]){
+                    this.serviceArray[region]["wafv2"] = [resource];
+                } else {
+                    this.serviceArray[region]["wafv2"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes(':cloudfront:')){
+                if (!this.serviceArray[region]["cloudfront"]){
+                    this.serviceArray[region]["cloudfront"] = [resource];
+                } else {
+                    this.serviceArray[region]["cloudfront"].push(resource);
                 }
             }
         }

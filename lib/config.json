@@ -3,5 +3,6 @@
   "ResourceFile": "../data/resources.json",
   "TagKey": "iem",
   "TagValues": ["202202","202102"],
-  "Regions": ["eu-west-1", "eu-north-1"]
+  "Regions": ["eu-west-1","eu-north-1"],
+  "CustomNamespaceFile": "../data/custom_namespaces.json"
 }
