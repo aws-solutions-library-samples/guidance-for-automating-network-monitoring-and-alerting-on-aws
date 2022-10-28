@@ -161,9 +161,9 @@ def cloudfront_retriever(config):
 
 def router(resource, config):
     arn = resource['ResourceARN']
-    if 'apigateway' in arn and 'restapis' in arn:
+    if 'apigateway' in arn and 'restapis' in arn and 'stages' not in arn:
         resource = apigw1_decorator(resource, config)
-    elif 'apigateway' in arn and 'apis' in arn:
+    elif 'apigateway' in arn and 'apis' in arn and 'stages' not in arn:
         resource = apigw2_decorator(resource, config)
     elif 'appsync' in arn:
         resource = appsync_decorator(resource, config)
