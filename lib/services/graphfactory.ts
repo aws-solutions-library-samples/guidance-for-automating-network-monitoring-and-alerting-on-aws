@@ -457,13 +457,13 @@ export class GraphFactory extends Construct {
             if ( ! this.serviceArray[region]){
                 this.serviceArray[region] = [];
             }
-            if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('restapis')) {
+            if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('restapis') && ! resource.ResourceARN.includes('stages')) {
                 if (!this.serviceArray[region]["apigatewayv1"]) {
                     this.serviceArray[region]["apigatewayv1"] = [resource];
                 } else {
                     this.serviceArray[region]["apigatewayv1"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('apis')) {
+            } else if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('apis') && ! resource.ResourceARN.includes('stages')) {
                 if (!this.serviceArray[region]["apigatewayv2"]) {
                     this.serviceArray[region]["apigatewayv2"] = [resource];
                 } else {
