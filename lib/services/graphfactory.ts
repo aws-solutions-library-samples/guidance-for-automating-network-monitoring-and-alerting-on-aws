@@ -358,7 +358,8 @@ export class GraphFactory extends Construct {
                         this.widgetArray.push(labelWidget);
 
                         for (const resource of this.serviceArray[region][servicekey]){
-                            const sns = new SNSWidgetSet(this,'widgetSetDUB',resource);
+                            const topicName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+                            const sns = new SNSWidgetSet(this,`widgetSetDUB-${topicName}`,resource);
                             for (const widget of sns.getWidgetSets()){
                                 this.widgetArray.push(widget);
                             }
