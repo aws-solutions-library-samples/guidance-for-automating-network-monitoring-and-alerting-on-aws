@@ -386,7 +386,8 @@ export class GraphFactory extends Construct {
                         this.EdgeDashboard.addWidgets(labelWidget);
 
                         for (const resource of this.serviceArray[region][servicekey]){
-                            const webacl = new WafV2WidgetSet(this,`widgetSet-${resource.Name}`,resource);
+                            const resourceName = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-2];
+                            const webacl = new WafV2WidgetSet(this,`widgetSet-${resourceName}`,resource);
                             for (const widget of webacl.getWidgetSets()){
                                 //this.widgetArray.push(widget);
                                 this.EdgeDashboard.addWidgets(widget);

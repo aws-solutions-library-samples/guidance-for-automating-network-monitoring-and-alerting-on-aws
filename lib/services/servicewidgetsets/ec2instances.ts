@@ -82,7 +82,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
             })],
-            width: 12
+            width: 12,
+            height: 5
         });
         const cpuwidget = new GraphWidget({
             title: 'CPU '+instanceId,
@@ -96,7 +97,12 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.MAXIMUM,
                 period:Duration.minutes(1)
             })],
-            width: 6
+            width: 6,
+            height: 5,
+            leftYAxis:{
+                min: 0,
+                max: 100
+            }
         });
         const networkWidget = new GraphWidget({
             title: 'Network '+instanceId,
@@ -135,9 +141,10 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.MAXIMUM,
                 period:Duration.minutes(1)
             })],
-            width: 6
+            width: 6,
+            height: 5
         });
-        this.widgetSet.push(new Row(widget,cpuwidget,networkWidget));
+        this.widgetSet.push(new Row(cpuwidget,networkWidget,widget));
 
         if ( burstable ){
             const CPUCreditUsageMetric = new Metric({
@@ -191,7 +198,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 right: [CPUCreditBalanceMetric],
                 period: Duration.minutes(1),
                 region: region,
-                width:12
+                width:12,
+                height: 5
             });
 
             const surplusWidget = new GraphWidget({
@@ -200,7 +208,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 right:[CPUSurplusCreditsCharged],
                 period: Duration.minutes(1),
                 region: region,
-                width: 12
+                width: 12,
+                height: 5
             });
             this.widgetSet.push(new Row(creditWidget,surplusWidget));
         }
@@ -266,7 +275,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 right:[cpuIowaitMetric],
                 period: Duration.minutes(1),
                 region: region,
-                width: 12
+                width: 12,
+                height: 5
             });
 
             const networkConnWidget = new GraphWidget({
@@ -275,7 +285,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 right:[netstatTcpWaitMetric],
                 period: Duration.minutes(1),
                 region: region,
-                width: 6
+                width: 6,
+                height: 5
             });
 
             const diskUtilWidget = new GraphWidget({
@@ -284,7 +295,16 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 right:[swapUsedPercentMetric],
                 period: Duration.minutes(1),
                 region: region,
-                width: 6
+                width: 6,
+                height: 5,
+                leftYAxis:{
+                    min: 0,
+                    max: 100
+                },
+                rightYAxis:{
+                    min: 0,
+                    max: 100
+                }
             });
 
             this.widgetSet.push(new Row(memoryUsageCpuIoWaitWidget,networkConnWidget,diskUtilWidget));

@@ -13,8 +13,9 @@ export class CloudfrontWidgetSet extends Construct implements WidgetSet {
         const distId = resource['Id'];
         const domainName = resource['DomainName'];
         const aliases = resource['Aliases']['Quantity']
+        const origins = resource['Origins']['Quantity']
 
-        let markDown = `### Distribution [${distId}](https://us-east-1.console.aws.amazon.com/cloudfront/v3/home?region=eu-west-1#/distributions/${distId}) ${domainName} Aliases: ${aliases}`
+        let markDown = `### Distribution [${distId}](https://us-east-1.console.aws.amazon.com/cloudfront/v3/home?region=eu-west-1#/distributions/${distId}) ${domainName} Aliases: ${aliases} Origins: ${origins}`
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,

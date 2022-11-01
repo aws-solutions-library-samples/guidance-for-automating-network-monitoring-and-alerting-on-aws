@@ -60,7 +60,8 @@ export class EbsWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.AVERAGE,
                 period:Duration.minutes(1)
             })],
-            width: type==="io1"|| type==="io2"?8:12
+            width: type==="io1"|| type==="io2"?8:12,
+            height: 3
         });
 
         const queues = new GraphWidget({
@@ -100,7 +101,8 @@ export class EbsWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.AVERAGE,
                 period:Duration.minutes(1)
             })],
-            width: type==="io1"|| type==="io2"?8:12
+            width: type==="io1"|| type==="io2"?8:12,
+            height: 3
         });
         if ( type == "io1" || type == "io2"){
             const iowidget = new GraphWidget({
@@ -124,7 +126,12 @@ export class EbsWidgetSet extends Construct implements WidgetSet{
                     statistic: Statistic.AVERAGE,
                     period:Duration.minutes(1)
                 })],
-                width: 8
+                width: 8,
+                height: 3,
+                rightYAxis: {
+                    min:0,
+                    max:100
+                }
             });
             this.widgetSet.push(new Row(widget,queues,iowidget));
         } else {

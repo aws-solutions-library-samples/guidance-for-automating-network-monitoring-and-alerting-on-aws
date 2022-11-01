@@ -11,8 +11,8 @@ export class WafV2WidgetSet extends Construct implements WidgetSet{
 
     constructor(scope: Construct, id: string, resource:any) {
         super(scope, id);
-        const webacl = resource.Name;
-        const webaclid = resource.Id;
+        const webacl = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-2];
+        const webaclid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### WebACL [${webacl}](https://us-east-1.console.aws.amazon.com/wafv2/homev2/web-acl/${webacl}/${webaclid}/overview?region=${region})`
         this.widgetSet.push(new TextWidget({

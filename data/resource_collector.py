@@ -36,8 +36,7 @@ def get_resources(tag_name, tag_values, config):
         resources.extend(response['ResourceTagMappingList'])
 
     resources.extend(autoscaling_retriever(tag_name, tag_values, config))
-    resources.extend(waf_retriever(config))
-    resources.extend(cloudfront_retriever(config))
+    #resources.extend(cloudfront_retriever(config))
     return resources
 
 
@@ -103,60 +102,7 @@ def cw_custom_namespace_retriever(config):
         print(f'Done fetching cloudwatch namespaces')
     return resources
 
-def waf_retriever(config):
-    """Retrieving waf config
-    """
-    waf = boto3.client('wafv2', config=config)
-    resources = []
-    response = waf.list_web_acls(
-        Scope='REGIONAL',
-        Limit=100
-    )
-    for resource in response['WebACLs']:
-        resource['ResourceARN'] = resource['ARN']
-        resources.append(resource)
 
-    try:
-        while response['NextMarker']:
-            response = waf.list_web_acls(
-                Scope='REGIONAL',
-                Limit=100,
-                NextMaker = response['NextMarker'])
-            for resource in response['WebACLs']:
-                    resource['ResourceARN'] = resource['ARN']
-                    resources.append(resource)
-    except:
-        print(f'Done fetching ACLs')
-
-    return resources
-
-def cloudfront_retriever(config):
-    """Retrieving cloudfront config
-    """
-    print('Fetching Cloudfront Distributions')
-    resources = []
-    f = open("../lib/config.json", "r")
-    main_config = json.load(f)
-    tag_name = main_config['TagKey']
-    tag_values = main_config['TagValues']
-    client = boto3.client('cloudfront', config=config)
-    response = client.list_distributions()
-    for x in response['DistributionList']['Items']:
-        arn = x['ARN']
-        tags = client.list_tags_for_resource(
-            Resource=arn
-        )
-        match = False
-        for t in tags['Tags']['Items']:
-            if t['Key'] in tag_name and t['Value'] in tag_values:
-                match = True
-        if match:
-            if x['Id'] not in singletons:
-                x['ResourceARN'] = x['ARN']
-                resources.append(x)
-                singletons.append(x['Id'])
-
-    return resources
 
 
 def router(resource, config):
@@ -193,6 +139,8 @@ def router(resource, config):
         resource = sqs_decorator(resource, config)
     elif 'sns' in arn:
         resource = sns_decorator(resource, config)
+    elif 'cloudfront' in arn:
+        resource = cloudfront_decorator(resource, config)
     return resource
 
 
@@ -268,6 +216,49 @@ def aurora_decorator(resource, config):
 def autoscaling_decorator(resource, config):
     print(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
     return resource
+
+def cloudfront_decorator(resource, config):
+    print(f'This resource is CloudFront distribution')
+    client = boto3.client('cloudfront', config=config)
+    response = client.get_distribution(
+        Id = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    )
+    #print(response)
+    print(response['Distribution'])
+    resource['Id'] = response['Distribution']['Id']
+    resource['ARN'] = response['Distribution']['ARN']
+    resource['DomainName'] = response['Distribution']['DomainName']
+    resource['Aliases'] = response['Distribution']['DistributionConfig']['Aliases']
+    resource['Origins'] = response['Distribution']['DistributionConfig']['Origins']
+    return resource
+
+def cloudfront_retriever(config):
+    """Retrieving cloudfront config
+    """
+    print('Fetching Cloudfront Distributions')
+    resources = []
+    f = open("../lib/config.json", "r")
+    main_config = json.load(f)
+    tag_name = main_config['TagKey']
+    tag_values = main_config['TagValues']
+    client = boto3.client('cloudfront', config=config)
+    response = client.list_distributions()
+    for x in response['DistributionList']['Items']:
+        arn = x['ARN']
+        tags = client.list_tags_for_resource(
+            Resource=arn
+        )
+        match = False
+        for t in tags['Tags']['Items']:
+            if t['Key'] in tag_name and t['Value'] in tag_values:
+                match = True
+        if match:
+            if x['Id'] not in singletons:
+                x['ResourceARN'] = x['ARN']
+                resources.append(x)
+                singletons.append(x['Id'])
+
+    return resources
 
 
 def odcr_decorator(resource, config):
@@ -534,6 +525,10 @@ def handler():
 
     decorated_resources = []
     region_namespaces = {'RegionNamespaces': []}
+    if 'us-east-1' not in regions:
+        regions.append('us-east-1')
+        print(regions)
+
     for region in regions:
         config = get_config(region)
         resources = get_resources(tag_name, tag_values, config)
