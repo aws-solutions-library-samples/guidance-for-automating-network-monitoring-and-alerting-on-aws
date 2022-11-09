@@ -9,7 +9,7 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
     widgetSet:any = [];
     alarmSet:any = [];
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
         const instanceId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
@@ -31,7 +31,19 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 }
             }
         }
-        let markDown = `### Instance [${instanceId}](https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#InstanceDetails:instanceId=${instanceId}) ${instanceName} ${instanceType}${burstmodeLabel}/${instanceAz}/Cores:${coreCount}/ThreadsPC:${threadsPerCore}`
+        let auxdata = ""
+        if ( config.CustomEC2TagKeys && config.CustomEC2TagKeys.length > 0){
+            let tags = resource.Tags;
+            for ( const tag of tags ){
+                if ( config.CustomEC2TagKeys.indexOf(tag.Key) > -1 ){
+                    auxdata += ` ${tag.Key}=${tag.Value}`
+                }
+            }
+        }
+
+
+
+        let markDown = `### Instance${auxdata} [${instanceId}](https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#InstanceDetails:instanceId=${instanceId}) ${instanceName} ${instanceType}${burstmodeLabel}/${instanceAz}/Cores:${coreCount}/ThreadsPC:${threadsPerCore}`
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,

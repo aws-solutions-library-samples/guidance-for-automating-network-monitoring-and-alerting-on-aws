@@ -14,7 +14,6 @@ import {ApiGatewayV2WebSocketWidgetSet} from "./servicewidgetsets/apigatewayv2we
 import {ApiGatewayV2HttpWidgetSet} from "./servicewidgetsets/apigatewayv2http";
 import {SQSWidgetSet} from "./servicewidgetsets/sqs";
 import {AuroraWidgetSet} from "./servicewidgetsets/aurora";
-import {Ec2InstanceGroupWidgetSet} from "./servicewidgetsets/ec2group";
 import {Construct} from "constructs";
 import {ELBv2WidgetSet} from "./servicewidgetsets/elbv2";
 import {ELBv1WidgetSet} from "./servicewidgetsets/elbv1";
@@ -32,6 +31,8 @@ export class GraphFactory extends Construct {
     EC2Dashboard:any = null;
     NetworkDashboard:any = null;
     EdgeDashboard:any = null;
+    overflowDashboards:any = [];
+    groupedDashboards = new Map<string,any>();
 
     alarmSet:any = [];
     config:any;
@@ -133,40 +134,49 @@ export class GraphFactory extends Construct {
 
                     case "ec2instances":{
                         //We create the dashboard only if we actually have EC2s in the workload
-                        if (!this.EC2Dashboard){
-                            this.EC2Dashboard = new Dashboard(this,config.BaseName + '-EC2-Dashboard',{
-                                dashboardName: config.BaseName + '-EC2-Dashboard'
-                            });
-                        }
-                        const labelWidget = new TextWidget({
-                            markdown: "## EC2 Instances " + region,
-                            width: 24,
-                            height: 1
-                        })
-                        this.EC2Dashboard.addWidgets(labelWidget)
-                        this.widgetArray.push(labelWidget)
-
-
-                        //Push instances to new detail dashboard
-                        for (const resource of this.serviceArray[region][servicekey]) {
-                            let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
-                            for (const widget of instance.getWidgetSets()){
-                                this.EC2Dashboard.addWidgets(widget);
-                                //this.widgetArray.push(widget);
-                            }
-                            resourcecounter += 1;
-                            this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
-                        }
-                        //This is doubling the info from above. Push aggregated view to main dashboard.
-                        let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet' + this.getRandomString(6) + resourcecounter,this.serviceArray[region][servicekey])
-                        for (const wdgt of instancegroup.getWidgetSets()){
-                            //this.widgetArray.push(wdgt);
-                        }
-                        this.alarmSet = this.alarmSet.concat(instancegroup.getAlarmSet())
-                        this.widgetArray.push(new Spacer({width:24,height:2}));
+                        this.processEC2(region,servicekey);
+                        // let grouby = false
+                        // if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
+                        //     console.log("Hej found the config")
+                        // }
+                        // if (!this.EC2Dashboard){
+                        //     this.EC2Dashboard = new Dashboard(this,config.BaseName + '-EC2-Dashboard',{
+                        //         dashboardName: config.BaseName + '-EC2-Dashboard'
+                        //     });
+                        // }
+                        // const labelWidget = new TextWidget({
+                        //     markdown: "## EC2 Instances " + region,
+                        //     width: 24,
+                        //     height: 1
+                        // })
+                        // this.EC2Dashboard.addWidgets(labelWidget)
+                        // this.widgetArray.push(labelWidget)
+                        //
+                        //
+                        // //Push instances to new detail dashboard
+                        // for (const resource of this.serviceArray[region][servicekey]) {
+                        //     let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
+                        //     for (const widget of instance.getWidgetSets()){
+                        //         this.EC2Dashboard.addWidgets(widget);
+                        //         //this.widgetArray.push(widget);
+                        //     }
+                        //     resourcecounter += 1;
+                        //     this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
+                        // }
+                        // //This is doubling the info from above. Push aggregated view to main dashboard.
+                        // let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet' + this.getRandomString(6) + resourcecounter,this.serviceArray[region][servicekey])
+                        // for (const wdgt of instancegroup.getWidgetSets()){
+                        //     //this.widgetArray.push(wdgt);
+                        // }
+                        // this.alarmSet = this.alarmSet.concat(instancegroup.getAlarmSet())
+                        // this.widgetArray.push(new Spacer({width:24,height:2}));
                         break;
                     }
                     case "lambda":{
+                        //console.log("HERE NOW");
+                        for (const regionz of Object.keys(this.serviceArray)) {
+                            //console.log('HEEEJ HEEJ ' + regionz)
+                        }
                         this.widgetArray.push(new TextWidget({
                             markdown: "## Lambda Functions",
                             width: 24,
@@ -456,6 +466,7 @@ export class GraphFactory extends Construct {
     private sortARNsByService(resources: any[]) {
         for (let resource of resources) {
             let region = resource.ResourceARN.split(':')[3];
+            if ( region === '' ) region = 'global';
             if ( ! this.serviceArray[region]){
                 this.serviceArray[region] = [];
             }
@@ -571,6 +582,85 @@ export class GraphFactory extends Construct {
                 }
             }
         }
+    }
+
+    private processEC2(region:string, servicekey:any){
+        let groupBy = false;
+        if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
+            console.log(`Grouping by tag: ${this.config.GroupingTagKey}`);
+            groupBy = true;
+        }
+        //Push instances to new detail dashboard
+        for (const resource of this.serviceArray[region][servicekey]) {
+            let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) ,resource, this.config);
+            if ( groupBy ){
+                let instanceGrouped = false;
+                for ( const tag of resource.Tags ){
+                    if ( tag.Key === this.config.GroupingTagKey ){
+                        //Need to remove spaces from the tag value
+                        tag.Value = tag.Value.replace(/\s/g, '');
+                        if ( this.groupedDashboards.has(tag.Value) ){
+                            console.log(`Found Dashboard for value ${tag.Value}`);
+                        } else {
+                            console.log(`Creating Dashboard for value ${tag.Value}`);
+                            const tagLabelWidget = new TextWidget({
+                                markdown: `## EC2 Instances - ${tag.Value} ${region}`,
+                                width: 24,
+                                height: 1
+                            })
+                            let dash = new Dashboard(this,this.config.BaseName + '-EC2-Dashboard' + '-' + tag.Value,{
+                                dashboardName: this.config.BaseName + '-EC2-Dashboard' + '-' + tag.Value
+                            });
+                            dash.addWidgets(tagLabelWidget);
+                            this.groupedDashboards.set(tag.Value,dash);
+                        }
+                         console.log(`adding instance grouped ${resource.Instance.InstanceId}`);
+                         for (const widget of instance.getWidgetSets()){
+                             this.groupedDashboards.get(tag.Value).addWidgets(widget);
+                         }
+                         this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
+                         instanceGrouped = true;
+                    }
+                }
+                if ( ! instanceGrouped ){
+                    if (!this.EC2Dashboard){
+                        this.EC2Dashboard = new Dashboard(this,this.config.BaseName + '-EC2-Dashboard',{
+                            dashboardName: this.config.BaseName + '-EC2-Dashboard'
+                        });
+                        const labelWidget = new TextWidget({
+                            markdown: "## EC2 Instances " + region,
+                            width: 24,
+                            height: 1
+                        })
+                        this.EC2Dashboard.addWidgets(labelWidget);
+                    }
+                    console.log(`adding instance non grouped in grouped config ${resource.Instance.InstanceId}`);
+                    for (const widget of instance.getWidgetSets()){
+                        this.EC2Dashboard.addWidgets(widget);
+                    }
+                    this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
+                }
+            } else {
+                if (!this.EC2Dashboard){
+                    this.EC2Dashboard = new Dashboard(this,this.config.BaseName + '-EC2-Dashboard',{
+                        dashboardName: this.config.BaseName + '-EC2-Dashboard'
+                    });
+                    const labelWidget = new TextWidget({
+                        markdown: "## EC2 Instances " + region,
+                        width: 24,
+                        height: 1
+                    })
+                    this.EC2Dashboard.addWidgets(labelWidget);
+                }
+                console.log(`adding instance no config ${resource.Instance.InstanceId}`);
+                for (const widget of instance.getWidgetSets()){
+                    this.EC2Dashboard.addWidgets(widget);
+                }
+                this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
+
+            }
+        }
+
     }
 
     private getRandomString(length:number){

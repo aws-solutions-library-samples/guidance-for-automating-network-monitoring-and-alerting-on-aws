@@ -32,7 +32,8 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            })]
+            })],
+            height: 5
         })
         const widgetErrors = new GraphWidget({
             title: 'Errors/Throttles '+functionName,
@@ -55,7 +56,8 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
             })],
-            width: 12
+            width: 12,
+            height: 5
         })
 
         const widgetConcurrent = new GraphWidget({
@@ -69,7 +71,8 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            })]
+            })],
+            height: 5
         })
 
         this.widgetSet.push(new Row(widget,widgetErrors,widgetConcurrent));

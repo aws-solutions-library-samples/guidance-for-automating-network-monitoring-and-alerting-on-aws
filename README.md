@@ -6,7 +6,9 @@ The project is an example how to use AWS Resource Groups Tagging API to retrieve
 and then based on found resources pull additional information from respective service APIs to generate
 a configuration file (JSON) to build a CloudWatch Dashboard with *reasonable* metrics and alarms.
 
-Currently supported services are:
+## Features 
+### Supported services
+
 * API Gateway v1 (REST)
 * API Gateway v2 (HTTP, WebSockets)
 * AppSync
@@ -28,6 +30,12 @@ Currently supported services are:
 * Transit Gateway
 * WAFv2
 
+### Configuration features
+
+* Use `GroupingTagKey` parameter in `lib/config.json` to group EC instances in separate individual dashboards. The value of the parameter should be a tag key and the instances will be grouped by value on individual dashboards.
+* Use `CustomEC2TagKeys` parameter array in `lib/config.json` to specify additional tag information that will be shown in the EC2 Instance header on the dashboard to help you better identify the instance. The parameter 
+should contain an array of tag keys which will be shown in the header in case that tag is set for the instance.
+
 ## How it works
 
 1. `data/resource_collector.py` is used to call the Resource Groups Tagging API and to generate the configuration file.
@@ -35,7 +43,7 @@ Currently supported services are:
 
 ## Prerequisites
 
-### To generate configuration:
+### To generate the resource configuration:
 * Python 3
 * Boto 3 (Python module. `python -m pip install boto3`)
 
@@ -46,11 +54,12 @@ Currently supported services are:
 ## Getting started
 1. Check out the project.
 2. Change current directory to project directory.
-3. Run `npm install` to install dependencies.
-4. Edit `lib/config.json` and set TagKey to tag key you want to use and TagValues to an array of values. Set Regions to include the regions that contain resources.
-5. Run `cd data; python3 resource_collector.py` to create configuration file `resources.json` in the `data` directory. IMPORTANT NOTICE: `data/getResources.sh`is now deprecated and will not be maintained. Use `data/resource_collector.py` instead.
-6. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard.
-7. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
+3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html)
+4. Run `npm install` to install dependencies.
+5. Edit `lib/config.json` and set TagKey to tag key you want to use and TagValues to an array of values. Set Regions to include the regions that contain resources.
+6. Run `cd data; python3 resource_collector.py` to create configuration file `resources.json` in the `data` directory. IMPORTANT NOTICE: `data/getResources.sh`is now deprecated and will not be maintained. Use `data/resource_collector.py` instead.
+7. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard.
+8. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
 
 ## Tips
 
