@@ -1,10 +1,10 @@
 {
-  "BaseName": "SAP-Dashboard",
+  "BaseName": "Application",
   "ResourceFile": "../data/resources.json",
   "TagKey": "iem",
   "TagValues": ["202202","202102"],
   "Regions": ["eu-west-1"],
-  "GroupingTagKey": "AddYourTagKeyHere",
+  "GroupingTagKey": "groupby",
   "CustomEC2TagKeys": ["Add","Your","TagKeys", "Here"],
   "CustomNamespaceFile": "../data/custom_namespaces.json"
 }

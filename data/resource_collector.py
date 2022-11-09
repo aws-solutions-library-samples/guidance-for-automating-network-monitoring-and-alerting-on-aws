@@ -1,5 +1,6 @@
 import boto3
 import json
+import math
 from botocore.config import Config
 
 singletons = []
@@ -10,6 +11,22 @@ def get_resources(tag_name, tag_values, config):
     """
     resourcetaggingapi = boto3.client('resourcegroupstaggingapi', config=config)
     resources = []
+
+    tags = len(tag_values)
+    print(tags)
+    if tags > 5:
+        tags_processed = 0
+        while tags_processed <= tags:
+            incremental_tag_values = tag_values[tags_processed:tags_processed+5]
+            resources = get_resources_from_api(resourcetaggingapi, resources, tag_name, incremental_tag_values)
+            tags_processed += 5
+    else:
+        resources = get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values)
+    resources.extend(autoscaling_retriever(tag_name, tag_values, config))
+    return resources
+
+
+def get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values):
     response = resourcetaggingapi.get_resources(
         TagFilters=[
             {
@@ -35,7 +52,6 @@ def get_resources(tag_name, tag_values, config):
         )
         resources.extend(response['ResourceTagMappingList'])
 
-    resources.extend(autoscaling_retriever(tag_name, tag_values, config))
     return resources
 
 
