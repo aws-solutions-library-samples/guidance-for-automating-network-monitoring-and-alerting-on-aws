@@ -135,41 +135,6 @@ export class GraphFactory extends Construct {
                     case "ec2instances":{
                         //We create the dashboard only if we actually have EC2s in the workload
                         this.processEC2(region,servicekey);
-                        // let grouby = false
-                        // if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
-                        //     console.log("Hej found the config")
-                        // }
-                        // if (!this.EC2Dashboard){
-                        //     this.EC2Dashboard = new Dashboard(this,config.BaseName + '-EC2-Dashboard',{
-                        //         dashboardName: config.BaseName + '-EC2-Dashboard'
-                        //     });
-                        // }
-                        // const labelWidget = new TextWidget({
-                        //     markdown: "## EC2 Instances " + region,
-                        //     width: 24,
-                        //     height: 1
-                        // })
-                        // this.EC2Dashboard.addWidgets(labelWidget)
-                        // this.widgetArray.push(labelWidget)
-                        //
-                        //
-                        // //Push instances to new detail dashboard
-                        // for (const resource of this.serviceArray[region][servicekey]) {
-                        //     let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
-                        //     for (const widget of instance.getWidgetSets()){
-                        //         this.EC2Dashboard.addWidgets(widget);
-                        //         //this.widgetArray.push(widget);
-                        //     }
-                        //     resourcecounter += 1;
-                        //     this.alarmSet = this.alarmSet.concat(instance.getAlarmSet());
-                        // }
-                        // //This is doubling the info from above. Push aggregated view to main dashboard.
-                        // let instancegroup = new Ec2InstanceGroupWidgetSet(this,'Ec2InstanceGroupWidgetSet' + this.getRandomString(6) + resourcecounter,this.serviceArray[region][servicekey])
-                        // for (const wdgt of instancegroup.getWidgetSets()){
-                        //     //this.widgetArray.push(wdgt);
-                        // }
-                        // this.alarmSet = this.alarmSet.concat(instancegroup.getAlarmSet())
-                        // this.widgetArray.push(new Spacer({width:24,height:2}));
                         break;
                     }
                     case "lambda":{
