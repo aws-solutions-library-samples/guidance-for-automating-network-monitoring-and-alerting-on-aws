@@ -29,19 +29,28 @@ export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
     EC2Dashboard:any = null;
+    LambdaDashboard:any = null;
     NetworkDashboard:any = null;
     EdgeDashboard:any = null;
     overflowDashboards:any = [];
     groupedDashboards = new Map<string,any>();
+    groupedLambdaDashboards = new Map<string,any>();
 
     alarmSet:any = [];
     config:any;
+    groupResourcesByTag:boolean = false;
 
     constructor(scope: Construct, id: string, resources:any[], config:any){
         super(scope,id);
         this.config = config;
         this.sortARNsByService(resources);
         let regions = Object.keys(this.serviceArray);
+
+        if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
+            console.log(`Grouping resources by tag: ${this.config.GroupingTagKey}`);
+            this.groupResourcesByTag = true;
+        }
+
         for (let region of regions ){
             console.log('Processing region ' + region);
             this.widgetArray.push(new TextWidget({
@@ -139,22 +148,23 @@ export class GraphFactory extends Construct {
                     }
                     case "lambda":{
                         //console.log("HERE NOW");
-                        for (const regionz of Object.keys(this.serviceArray)) {
-                            //console.log('HEEEJ HEEJ ' + regionz)
-                        }
-                        this.widgetArray.push(new TextWidget({
-                            markdown: "## Lambda Functions",
-                            width: 24,
-                            height: 1
-                        }))
-                        for (const resource of this.serviceArray[region][servicekey]) {
-                            let lambdas = new LambdaWidgetSet(this,'LambdaWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
-                            for (const widget of lambdas.getWidgetSets()) {
-                                this.widgetArray.push(widget);
-                            }
-                            resourcecounter += 1;
-                        }
-                        this.widgetArray.push(new Spacer({width:24,height:2}));
+                        // for (const regionz of Object.keys(this.serviceArray)) {
+                        //     //console.log('HEEEJ HEEJ ' + regionz)
+                        // }
+                        // this.widgetArray.push(new TextWidget({
+                        //     markdown: "## Lambda Functions",
+                        //     width: 24,
+                        //     height: 1
+                        // }))
+                        // for (const resource of this.serviceArray[region][servicekey]) {
+                        //     let lambdas = new LambdaWidgetSet(this,'LambdaWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
+                        //     for (const widget of lambdas.getWidgetSets()) {
+                        //         this.widgetArray.push(widget);
+                        //     }
+                        //     resourcecounter += 1;
+                        // }
+                        // this.widgetArray.push(new Spacer({width:24,height:2}));
+                        this.processLambda(region,servicekey);
                         break;
                     }
 
@@ -469,9 +479,9 @@ export class GraphFactory extends Construct {
                 }
             } else if (resource.ResourceARN.includes('lambda') && resource.ResourceARN.includes('function')) {
                 if (!this.serviceArray[region]["lambda"]) {
-                    this.serviceArray[region]["lambda"] = [resource.ResourceARN];
+                    this.serviceArray[region]["lambda"] = [resource];
                 } else {
-                    this.serviceArray[region]["lambda"].push(resource.ResourceARN);
+                    this.serviceArray[region]["lambda"].push(resource);
                 }
             } else if (resource.ResourceARN.includes('autoscaling') && resource.ResourceARN.includes('autoScalingGroup')) {
                 if (!this.serviceArray[region]["autoscalinggroup"]){
@@ -550,15 +560,10 @@ export class GraphFactory extends Construct {
     }
 
     private processEC2(region:string, servicekey:any){
-        let groupBy = false;
-        if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
-            console.log(`Grouping by tag: ${this.config.GroupingTagKey}`);
-            groupBy = true;
-        }
         //Push instances to new detail dashboard
         for (const resource of this.serviceArray[region][servicekey]) {
             let instance = new Ec2InstancesWidgetSet(this, 'EC2InstancesWidgetSet' + this.getRandomString(6) ,resource, this.config);
-            if ( groupBy ){
+            if ( this.groupResourcesByTag ){
                 let instanceGrouped = false;
                 for ( const tag of resource.Tags ){
                     if ( tag.Key === this.config.GroupingTagKey ){
@@ -626,6 +631,79 @@ export class GraphFactory extends Construct {
             }
         }
 
+    }
+
+
+    private processLambda(region:string, servicekey:any){
+        for (const resource of this.serviceArray[region][servicekey]) {
+            let lambda = new LambdaWidgetSet(this,`Lambda-WS-${resource.Configuration.FunctionName}`,resource);
+            if ( this.groupResourcesByTag ){
+                let lambdaGrouped = false;
+                for ( const tag of resource.Tags ){
+                    if ( tag.Key === this.config.GroupingTagKey ){
+                        tag.Value = tag.Value.replace(/\s/g, '');
+                        if ( this.groupedLambdaDashboards.has(tag.Value)){
+                            console.log(`Found Lambda Dashboard for value ${tag.Value}`);
+                        } else {
+                            console.log(`Creating Lambda Dashboard for value ${tag.Value}`);
+                            const tagLabelWidget =  new TextWidget({
+                                markdown: `## Lambdas - ${tag.Value} ${region}`,
+                                width: 24,
+                                height: 1
+                            });
+                            let dash = new Dashboard(this,this.config.BaseName + '-Lambda-Dashboard' + '-' + tag.Value,{
+                                dashboardName: this.config.BaseName + '-Lambda-Dashboard' + '-' + tag.Value
+                            });
+                            dash.addWidgets(tagLabelWidget);
+                            this.groupedLambdaDashboards.set(tag.Value,dash);
+                        }
+                        console.log(`adding lambda grouped ${resource.Configuration.FunctionName}`);
+                        for (const widget of lambda.getWidgetSets()){
+                            this.groupedLambdaDashboards.get(tag.Value).addWidgets(widget);
+                        }
+                        this.alarmSet = this.alarmSet.concat(lambda.getAlarmSet());
+                        lambdaGrouped = true;
+                    }
+                }
+                if ( ! lambdaGrouped ){
+                    if ( ! this.LambdaDashboard ){
+                        this.LambdaDashboard = new Dashboard(this, `${this.config.BaseName}-Lambda-Dashboard`,{
+                            dashboardName: `${this.config.BaseName}-Lambda-Dashboard`
+                        });
+                        const labelWidget = new TextWidget({
+                            markdown: "## Lambdas " + region,
+                            width: 24,
+                            height: 1
+                        })
+                        this.LambdaDashboard.addWidgets(labelWidget);
+                    }
+                    console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
+                    for (const widget of lambda.getWidgetSets()){
+                        this.LambdaDashboard.addWidgets(widget);
+                    }
+                    this.alarmSet = this.alarmSet.concat(lambda.getAlarmSet());
+                }
+            } else {
+                if ( ! this.LambdaDashboard ){
+                    this.LambdaDashboard = new Dashboard(this, `${this.config.BaseName}-Lambda-Dashboard`,{
+                        dashboardName: `${this.config.BaseName}-Lambda-Dashboard`
+                    });
+                    const labelWidget = new TextWidget({
+                        markdown: "## Lambdas " + region,
+                        width: 24,
+                        height: 1
+                    })
+                    this.LambdaDashboard.addWidgets(labelWidget);
+                }
+                console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
+                for (const widget of lambda.getWidgetSets()){
+                    this.LambdaDashboard.addWidgets(widget);
+                }
+                this.alarmSet = this.alarmSet.concat(lambda.getAlarmSet());
+            }
+
+        }
+        console.log(this.LambdaDashboard)
     }
 
     private getRandomString(length:number){

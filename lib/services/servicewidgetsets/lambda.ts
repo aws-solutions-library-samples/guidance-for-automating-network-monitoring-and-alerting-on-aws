@@ -1,4 +1,4 @@
-import {GraphWidget, Metric, Row, Statistic} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
@@ -8,10 +8,19 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
     widgetSet:any = [];
     alarmSet:any = [];
 
-    constructor(scope:Construct, id:string, arn:string) {
+    constructor(scope:Construct, id:string, resource:any) {
         super(scope, id);
-        let functionName = arn.split(':')[arn.split(':').length - 1];
-        let region = arn.split(':')[3];
+        const functionName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+        const region = resource.ResourceARN.split(':')[3];
+        const memory = resource.Configuration.MemorySize;
+        const runtime = resource.Configuration.Runtime;
+        let markDown = `### Lambda [${functionName}](https://${region}.console.aws.amazon.com/lambda/home?region=${region}#/functions/${functionName}?tab=monitoring) Mem:${memory} RT:${runtime}`
+
+        this.widgetSet.push(new TextWidget({
+            markdown: markDown,
+            width: 24,
+            height: 1
+        }))
         const widget = new GraphWidget({
             title: 'Invocations '+functionName,
             region: region,

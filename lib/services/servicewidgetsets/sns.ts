@@ -16,7 +16,7 @@ export class SNSWidgetSet extends Construct implements WidgetSet {
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 2
+            height: 1
         }));
 
         const noOfNotificationsDelivered = new Metric({
