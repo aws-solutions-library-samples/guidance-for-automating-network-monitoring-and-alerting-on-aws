@@ -703,7 +703,6 @@ export class GraphFactory extends Construct {
             }
 
         }
-        console.log(this.LambdaDashboard)
     }
 
     private getRandomString(length:number){
