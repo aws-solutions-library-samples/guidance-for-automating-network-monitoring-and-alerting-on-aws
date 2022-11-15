@@ -11,10 +11,16 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
     constructor(scope:Construct, id:string, resource:any) {
         super(scope, id);
         const functionName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+        let name = functionName
         const region = resource.ResourceARN.split(':')[3];
         const memory = resource.Configuration.MemorySize;
         const runtime = resource.Configuration.Runtime;
-        let markDown = `### Lambda [${functionName}](https://${region}.console.aws.amazon.com/lambda/home?region=${region}#/functions/${functionName}?tab=monitoring) Mem:${memory} RT:${runtime}`
+        for ( const tag of resource.Tags ){
+            if ( tag.Key === "Name"){
+                name = tag.Value
+            }
+        }
+        let markDown = `### Lambda [${name}](https://${region}.console.aws.amazon.com/lambda/home?region=${region}#/functions/${functionName}?tab=monitoring) Mem:${memory} RT:${runtime}`
 
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
