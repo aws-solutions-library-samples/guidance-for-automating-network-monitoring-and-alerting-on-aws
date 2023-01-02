@@ -24,6 +24,7 @@ import {NatgwWidgetSet} from "./servicewidgetsets/natgw";
 import {SNSWidgetSet} from "./servicewidgetsets/sns";
 import {WafV2WidgetSet} from "./servicewidgetsets/wafv2";
 import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
+import {LambdaGroupWidgetSet} from "./servicewidgetsets/lambdagroup";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -49,6 +50,8 @@ export class GraphFactory extends Construct {
         if ( this.config.GroupingTagKey && this.config.GroupingTagKey.length > 0 ){
             console.log(`Grouping resources by tag: ${this.config.GroupingTagKey}`);
             this.groupResourcesByTag = true;
+        } else {
+            console.log(`Not grouping resources by tag`);
         }
 
         for (let region of regions ){
@@ -61,7 +64,7 @@ export class GraphFactory extends Construct {
             let servicekeys = Object.keys(this.serviceArray[region]);
             let resourcecounter = 0;
             for (let servicekey of servicekeys){
-                console.log("Processing " + servicekey);
+                //console.log("Processing " + servicekey);
                 switch(servicekey){
                     case "appsync": {
                         this.widgetArray.push(new TextWidget({
@@ -147,24 +150,11 @@ export class GraphFactory extends Construct {
                         break;
                     }
                     case "lambda":{
-                        //console.log("HERE NOW");
-                        // for (const regionz of Object.keys(this.serviceArray)) {
-                        //     //console.log('HEEEJ HEEJ ' + regionz)
-                        // }
-                        // this.widgetArray.push(new TextWidget({
-                        //     markdown: "## Lambda Functions",
-                        //     width: 24,
-                        //     height: 1
-                        // }))
-                        // for (const resource of this.serviceArray[region][servicekey]) {
-                        //     let lambdas = new LambdaWidgetSet(this,'LambdaWidgetSet' + this.getRandomString(6) + resourcecounter,resource);
-                        //     for (const widget of lambdas.getWidgetSets()) {
-                        //         this.widgetArray.push(widget);
-                        //     }
-                        //     resourcecounter += 1;
-                        // }
-                        // this.widgetArray.push(new Spacer({width:24,height:2}));
-                        this.processLambda(region,servicekey);
+                        if ( this.config.Compact ){
+                            this.processCompactLambda(region,servicekey);
+                        } else {
+                            this.processLambda(region,servicekey);
+                        }
                         break;
                     }
 
@@ -695,13 +685,114 @@ export class GraphFactory extends Construct {
                     })
                     this.LambdaDashboard.addWidgets(labelWidget);
                 }
-                console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
+                console.log(`adding lambda in non grouped config ${resource.Configuration.FunctionName}`);
                 for (const widget of lambda.getWidgetSets()){
                     this.LambdaDashboard.addWidgets(widget);
                 }
                 this.alarmSet = this.alarmSet.concat(lambda.getAlarmSet());
             }
 
+        }
+    }
+
+    private processCompactLambda(region:string, servicekey:any){
+        let resourceGroups:Map<string,Array<any>> = new Map<string,Array<any>>();
+        for (const resource of this.serviceArray[region][servicekey]) {
+            if (this.groupResourcesByTag ) {
+                let lambdaGrouped = false;
+
+                //Iterate through the tags of this Lambda function. If the Lambda has groupResourcesByTag key, sort it in a map with value as key
+                for ( const tag of resource.Tags ){
+                    if ( tag.Key === this.config.GroupingTagKey ){
+                        if ( resourceGroups.has(tag.Value) ){
+                            console.log()
+                            let rgArray = resourceGroups.get(tag.Value);
+                            if ( rgArray )
+                                rgArray.push(resource);
+                            else {
+                                let rgArray = new Array<any>();
+                                rgArray.push(resource);
+                                resourceGroups.set(tag.Value,rgArray);
+                            }
+                        } else {
+                            let rgArray = new Array<any>();
+                            rgArray.push(resource);
+                            resourceGroups.set(tag.Value,rgArray);
+                        }
+                        lambdaGrouped = true
+                    }
+
+                }
+                if ( ! lambdaGrouped ){
+                    //For lambdas that don't have grouping key, they will end up in a default dashboard.
+                    if ( resourceGroups.has("default") ){
+                        let rgArray = resourceGroups.get("default");
+                        if ( rgArray ){
+                            rgArray.push(resource);
+                        } else {
+                            let rgArray = new Array<any>();
+                            rgArray.push(resource);
+                            resourceGroups.set("default", rgArray);
+                        }
+                    } else {
+                        let rgArray = new Array<any>();
+                        rgArray.push(resource);
+                        resourceGroups.set("default", rgArray);
+                    }
+                }
+            } else {
+                //We are not using groupbytag so all Lambdas should go into default dashboard
+                console.log('Not grouping Lambdas by tag');
+                if ( resourceGroups.has("default") ){
+                    let rgArray = resourceGroups.get("default");
+                    if ( rgArray ){
+                        rgArray.push(resource);
+                    } else {
+                        let rgArray = new Array<any>();
+                        rgArray.push(resource);
+                        resourceGroups.set("default", rgArray);
+                    }
+                } else {
+                    let rgArray = new Array<any>();
+                    rgArray.push(resource);
+                    resourceGroups.set("default", rgArray);
+                }
+            }
+        }
+        console.log(resourceGroups);
+        //At this point we should have a resourceGroups Map containing a hashmap of groupResourcesByTag values containing array of lambdas to iterate over.
+        // From this point we group the lambdas into own dashboards.
+
+        let lambdasPerWidget = 100;
+        if ( this.config.CompactMaxResourcesPerWidget && this.config.CompactMaxResourcesPerWidget < lambdasPerWidget ){
+            lambdasPerWidget = this.config.CompactMaxResourcesPerWidget
+            console.log(`lambdas per widget are ${lambdasPerWidget}`);
+        }
+
+        for ( const key of resourceGroups.keys() ){
+            console.log(`processing key ${key}`);
+            let dashboard:any = new Dashboard(this,`${this.config.BaseName}-Lambda-${key}-${region}`,{
+                dashboardName: `${this.config.BaseName}-Lambda-${key}-${region}`
+            });
+            const lambdas = resourceGroups.get(key);
+
+            if ( lambdas ){
+                let lamdasRemaining = 0;
+                if ( lambdas?.length  && lambdas.length > 0 ){
+                    lamdasRemaining = lambdas.length;
+                }
+                let offset = 0;
+                while ( lamdasRemaining > 0 ){
+                    let lambdaIncrement = lambdas.slice(offset,lambdasPerWidget*(offset+1));
+                    console.log(lambdaIncrement.length);
+                    let widgetSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset+1}`,lambdaIncrement);
+                    for ( let widget of widgetSet.getWidgetSets()){
+                        dashboard.addWidgets(widget);
+                    }
+                    lamdasRemaining -= lambdasPerWidget;
+                    offset += lambdasPerWidget;
+                }
+            }
         }
     }
 

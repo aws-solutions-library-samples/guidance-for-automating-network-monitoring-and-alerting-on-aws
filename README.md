@@ -35,6 +35,7 @@ a configuration file (JSON) to build a CloudWatch Dashboard with *reasonable* me
 * Use `GroupingTagKey` parameter in `lib/config.json` to group EC instances and lambdas in separate individual dashboards. The value of the parameter should be a tag key and the instances/lambdas will be grouped by value on individual dashboards.
 * Use `CustomEC2TagKeys` parameter array in `lib/config.json` to specify additional tag information that will be shown in the EC2 Instance header on the dashboard to help you better identify the instance. The parameter 
 should contain an array of tag keys which will be shown in the header in case that tag is set for the instance.
+* Use `Compact` parameter in `lib/config.json` to use compact mode for lambda metrics. This will put multiple lambdas in a single widget. Use `CompactMaxResourcesPerWidget` to specify how many lambdas will be visualized in one widget.
 
 ## How it works
 

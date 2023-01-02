@@ -64,7 +64,7 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
             })],
             right:[new Metric({
                 namespace: this.namespace,
-                metricName: 'Throttles '+functionName,
+                metricName: 'Throttles',
                 dimensionsMap: {
                     FunctionName: functionName
                 },
