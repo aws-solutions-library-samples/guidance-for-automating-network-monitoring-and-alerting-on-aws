@@ -767,7 +767,6 @@ export class GraphFactory extends Construct {
                 }
             }
         }
-        console.log(resourceGroups);
         //At this point we should have a resourceGroups Map containing a hashmap of groupResourcesByTag values containing array of lambdas to iterate over.
         // From this point we group the lambdas into own dashboards.
 
@@ -792,7 +791,6 @@ export class GraphFactory extends Construct {
                 let offset = 0;
                 while ( lamdasRemaining > 0 ){
                     let lambdaIncrement = lambdas.slice(offset,lambdasPerWidget*(offset+1));
-                    console.log(lambdaIncrement.length);
                     let widgetSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset+1}`,lambdaIncrement);
                     for ( let widget of widgetSet.getWidgetSets()){
                         dashboard.addWidgets(widget);
