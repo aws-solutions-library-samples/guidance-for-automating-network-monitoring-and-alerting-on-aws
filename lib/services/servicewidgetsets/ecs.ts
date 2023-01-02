@@ -92,13 +92,13 @@ export class EcsWidgetSet extends Construct implements WidgetSet {
 
         for (let service of resource.services){
             if ( service.launchType === "EC2" ){
-                const ec2serviceWidgetSet = new EcsEC2WidgetSet(this,'ECSEC2WidgetSet' + this.getRandomString(6),service, clusterName);
+                const ec2serviceWidgetSet = new EcsEC2WidgetSet(this,`ECSEC2WidgetSet-${service.serviceName}-${region}`,service, clusterName);
                 for ( let widget of ec2serviceWidgetSet.getWidgetSets()){
                     this.widgetSet.push(widget);
                 }
                 this.alarmSet = this.alarmSet.concat(ec2serviceWidgetSet.getAlarmSet());
             } else {
-                const fargateServiceWidgetSet = new EcsFargateWidgetSet(this,'FargateWidgetSet' + this.getRandomString(6), service, clusterName);
+                const fargateServiceWidgetSet = new EcsFargateWidgetSet(this,`FargateWidgetSet-${service.serviceName}-${region}`, service, clusterName);
                 for ( let widget of fargateServiceWidgetSet.getWidgetSets()){
                     this.widgetSet.push(widget);
                 }
@@ -107,16 +107,6 @@ export class EcsWidgetSet extends Construct implements WidgetSet {
 
         }
 
-    }
-
-    private getRandomString(length:number){
-        let result = '';
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        const charactersLength = characters.length;
-        for (let i = 0; i < length; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
     }
 
     getWidgetSets(): [] {
