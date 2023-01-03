@@ -134,15 +134,15 @@ def router(resource, config):
         resource = autoscaling_decorator(resource, config)
     elif 'capacity-reservation' in arn:
         resource = odcr_decorator(resource, config)
-    elif 'dynamodb' in arn and 'table' in arn:
+    elif ':dynamodb:' in arn and 'table' in arn:
         resource = dynamodb_decorator(resource, config)
     elif 'ec2' in arn and 'instance' in arn:
         resource = ec2_decorator(resource, config)
     elif 'lambda' in arn and 'function' in arn:
         resource = lambda_decorator(resource, config)
-    elif 'elasticloadbalancing' in arn and '/net/' not in arn and '/app/' not in arn:
+    elif 'elasticloadbalancing' in arn and '/net/' not in arn and '/app/' not in arn and ':targetgroup/' not in arn:
         resource = elb1_decorator(resource, config)
-    elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ):
+    elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ) and ':targetgroup/' not in arn:
         resource = elb2_decorator(resource, config)
     elif 'ecs' in arn and 'cluster' in arn:
         resource = ecs_decorator(resource, config)

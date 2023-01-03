@@ -45,7 +45,7 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.SUM,
+                statistic: Statistic.AVERAGE,
                 period:Duration.minutes(1)
             })],
             height: 5
@@ -84,7 +84,7 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.SUM,
+                statistic: Statistic.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             height: 5

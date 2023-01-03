@@ -224,7 +224,6 @@ export class GraphFactory extends Construct {
                             let elbID = resource.ResourceARN.split('/')[3]
                             let elbv2 = new ELBv2WidgetSet(this,`ELBv2WidgetSet-${elbID}-${region}`,resource);
                             for (const widget of elbv2.getWidgetSets()){
-                                console.log('GOT WIDGET FROM ELB2');
                                 this.widgetArray.push(widget);
                             }
                             this.alarmSet = this.alarmSet.concat(elbv2.getAlarmSet());
@@ -442,31 +441,31 @@ export class GraphFactory extends Construct {
             if ( ! this.serviceArray[region]){
                 this.serviceArray[region] = [];
             }
-            if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('restapis') && ! resource.ResourceARN.includes('stages')) {
+            if (resource.ResourceARN.includes(':apigateway:') && resource.ResourceARN.includes('/restapis/') && ! resource.ResourceARN.includes('stages')) {
                 if (!this.serviceArray[region]["apigatewayv1"]) {
                     this.serviceArray[region]["apigatewayv1"] = [resource];
                 } else {
                     this.serviceArray[region]["apigatewayv1"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('apigateway') && resource.ResourceARN.includes('apis') && ! resource.ResourceARN.includes('stages')) {
+            } else if (resource.ResourceARN.includes(':apigateway:') && resource.ResourceARN.includes('/apis/') && ! resource.ResourceARN.includes('stages')) {
                 if (!this.serviceArray[region]["apigatewayv2"]) {
                     this.serviceArray[region]["apigatewayv2"] = [resource];
                 } else {
                     this.serviceArray[region]["apigatewayv2"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('appsync')) {
+            } else if (resource.ResourceARN.includes(':appsync:')) {
                 if (!this.serviceArray[region]["appsync"]) {
                     this.serviceArray[region]["appsync"] = [resource.ResourceARN];
                 } else {
                     this.serviceArray[region]["appsync"].push(resource.ResourceARN);
                 }
-            } else if (resource.ResourceARN.includes('dynamodb') && resource.ResourceARN.includes("table")) {
+            } else if (resource.ResourceARN.includes(':dynamodb:') && resource.ResourceARN.includes(":table/")) {
                 if (!this.serviceArray[region]["dynamodb"]) {
                     this.serviceArray[region]["dynamodb"] = [resource];
                 } else {
                     this.serviceArray[region]["dynamodb"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('ec2') && resource.ResourceARN.includes('instance')) {
+            } else if (resource.ResourceARN.includes(':ec2:') && resource.ResourceARN.includes(':instance/')) {
                 if (this.hasTagKey(resource.Tags,'aws:autoscaling:groupName')){
                 }
                 if (!this.serviceArray[region]["ec2instances"]) {
@@ -474,61 +473,61 @@ export class GraphFactory extends Construct {
                 } else {
                     this.serviceArray[region]["ec2instances"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('lambda') && resource.ResourceARN.includes('function')) {
+            } else if (resource.ResourceARN.includes(':lambda:') && resource.ResourceARN.includes(':function:')) {
                 if (!this.serviceArray[region]["lambda"]) {
                     this.serviceArray[region]["lambda"] = [resource];
                 } else {
                     this.serviceArray[region]["lambda"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes('autoscaling') && resource.ResourceARN.includes('autoScalingGroup')) {
+            } else if (resource.ResourceARN.includes(':autoscaling:') && resource.ResourceARN.includes(':autoScalingGroup:')) {
                 if (!this.serviceArray[region]["autoscalinggroup"]){
                     this.serviceArray[region]["autoscalinggroup"] = [resource.ResourceARN];
                 } else {
                     this.serviceArray[region]["autoscalinggroup"].push(resource.ResourceARN);
                 }
-            } else if (resource.ResourceARN.includes('sqs')){
+            } else if (resource.ResourceARN.includes(':sqs:')){
                 if (!this.serviceArray[region]["sqs"]){
                     this.serviceArray[region]["sqs"] = [resource.ResourceARN];
                 } else {
                     this.serviceArray[region]["sqs"].push(resource.ResourceARN);
                 }
-            } else if ( resource.ResourceARN.includes('rds') && resource.ResourceARN.includes(':cluster:') && resource.Engine){
+            } else if ( resource.ResourceARN.includes(':rds:') && resource.ResourceARN.includes(':cluster:') && resource.Engine){
                 if (!this.serviceArray[region]["aurora"]){
                     this.serviceArray[region]["aurora"] = [resource];
                 } else {
                     this.serviceArray[region]["aurora"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('elasticloadbalancing') && (resource.ResourceARN.includes('/net/') || resource.ResourceARN.includes('/app/'))){
+            } else if ( resource.ResourceARN.includes(':elasticloadbalancing:') && (resource.ResourceARN.includes('/net/') || resource.ResourceARN.includes('/app/')) && ! resource.ResourceARN.includes(':targetgroup/')){
                 if (!this.serviceArray[region]["elbv2"]){
                     this.serviceArray[region]["elbv2"] = [resource];
                 } else {
                     this.serviceArray[region]["elbv2"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('elasticloadbalancing') && ! resource.ResourceARN.includes('/net/') && ! resource.ResourceARN.includes('/app/')){
+            } else if ( resource.ResourceARN.includes(':elasticloadbalancing:') && ! resource.ResourceARN.includes('/net/') && ! resource.ResourceARN.includes('/app/') && ! resource.ResourceARN.includes(':targetgroup/')){
                 if (!this.serviceArray[region]["elbv1"]){
                     this.serviceArray[region]["elbv1"] = [resource];
                 } else {
                     this.serviceArray[region]["elbv1"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('capacity-reservation')){
+            } else if ( resource.ResourceARN.includes(':capacity-reservation/')){
                 if (!this.serviceArray[region]["odcr"]){
                     this.serviceArray[region]["odcr"] = [resource];
                 } else {
                     this.serviceArray[region]["odcr"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('ecs') && resource.ResourceARN.includes('cluster')){
+            } else if ( resource.ResourceARN.includes(':ecs:') && resource.ResourceARN.includes(':cluster/')){
                 if (!this.serviceArray[region]["ecs"]){
                     this.serviceArray[region]["ecs"] = [resource];
                 } else {
                     this.serviceArray[region]["ecs"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('transit-gateway') && resource.ResourceARN.includes(':ec2:')){
+            } else if ( resource.ResourceARN.includes(':transit-gateway/') && resource.ResourceARN.includes(':ec2:')){
                 if (!this.serviceArray[region]["tgw"]){
                     this.serviceArray[region]["tgw"] = [resource];
                 } else {
                     this.serviceArray[region]["tgw"].push(resource);
                 }
-            } else if ( resource.ResourceARN.includes('natgateway') && resource.ResourceARN.includes(':ec2:')){
+            } else if ( resource.ResourceARN.includes(':natgateway/') && resource.ResourceARN.includes(':ec2:')){
                 if (!this.serviceArray[region]["natgw"]){
                     this.serviceArray[region]["natgw"] = [resource];
                 } else {
@@ -582,7 +581,7 @@ export class GraphFactory extends Construct {
                             dash.addWidgets(tagLabelWidget);
                             this.groupedDashboards.set(tag.Value,dash);
                         }
-                         console.log(`adding instance grouped ${resource.Instance.InstanceId}`);
+                         //console.log(`adding instance grouped ${resource.Instance.InstanceId}`);
                          for (const widget of instance.getWidgetSets()){
                              this.groupedDashboards.get(tag.Value).addWidgets(widget);
                          }
@@ -602,7 +601,7 @@ export class GraphFactory extends Construct {
                         })
                         this.EC2Dashboard.addWidgets(labelWidget);
                     }
-                    console.log(`adding instance non grouped in grouped config ${resource.Instance.InstanceId}`);
+                    //console.log(`adding instance non grouped in grouped config ${resource.Instance.InstanceId}`);
                     for (const widget of instance.getWidgetSets()){
                         this.EC2Dashboard.addWidgets(widget);
                     }
@@ -620,7 +619,7 @@ export class GraphFactory extends Construct {
                     })
                     this.EC2Dashboard.addWidgets(labelWidget);
                 }
-                console.log(`adding instance no config ${resource.Instance.InstanceId}`);
+                //console.log(`adding instance no config ${resource.Instance.InstanceId}`);
                 for (const widget of instance.getWidgetSets()){
                     this.EC2Dashboard.addWidgets(widget);
                 }
@@ -655,7 +654,7 @@ export class GraphFactory extends Construct {
                             dash.addWidgets(tagLabelWidget);
                             this.groupedLambdaDashboards.set(tag.Value,dash);
                         }
-                        console.log(`adding lambda grouped ${resource.Configuration.FunctionName}`);
+                        //console.log(`adding lambda grouped ${resource.Configuration.FunctionName}`);
                         for (const widget of lambda.getWidgetSets()){
                             this.groupedLambdaDashboards.get(tag.Value).addWidgets(widget);
                         }
@@ -675,7 +674,7 @@ export class GraphFactory extends Construct {
                         })
                         this.LambdaDashboard.addWidgets(labelWidget);
                     }
-                    console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
+                    //console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
                     for (const widget of lambda.getWidgetSets()){
                         this.LambdaDashboard.addWidgets(widget);
                     }
@@ -693,7 +692,7 @@ export class GraphFactory extends Construct {
                     })
                     this.LambdaDashboard.addWidgets(labelWidget);
                 }
-                console.log(`adding lambda in non grouped config ${resource.Configuration.FunctionName}`);
+                //console.log(`adding lambda in non grouped config ${resource.Configuration.FunctionName}`);
                 for (const widget of lambda.getWidgetSets()){
                     this.LambdaDashboard.addWidgets(widget);
                 }
@@ -713,7 +712,6 @@ export class GraphFactory extends Construct {
                 for ( const tag of resource.Tags ){
                     if ( tag.Key === this.config.GroupingTagKey ){
                         if ( resourceGroups.has(tag.Value) ){
-                            console.log()
                             let rgArray = resourceGroups.get(tag.Value);
                             if ( rgArray )
                                 rgArray.push(resource);
@@ -773,7 +771,6 @@ export class GraphFactory extends Construct {
         let lambdasPerWidget = 100;
         if ( this.config.CompactMaxResourcesPerWidget && this.config.CompactMaxResourcesPerWidget < lambdasPerWidget ){
             lambdasPerWidget = this.config.CompactMaxResourcesPerWidget
-            console.log(`lambdas per widget are ${lambdasPerWidget}`);
         }
 
         for ( const key of resourceGroups.keys() ){
@@ -782,22 +779,43 @@ export class GraphFactory extends Construct {
                 dashboardName: `${this.config.BaseName}-Lambda-${key}-${region}`
             });
             const lambdas = resourceGroups.get(key);
+            let widgetSet:any = [];
+            let alarmSet:any = [];
 
             if ( lambdas ){
-                let lamdasRemaining = 0;
+                let lambdasRemaining = 0;
                 if ( lambdas?.length  && lambdas.length > 0 ){
-                    lamdasRemaining = lambdas.length;
+                    lambdasRemaining = lambdas.length;
                 }
                 let offset = 0;
-                while ( lamdasRemaining > 0 ){
-                    let lambdaIncrement = lambdas.slice(offset,lambdasPerWidget*(offset+1));
-                    let widgetSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset+1}`,lambdaIncrement);
-                    for ( let widget of widgetSet.getWidgetSets()){
-                        dashboard.addWidgets(widget);
+                while ( lambdasRemaining > 0 ){
+                    let lambdaIncrement = lambdas.slice(offset,offset+lambdasPerWidget);
+                    let lambdaSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset+1}`,lambdaIncrement);
+                    for ( let widget of lambdaSet.getWidgetSets()){
+                        widgetSet.push(widget);
+                        //dashboard.addWidgets(widget);
                     }
-                    lamdasRemaining -= lambdasPerWidget;
+                    alarmSet = alarmSet.concat(lambdaSet.getAlarmSet());
+                    lambdasRemaining -= lambdasPerWidget;
                     offset += lambdasPerWidget;
                 }
+            }
+
+            if ( alarmSet.length > 0 ){
+                const height = 1 + Math.floor(alarmSet.length/4) + (alarmSet.length%4!=0?1:0)
+                const lambdaAlarmStatusWidget = new AlarmStatusWidget({
+                    title: 'Alarms',
+                    width: 24,
+                    height: height,
+                    alarms: alarmSet
+                });
+                //dashboard.addWidgets(lambdaAlarmStatusWidget);
+                widgetSet = [lambdaAlarmStatusWidget].concat(widgetSet);
+
+                //this.widgetArray = [alarmStatusWidget].concat(this.widgetArray);
+            }
+            for (const widgetSetElement of widgetSet) {
+                dashboard.addWidgets(widgetSetElement);
             }
         }
     }

@@ -13,7 +13,7 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
         super(scope, id);
         const natgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
-        let markDown = `### TGW [${natgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${natgwId})`
+        let markDown = `### NATGW [${natgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${natgwId})`
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,

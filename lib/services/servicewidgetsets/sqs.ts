@@ -21,7 +21,7 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
                 dimensionsMap: {
                     QueueName: queueName
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Statistic.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({

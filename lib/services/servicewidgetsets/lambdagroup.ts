@@ -11,6 +11,10 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
     constructor(scope:Construct, id:string, resourceArray:any) {
         super(scope,id);
         const region = resourceArray[0].ResourceARN.split(':')[3];
+        let widgetHeight = 8
+        if ( resourceArray.length > 5 ){
+            widgetHeight = 14
+        }
 
         this.widgetSet.push(new TextWidget({
             markdown: "**Lambdas in " + region +' ' + id + '**',
@@ -19,20 +23,34 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
         }));
 
         const invocationsMetricArray = this.getMetricArray(resourceArray,'Invocations');
-        const durationMetricArray = this.getMetricArray(resourceArray,'Duration')
+        const durationMetricArray = this.getMetricArray(resourceArray,'Duration',Duration.minutes(1),Statistic.AVERAGE);
 
         const errorsMetricArray = this.getMetricArray(resourceArray,'Errors');
         const throttlesMetricArray = this.getMetricArray(resourceArray,'Throttles');
+        for (const metric of throttlesMetricArray) {
+            if ( metric.dimensions && metric.dimensions.FunctionName ){
 
-        const concurrentMetricArray = this.getMetricArray(resourceArray,'ConcurrentExecutions');
+                let alarm = metric.createAlarm(this,`Throttles-${metric.dimensions.FunctionName}`,{
+                    alarmName: `Throttles-${metric.dimensions.FunctionName}`,
+                    datapointsToAlarm: 3,
+                    evaluationPeriods: 3,
+                    threshold: 10
+                });
+                this.alarmSet.push(alarm);
+
+            }
+        }
+
+        const concurrentMetricArray = this.getMetricArray(resourceArray,'ConcurrentExecutions',Duration.minutes(1),Statistic.MAXIMUM);
+
 
         const invocationsDuration = new GraphWidget({
             title: 'Invocations/Duration',
             region: region,
             left: invocationsMetricArray,
             right: durationMetricArray,
-            width: 6,
-            height: 8
+            width: 8,
+            height: widgetHeight
         });
 
         const errorsThrottles = new GraphWidget({
@@ -40,16 +58,16 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
             region: region,
             left: errorsMetricArray,
             right: throttlesMetricArray,
-            width: 12,
-            height: 8
+            width: 8,
+            height: widgetHeight
         });
 
         const concurrency = new GraphWidget({
             title: 'Concurrency',
             region: region,
             left: concurrentMetricArray,
-            width: 6,
-            height: 8
+            width: 8,
+            height: widgetHeight
         });
 
         this.widgetSet.push(new Row(invocationsDuration,errorsThrottles,concurrency));
