@@ -15,17 +15,19 @@ export class AppsyncWidgetSet extends Construct implements WidgetSet{
     widgetSet:any = [];
     alarmSet:any = [];
 
-    constructor(scope: Construct, id:string, arn:string) {
+    constructor(scope: Construct, id:string, resource:any) {
         super(scope, id);
+        const arn = resource.ResourceARN;
+        const name = resource.name;
         let graphqlendpoint = arn.split('/')[arn.split('/').length-1];
         let region = arn.split(':')[3];
         const widget = new GraphWidget({
-            title: 'TotalRequests '+graphqlendpoint,
+            title: `TotalRequests ${name} ${graphqlendpoint}`,
             region: region,
             left: [new Metric({
                 namespace: this.namespace,
                 metricName: '4XXError',
-                label: `Requests ${graphqlendpoint}`,
+                label: `Requests ${name} ${graphqlendpoint}`,
                 dimensionsMap: {
                     GraphQLAPIId: graphqlendpoint
                 },
@@ -35,7 +37,7 @@ export class AppsyncWidgetSet extends Construct implements WidgetSet{
             width: 8
         })
         const widget2 = new GraphWidget({
-            title: 'Errors '+graphqlendpoint,
+            title: `Errors ${name} ${graphqlendpoint}`,
             stacked: true,
             region: region,
             left: [new Metric({
@@ -60,7 +62,7 @@ export class AppsyncWidgetSet extends Construct implements WidgetSet{
         })
 
         const latencywidget = new GraphWidget({
-            title: 'Latency '+graphqlendpoint,
+            title: `Latency ${name} ${graphqlendpoint}`,
             region: region,
             left: [new Metric({
                 namespace: this.namespace,

@@ -1,5 +1,13 @@
 import {WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {
+    GraphWidget,
+    MathExpression,
+    Metric,
+    Row,
+    Statistic,
+    TextWidget,
+    TreatMissingData
+} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
@@ -13,6 +21,28 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
         let apigw = resource.name;
         let region = resource.ResourceARN.split(':')[3];
         let apiid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1]
+
+        let hasCachingEnabled = false;
+        let stageMarkDownInfo = "";
+        if ( resource.stages ){
+            let stages:[any] = resource.stages;
+            for ( let stage of stages ){
+                stageMarkDownInfo += ` [${stage.stageName}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/stages/${stage.stageName})`;
+                if ( stage.cacheClusterEnabled && stage.cacheClusterEnabled == true ){
+                    stageMarkDownInfo += `(cached)`
+                    hasCachingEnabled = true;
+                }
+            }
+
+        }
+
+        let markDown = `### API GW [${apigw}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/resources) ${stageMarkDownInfo}`
+        this.widgetSet.push(new TextWidget({
+            markdown: markDown,
+            width: 24,
+            height: 1
+        }));
+
         const trafficMetric = new Metric({
             namespace: this.namespace,
             metricName: 'Count',
@@ -30,16 +60,6 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
             left: [trafficMetric],
             width: 6
         })
-
-        const trafficCountAlarm = trafficMetric.createAlarm(this,`TrafficCountAlarm-${apigw}-${apiid}`,{
-            alarmName: `Traffic-${apigw}-${apiid}`,
-            evaluationPeriods: 1,
-            threshold: 10000,
-            datapointsToAlarm: 1,
-            treatMissingData: TreatMissingData.NOT_BREACHING
-        })
-
-        this.alarmSet.push(trafficCountAlarm)
 
         const status4xxMetric = new Metric({
             namespace: this.namespace,
@@ -101,9 +121,66 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.AVERAGE,
                 period:Duration.minutes(1)
             })],
-            width: 18
+            width: hasCachingEnabled?9:18
         });
-        this.widgetSet.push(new Row(traffic,errors));
+
+        if ( hasCachingEnabled ){
+            const hitMetric = new Metric({
+                namespace: this.namespace,
+                metricName: 'CacheHitCount',
+                dimensionsMap: {
+                    ApiName: apigw
+                },
+                statistic: Statistic.SUM,
+                period: Duration.minutes(1)
+            });
+
+            const missMetric = new Metric({
+                namespace: this.namespace,
+                metricName: 'CacheMissCount',
+                dimensionsMap: {
+                    ApiName: apigw
+                },
+                statistic: Statistic.SUM,
+                period: Duration.minutes(1)
+            });
+
+            const missPercentage = new MathExpression({
+                expression: "(missMetric/hitMetric) * 100",
+                usingMetrics: {
+                    missMetric: missMetric,
+                    hitMetric: hitMetric
+                },
+                label: "Miss ratio in %"
+            });
+
+            const missAlarm = missPercentage.createAlarm(this,`CacheMissAlarm-${apiid}-${region}`,{
+                alarmName:`CacheMissAlarm-${apiid}-${region}`,
+                datapointsToAlarm: 5,
+                evaluationPeriods: 5,
+                threshold: 25,
+                treatMissingData: TreatMissingData.NOT_BREACHING
+            });
+
+            this.alarmSet.push(missAlarm);
+
+            const cacheInfo = new GraphWidget({
+                title: 'CacheHit/CacheMiss',
+                stacked: true,
+                region: region,
+                left: [missPercentage],
+                leftYAxis:{
+                    min: 0,
+                    max: 100
+                },
+                width: 9
+            });
+            this.widgetSet.push(new Row(traffic,cacheInfo,errors));
+        } else {
+            this.widgetSet.push(new Row(traffic,errors));
+        }
+
+
     }
 
 

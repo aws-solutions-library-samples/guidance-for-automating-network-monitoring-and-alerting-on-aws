@@ -16,9 +16,9 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
         const instanceType = resource.Instance.InstanceType;
         let burstable = false;
         let burstmodeLabel = ''
-        if ( instanceType.includes('t2') || instanceType.includes('t3') || instanceType.includes('t4')){
+        if ( instanceType.match('t[2-9]')){
             burstable = true;
-            burstmodeLabel = ` (${resource.CPUCreditSpecs.CpuCredits})`;
+            burstmodeLabel = ` (${resource?.CPUCreditSpecs?.CpuCredits})`;
         }
         const instanceAz = resource.Instance.Placement.AvailabilityZone;
         const coreCount = resource.Instance.CpuOptions.CoreCount;
@@ -47,7 +47,7 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 2
+            height: 1
         }))
         const widget = new GraphWidget({
             title: 'Disk '+instanceId,

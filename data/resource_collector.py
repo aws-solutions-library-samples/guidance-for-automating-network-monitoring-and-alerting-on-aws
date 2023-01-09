@@ -166,9 +166,13 @@ def apigw1_decorator(resource, config):
     response = apigw.get_rest_api(
         restApiId=apiid
     )
+    response2 = apigw.get_stages(
+        restApiId=apiid
+    )
     resource['name'] = response['name']
     resource['endpointConfiguration'] = response['endpointConfiguration']['types'][0]
     resource['disableExecuteApiEndpoint'] = response['disableExecuteApiEndpoint']
+    resource['stages'] = response2['item']
     return resource
 
 def apigw2_decorator(resource, config):
