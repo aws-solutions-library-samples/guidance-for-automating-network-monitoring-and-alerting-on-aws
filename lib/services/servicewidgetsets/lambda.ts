@@ -50,6 +50,25 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
             })],
             height: 5
         })
+        const throttleMetric = new Metric({
+            namespace: this.namespace,
+            metricName: 'Throttles',
+            dimensionsMap: {
+                FunctionName: functionName
+            },
+            statistic: Statistic.SUM,
+            period:Duration.minutes(1)
+        });
+
+        const throttleAlarm = throttleMetric.createAlarm(this,`Throttles-${functionName}`,{
+            alarmName: `Throttles-${functionName}`,
+            datapointsToAlarm: 3,
+            evaluationPeriods: 3,
+            threshold: 10
+        });
+
+        this.alarmSet.push(throttleAlarm);
+
         const widgetErrors = new GraphWidget({
             title: 'Errors/Throttles '+functionName,
             region: region,
@@ -62,15 +81,7 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
             })],
-            right:[new Metric({
-                namespace: this.namespace,
-                metricName: 'Throttles',
-                dimensionsMap: {
-                    FunctionName: functionName
-                },
-                statistic: Statistic.SUM,
-                period:Duration.minutes(1)
-            })],
+            right:[throttleMetric],
             width: 12,
             height: 5
         })

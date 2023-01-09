@@ -637,11 +637,16 @@ export class GraphFactory extends Construct {
     private processLambda(region:string, servicekey:any){
         for (const resource of this.serviceArray[region][servicekey]) {
             let lambda = new LambdaWidgetSet(this,`Lambda-WS-${resource.Configuration.FunctionName}`,resource);
+
             if ( this.groupResourcesByTag ){
                 let lambdaGrouped = false;
+
                 for ( const tag of resource.Tags ){
+
                     if ( tag.Key === this.config.GroupingTagKey ){
+
                         tag.Value = tag.Value.replace(/\s/g, '');
+
                         if ( this.groupedLambdaDashboards.has(tag.Value)){
                             console.log(`Found Lambda Dashboard for value ${tag.Value}`);
                         } else {
@@ -657,10 +662,11 @@ export class GraphFactory extends Construct {
                             dash.addWidgets(tagLabelWidget);
                             this.groupedLambdaDashboards.set(tag.Value,dash);
                         }
-                        //console.log(`adding lambda grouped ${resource.Configuration.FunctionName}`);
+
                         for (const widget of lambda.getWidgetSets()){
                             this.groupedLambdaDashboards.get(tag.Value).addWidgets(widget);
                         }
+
                         this.alarmSet = this.alarmSet.concat(lambda.getAlarmSet());
                         lambdaGrouped = true;
                     }
@@ -677,7 +683,6 @@ export class GraphFactory extends Construct {
                         })
                         this.LambdaDashboard.addWidgets(labelWidget);
                     }
-                    //console.log(`adding lambda non grouped in grouped config ${resource.Configuration.FunctionName}`);
                     for (const widget of lambda.getWidgetSets()){
                         this.LambdaDashboard.addWidgets(widget);
                     }
@@ -695,7 +700,7 @@ export class GraphFactory extends Construct {
                     })
                     this.LambdaDashboard.addWidgets(labelWidget);
                 }
-                //console.log(`adding lambda in non grouped config ${resource.Configuration.FunctionName}`);
+
                 for (const widget of lambda.getWidgetSets()){
                     this.LambdaDashboard.addWidgets(widget);
                 }
@@ -768,10 +773,7 @@ export class GraphFactory extends Construct {
                     height: height,
                     alarms: alarmSet
                 });
-                //dashboard.addWidgets(lambdaAlarmStatusWidget);
                 widgetSet = [lambdaAlarmStatusWidget].concat(widgetSet);
-
-                //this.widgetArray = [alarmStatusWidget].concat(this.widgetArray);
             }
             for (const widgetSetElement of widgetSet) {
                 dashboard.addWidgets(widgetSetElement);
