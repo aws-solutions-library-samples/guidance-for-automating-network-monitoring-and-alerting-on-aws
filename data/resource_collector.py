@@ -122,21 +122,21 @@ def cw_custom_namespace_retriever(config):
 
 def router(resource, config):
     arn = resource['ResourceARN']
-    if 'apigateway' in arn and 'restapis' in arn and 'stages' not in arn:
+    if ':apigateway:' in arn and '/restapis/' in arn and 'stages' not in arn:
         resource = apigw1_decorator(resource, config)
-    elif 'apigateway' in arn and 'apis' in arn and 'stages' not in arn:
+    elif ':apigateway:' in arn and '/apis/' in arn and 'stages' not in arn:
         resource = apigw2_decorator(resource, config)
-    elif 'appsync' in arn:
+    elif ':appsync:' in arn:
         resource = appsync_decorator(resource, config)
-    elif 'rds' in arn and ':cluster:' in arn:
+    elif ':rds:' in arn and ':cluster:' in arn:
         resource = aurora_decorator(resource, config)
-    elif 'autoscaling' in arn and 'autoScalingGroup' in arn:
+    elif ':autoscaling:' in arn and ':autoScalingGroup:' in arn:
         resource = autoscaling_decorator(resource, config)
-    elif 'capacity-reservation' in arn:
+    elif ':capacity-reservation/' in arn:
         resource = odcr_decorator(resource, config)
-    elif ':dynamodb:' in arn and 'table' in arn:
+    elif ':dynamodb:' in arn and ':table/' in arn:
         resource = dynamodb_decorator(resource, config)
-    elif 'ec2' in arn and 'instance' in arn:
+    elif ':ec2:' in arn and ':instance/' in arn:
         resource = ec2_decorator(resource, config)
     elif 'lambda' in arn and 'function' in arn:
         resource = lambda_decorator(resource, config)
@@ -144,17 +144,17 @@ def router(resource, config):
         resource = elb1_decorator(resource, config)
     elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ) and ':targetgroup/' not in arn:
         resource = elb2_decorator(resource, config)
-    elif 'ecs' in arn and 'cluster' in arn:
+    elif ':ecs:' in arn and ':cluster/' in arn:
         resource = ecs_decorator(resource, config)
-    elif 'natgateway' in arn and ':ec2:' in arn:
+    elif ':natgateway/' in arn and ':ec2:' in arn:
         resource = natgw_decorator(resource, config)
-    elif 'transit-gateway' in arn and ':ec2:' in arn:
+    elif ':transit-gateway:' in arn and ':ec2:' in arn:
         resource = tgw_decorator(resource, config)
-    elif 'sqs' in arn:
+    elif ':sqs:' in arn:
         resource = sqs_decorator(resource, config)
-    elif 'sns' in arn:
+    elif ':sns:' in arn:
         resource = sns_decorator(resource, config)
-    elif 'cloudfront' in arn:
+    elif ':cloudfront:' in arn:
         resource = cloudfront_decorator(resource, config)
     return resource
 
