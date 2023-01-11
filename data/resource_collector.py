@@ -154,7 +154,7 @@ def router(resource, config):
         resource = sqs_decorator(resource, config)
     elif ':sns:' in arn:
         resource = sns_decorator(resource, config)
-    elif ':cloudfront:' in arn:
+    elif ':cloudfront:' in arn and ':distribution/' in arn:
         resource = cloudfront_decorator(resource, config)
     return resource
 
