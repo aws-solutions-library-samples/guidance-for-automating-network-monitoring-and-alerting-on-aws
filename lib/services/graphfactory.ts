@@ -423,6 +423,7 @@ export class GraphFactory extends Construct {
         }
         if (this.alarmSet.length > 0) {
             const height = 1 + Math.floor(this.alarmSet.length / 4) + (this.alarmSet.length % 4 != 0 ? 1 : 0)
+            console.log(`Height of alarms is calculated to ${height}. Length is ${this.alarmSet.length}`)
             const alarmStatusWidget = new AlarmStatusWidget({
                 title: 'Alarms',
                 width: 24,
@@ -548,7 +549,7 @@ export class GraphFactory extends Construct {
                 } else {
                     this.serviceArray[region]["wafv2"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes(':cloudfront:')){
+            } else if (resource.ResourceARN.includes(':cloudfront:') && resource.ResourceARN.includes(':distribution/')){
                 if (!this.serviceArray[region]["cloudfront"]){
                     this.serviceArray[region]["cloudfront"] = [resource];
                 } else {
