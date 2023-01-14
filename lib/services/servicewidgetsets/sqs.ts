@@ -8,8 +8,9 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
     widgetSet:any=[];
     alarmSet:any = [];
 
-    constructor(scope: Construct, id:string, arn:string) {
+    constructor(scope: Construct, id:string, resource:any) {
         super(scope, id);
+        let arn = resource.ResourceARN
         let queueName = arn.split(':')[arn.split(':').length - 1];
         let region = arn.split(':')[3];
         const widget = new GraphWidget({
@@ -25,14 +26,23 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
-                namespace: this.namespace,
-                metricName: 'NumberOfMessagesDeleted',
-                dimensionsMap: {
+                namespace:this.namespace,
+                metricName: 'ApproximateNumberOfMessagesNotVisible',
+                dimensionsMap:{
                     QueueName: queueName
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            }),new Metric({
+            })],
+            width: 6
+        });
+
+
+
+        const sentReceivedWidget = new GraphWidget({
+            title: 'No Messages Sent/Received',
+            region: region,
+            left:[new Metric({
                 namespace: this.namespace,
                 metricName: 'NumberOfMessagesSent',
                 dimensionsMap: {
@@ -40,7 +50,8 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            }),new Metric({
+            })],
+            right:[new Metric({
                 namespace: this.namespace,
                 metricName: 'NumberOfMessagesReceived',
                 dimensionsMap: {
@@ -49,10 +60,11 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
             })],
-            width: 12
-        });
-        const widget2 = new GraphWidget({
-            title: 'Delays ' + queueName,
+            width: 6
+        })
+
+        const delayWidget = new GraphWidget({
+            title: 'Messages delayed/Age oldest message ' + queueName,
             region: region,
             left:[new Metric({
                 namespace:this.namespace,
@@ -65,13 +77,31 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
             })],
             right:[new Metric({
                 namespace:this.namespace,
-                metricName: 'ApproximateNumberOfMessagesDelayed',
+                metricName: 'ApproximateAgeOfOldestMessage',
                 dimensionsMap:{
                     QueueName: queueName
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            }),new Metric({
+            })],
+            width: 6
+        })
+
+
+
+        const widget2 = new GraphWidget({
+            title: 'Delays ' + queueName,
+            region: region,
+            left:[new Metric({
+                namespace: this.namespace,
+                metricName: 'NumberOfMessagesDeleted',
+                dimensionsMap: {
+                    QueueName: queueName
+                },
+                statistic: Statistic.SUM,
+                period:Duration.minutes(1)
+            })],
+            right:[new Metric({
                 namespace:this.namespace,
                 metricName: 'NumberOfEmptyReceives',
                 dimensionsMap:{
@@ -79,26 +109,10 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
                 },
                 statistic: Statistic.SUM,
                 period:Duration.minutes(1)
-            }),new Metric({
-                namespace:this.namespace,
-                metricName: 'ApproximateAgeOfOldestMessage',
-                dimensionsMap:{
-                    QueueName: queueName
-                },
-                statistic: Statistic.SUM,
-                period:Duration.minutes(1)
-            }),new Metric({
-                namespace:this.namespace,
-                metricName: 'ApproximateNumberOfMessagesNotVisible',
-                dimensionsMap:{
-                    QueueName: queueName
-                },
-                statistic: Statistic.SUM,
-                period:Duration.minutes(1)
             })],
-            width: 12
+            width: 6
         })
-        this.widgetSet.push(new Row(widget,widget2));
+        this.widgetSet.push(new Row(widget,sentReceivedWidget,delayWidget,widget2));
     }
 
     getWidgetSets(): [] {

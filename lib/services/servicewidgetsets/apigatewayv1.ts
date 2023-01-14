@@ -23,20 +23,21 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
         let apiid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1]
 
         let hasCachingEnabled = false;
-        let stageMarkDownInfo = "";
+        let markDown = `### API GW [${apigw}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/resources)`
         if ( resource.stages ){
             let stages:[any] = resource.stages;
+            markDown += ` Stages: |`
             for ( let stage of stages ){
-                stageMarkDownInfo += ` [${stage.stageName}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/stages/${stage.stageName})`;
+                markDown += ` [${stage.stageName}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/stages/${stage.stageName})`;
                 if ( stage.cacheClusterEnabled && stage.cacheClusterEnabled == true ){
-                    stageMarkDownInfo += `(cached)`
+                    markDown += `(**cached**)`
                     hasCachingEnabled = true;
                 }
+                markDown += ` |`
             }
 
         }
 
-        let markDown = `### API GW [${apigw}](https://${region}.console.aws.amazon.com/apigateway/home?region=${region}#/apis/${apiid}/resources) ${stageMarkDownInfo}`
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,

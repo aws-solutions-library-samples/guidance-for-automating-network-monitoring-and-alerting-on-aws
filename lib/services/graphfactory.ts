@@ -25,6 +25,7 @@ import {SNSWidgetSet} from "./servicewidgetsets/sns";
 import {WafV2WidgetSet} from "./servicewidgetsets/wafv2";
 import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
 import {LambdaGroupWidgetSet} from "./servicewidgetsets/lambdagroup";
+import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -70,7 +71,7 @@ export class GraphFactory extends Construct {
             let servicekeys = Object.keys(this.serviceArray[region]);
             let resourcecounter = 0;
             for (let servicekey of servicekeys) {
-                //console.log("Processing " + servicekey);
+                console.log("Processing " + servicekey);
                 switch (servicekey) {
                     case "appsync": {
                         this.widgetArray.push(new TextWidget({
@@ -192,14 +193,21 @@ export class GraphFactory extends Construct {
                             width: 24,
                             height: 1
                         }))
-                        for (const resource of this.serviceArray[region][servicekey]) {
-                            let queueName = resource.split(':')[resource.split(':').length - 1];
-                            let sqs = new SQSWidgetSet(this, `SQSWidgetSet-${queueName}-${region}`, resource);
-                            for (const widget of sqs.getWidgetSets()) {
-                                this.widgetArray.push(widget);
+                        if ( this.config?.Compact ){
+                            let sqsWidgetSetGroup = new SQSGroupWidgetSet(this,`SQS-WidgetSet-${region}`, this.serviceArray[region][servicekey], this.config);
+                            this.widgetArray.push(...sqsWidgetSetGroup.getWidgetSets());
+                            this.alarmSet.push(...sqsWidgetSetGroup.getAlarmSet());
+                        } else {
+                            for (const resource of this.serviceArray[region][servicekey]) {
+                                let queueName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+                                let sqs = new SQSWidgetSet(this, `SQSWidgetSet-${queueName}-${region}`, resource);
+                                for (const widget of sqs.getWidgetSets()) {
+                                    this.widgetArray.push(widget);
+                                }
+                                resourcecounter += 1;
                             }
-                            resourcecounter += 1;
                         }
+
                         break;
                     }
 
@@ -491,9 +499,9 @@ export class GraphFactory extends Construct {
                 }
             } else if (resource.ResourceARN.includes(':sqs:')){
                 if (!this.serviceArray[region]["sqs"]){
-                    this.serviceArray[region]["sqs"] = [resource.ResourceARN];
+                    this.serviceArray[region]["sqs"] = [resource];
                 } else {
-                    this.serviceArray[region]["sqs"].push(resource.ResourceARN);
+                    this.serviceArray[region]["sqs"].push(resource);
                 }
             } else if ( resource.ResourceARN.includes(':rds:') && resource.ResourceARN.includes(':cluster:') && resource.Engine){
                 if (!this.serviceArray[region]["aurora"]){
