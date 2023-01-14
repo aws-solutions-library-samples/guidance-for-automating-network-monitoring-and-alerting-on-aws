@@ -425,6 +425,17 @@ def rds_decorator(resource, config):
 
 def sqs_decorator(resource, config):
     print(f'This resource is SQS {resource["ResourceARN"]}')
+    queueName = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
+    print(f'QueueName is {queueName}')
+    sqs = boto3.client('sqs', config=config)
+    response = sqs.get_queue_url(
+        QueueName=queueName
+    )
+    response = sqs.get_queue_attributes(
+        AttributeNames=['All'],
+        QueueUrl=response['QueueUrl']
+    )
+    resource['Attributes'] = response['Attributes']
     return resource
 
 def sns_decorator(resource, config):
