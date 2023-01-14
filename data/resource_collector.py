@@ -148,7 +148,7 @@ def router(resource, config):
         resource = ecs_decorator(resource, config)
     elif ':natgateway/' in arn and ':ec2:' in arn:
         resource = natgw_decorator(resource, config)
-    elif ':transit-gateway:' in arn and ':ec2:' in arn:
+    elif ':transit-gateway/' in arn and ':ec2:' in arn:
         resource = tgw_decorator(resource, config)
     elif ':sqs:' in arn:
         resource = sqs_decorator(resource, config)
