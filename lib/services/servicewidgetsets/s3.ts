@@ -1,0 +1,102 @@
+import {WidgetSet} from "./widgetset";
+import {Construct} from "constructs";
+import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {Duration} from "aws-cdk-lib";
+
+export class S3WidgetSet extends Construct implements WidgetSet {
+    alarmSet:any = [];
+    namespace:string = 'AWS/S3';
+    widgetSet:any = [];
+
+
+    constructor(scope: Construct, id: string, resource: any) {
+        super(scope, id);
+        let arn = resource.ResourceARN;
+        let bucketName = arn.split(":")[arn.split(':').length-1];
+        let markDown = `#### Bucket [${bucketName}](https://console.aws.amazon.com/s3/buckets/${bucketName}/)`
+        if ( resource.Encryption ){
+            markDown += ` Encrypted: ${resource.Encryption.Type}, BucketKeyEnabled: ${resource.Encryption.BucketKeyEnabled}`
+        } else {
+            markDown += ` Not Encrypted`
+        }
+        this.widgetSet.push(new TextWidget({
+            markdown: markDown,
+            width: 24,
+            height: 1
+        }))
+
+
+        const widget = new GraphWidget({
+            title: 'Number of Objects '+bucketName,
+            left: [new Metric({
+                namespace: this.namespace,
+                metricName: 'NumberOfObjects',
+                dimensionsMap: {
+                    BucketName: bucketName,
+                    StorageType: "AllStorageTypes"
+                },
+                statistic: Statistic.AVERAGE,
+                period:Duration.minutes(1)
+            })],
+            width: 8
+        });
+
+
+        const storageWidget = new GraphWidget({
+            title: 'Total Storage',
+            left:[new Metric({
+                namespace: this.namespace,
+                metricName: 'BucketSizeBytes',
+                dimensionsMap: {
+                    BucketName: bucketName,
+                    StorageType: "StandardStorage"
+                },
+                statistic: Statistic.AVERAGE,
+                period:Duration.minutes(1)
+            })],
+            width: 8
+        });
+
+        const requests = new GraphWidget({
+            title: 'Requests',
+            left:[new Metric({
+                namespace: this.namespace,
+                metricName: 'GetRequests',
+                dimensionsMap: {
+                    BucketName: bucketName
+                },
+                statistic: Statistic.SUM
+            })],
+            right:[new Metric({
+                namespace: this.namespace,
+                metricName: 'PutRequests',
+                dimensionsMap:{
+                    BucketName: bucketName
+                },
+                statistic: Statistic.SUM
+            }),new Metric({
+                namespace: this.namespace,
+                metricName: 'PostRequests',
+                dimensionsMap:{
+                    BucketName: bucketName
+                },
+                statistic: Statistic.SUM
+            })],
+            period: Duration.minutes(1),
+            width: 8
+        });
+        this.widgetSet.push(new Row(widget,storageWidget,requests));
+
+        // adding alarms if needed
+        // this.alarmSet.push(new Alarm())
+    }
+
+    getAlarmSet(): [] {
+        return this.alarmSet;
+    }
+
+    getWidgetSets(): [] {
+        return this.widgetSet;
+    }
+
+}

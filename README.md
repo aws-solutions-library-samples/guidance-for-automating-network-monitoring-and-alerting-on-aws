@@ -27,6 +27,7 @@ a configuration file (JSON) to build a CloudWatch Dashboard with _reasonable_ me
 - Lambda
 - NAT Gateway
 - RDS
+- S3
 - SNS
 - SQS
 - Transit Gateway

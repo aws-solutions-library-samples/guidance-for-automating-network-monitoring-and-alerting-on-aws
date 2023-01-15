@@ -152,6 +152,8 @@ def router(resource, config):
         resource = tgw_decorator(resource, config)
     elif ':sqs:' in arn:
         resource = sqs_decorator(resource, config)
+    elif 'arn:aws:s3:' in arn:
+        resource = s3_decorator(resource, config)
     elif ':sns:' in arn:
         resource = sns_decorator(resource, config)
     elif ':cloudfront:' in arn and ':distribution/' in arn:
@@ -422,11 +424,31 @@ def rds_decorator(resource, config):
     print(f'This resource is RDS {resource["ResourceARN"]}')
     return resource
 
+def s3_decorator(resource, config):
+    bucket_name = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
+    resource['BucketName'] = bucket_name
+    print(f'This resource {bucket_name} is S3 bucket')
+    s3client = boto3.client('s3', config=config)
+    try:
+        encryption_request = s3client.get_bucket_encryption(
+            Bucket=bucket_name
+        )
+        enc_type = 'SSE-S3'
+        if encryption_request['ServerSideEncryptionConfiguration']['Rules'][0]['ApplyServerSideEncryptionByDefault']['SSEAlgorithm'] == "aws:kms":
+            enc_type = 'SSE-KMS'
+        encryption = {}
+        encryption['Type'] = enc_type
+        encryption['BucketKeyEnabled'] = encryption_request['ServerSideEncryptionConfiguration']['Rules'][0]['BucketKeyEnabled']
+        resource['Encryption'] = encryption
+    except s3client.exceptions.ClientError:
+        resource['Encryption']=False
+
+    return resource
+
 
 def sqs_decorator(resource, config):
     print(f'This resource is SQS {resource["ResourceARN"]}')
     queueName = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
-    print(f'QueueName is {queueName}')
     sqs = boto3.client('sqs', config=config)
     response = sqs.get_queue_url(
         QueueName=queueName

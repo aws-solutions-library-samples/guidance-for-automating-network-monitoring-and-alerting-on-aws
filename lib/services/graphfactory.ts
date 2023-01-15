@@ -26,6 +26,7 @@ import {WafV2WidgetSet} from "./servicewidgetsets/wafv2";
 import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
 import {LambdaGroupWidgetSet} from "./servicewidgetsets/lambdagroup";
 import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
+import {S3WidgetSet} from "./servicewidgetsets/s3";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -422,6 +423,21 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "s3": {
+                        this.widgetArray.push(new TextWidget({
+                            markdown: "## S3 Buckets",
+                            width: 24,
+                            height: 1
+                        }));
+                       for (const resource of this.serviceArray[region][servicekey]){
+                            const bucketName = resource.BucketName
+                            const s3set = new S3WidgetSet(this,`s3-${bucketName}`, resource);
+                            this.widgetArray.push(...s3set.getWidgetSets());
+                            this.alarmSet.push(...s3set.getAlarmSet());
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -562,6 +578,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["cloudfront"] = [resource];
                 } else {
                     this.serviceArray[region]["cloudfront"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes('arn:aws:s3:')){
+                if (!this.serviceArray[region]["s3"]){
+                    this.serviceArray[region]["s3"] = [resource];
+                } else {
+                    this.serviceArray[region]["s3"].push(resource);
                 }
             }
         }
