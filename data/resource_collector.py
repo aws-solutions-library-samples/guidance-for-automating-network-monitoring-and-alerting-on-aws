@@ -13,10 +13,9 @@ def get_resources(tag_name, tag_values, config):
     resources = []
 
     tags = len(tag_values)
-    print(tags)
     if tags > 5:
         tags_processed = 0
-        while tags_processed <= tags:
+        while tags_processed < tags:
             incremental_tag_values = tag_values[tags_processed:tags_processed+5]
             resources = get_resources_from_api(resourcetaggingapi, resources, tag_name, incremental_tag_values)
             tags_processed += 5
@@ -54,8 +53,22 @@ def get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values):
 
     return resources
 
-
 def autoscaling_retriever(tag_name, tag_values, config):
+    resources = []
+    tags = len(tag_values)
+    if tags > 5:
+        tags_processed = 0
+        while tags_processed < tags:
+            incremental_tag_values = tag_values[tags_processed:tags_processed+5]
+            resources.extend(get_asgs_from_api(tag_name, incremental_tag_values, config))
+            tags_processed += 5
+    else:
+        resources.extend(get_asgs_from_api(tag_name, tag_values, config))
+
+    return resources
+
+
+def get_asgs_from_api(tag_name, tag_values, config):
     """Autoscaling is not supported by resource groups and tagging api
     This is
     :return:
@@ -452,7 +465,6 @@ def s3_decorator(resource, config):
         region = response['LocationConstraint']
 
     resource['Region'] = region
-    debug(resource)
     return resource
 
 
