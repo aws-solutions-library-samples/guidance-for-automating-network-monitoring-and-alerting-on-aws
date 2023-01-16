@@ -443,6 +443,16 @@ def s3_decorator(resource, config):
     except s3client.exceptions.ClientError:
         resource['Encryption']=False
 
+    response = s3client.get_bucket_location(
+        Bucket=bucket_name
+    )
+
+    region="us-east-1"
+    if response['LocationConstraint']:
+        region = response['LocationConstraint']
+
+    resource['Region'] = region
+    debug(resource)
     return resource
 
 

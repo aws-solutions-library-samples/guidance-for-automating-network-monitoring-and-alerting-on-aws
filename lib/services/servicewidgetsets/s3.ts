@@ -13,12 +13,19 @@ export class S3WidgetSet extends Construct implements WidgetSet {
         super(scope, id);
         let arn = resource.ResourceARN;
         let bucketName = arn.split(":")[arn.split(':').length-1];
+        let region = resource.Region;
         let markDown = `#### Bucket [${bucketName}](https://console.aws.amazon.com/s3/buckets/${bucketName}/)`
         if ( resource.Encryption ){
-            markDown += ` Encrypted: ${resource.Encryption.Type}, BucketKeyEnabled: ${resource.Encryption.BucketKeyEnabled}`
+            markDown += ` Encrypted: ${resource.Encryption.Type}, BucketKeyEnabled: ${resource.Encryption.BucketKeyEnabled}`;
         } else {
-            markDown += ` Not Encrypted`
+            markDown += ` Not Encrypted`;
         }
+
+        if ( region ){
+            markDown += `, Region: ${region}`
+        }
+
+
         this.widgetSet.push(new TextWidget({
             markdown: markDown,
             width: 24,
@@ -27,10 +34,12 @@ export class S3WidgetSet extends Construct implements WidgetSet {
 
 
         const widget = new GraphWidget({
-            title: 'Number of Objects '+bucketName,
+            title: 'Numberz of Objects '+bucketName,
+            region: region,
             left: [new Metric({
                 namespace: this.namespace,
                 metricName: 'NumberOfObjects',
+                region: region,
                 dimensionsMap: {
                     BucketName: bucketName,
                     StorageType: "AllStorageTypes"
@@ -44,9 +53,11 @@ export class S3WidgetSet extends Construct implements WidgetSet {
 
         const storageWidget = new GraphWidget({
             title: 'Total Storage',
+            region: region,
             left:[new Metric({
                 namespace: this.namespace,
                 metricName: 'BucketSizeBytes',
+                region: region,
                 dimensionsMap: {
                     BucketName: bucketName,
                     StorageType: "StandardStorage"
@@ -59,9 +70,11 @@ export class S3WidgetSet extends Construct implements WidgetSet {
 
         const requests = new GraphWidget({
             title: 'Requests',
+            region: region,
             left:[new Metric({
                 namespace: this.namespace,
                 metricName: 'GetRequests',
+                region: region,
                 dimensionsMap: {
                     BucketName: bucketName
                 },
@@ -70,6 +83,7 @@ export class S3WidgetSet extends Construct implements WidgetSet {
             right:[new Metric({
                 namespace: this.namespace,
                 metricName: 'PutRequests',
+                region: region,
                 dimensionsMap:{
                     BucketName: bucketName
                 },
@@ -77,6 +91,7 @@ export class S3WidgetSet extends Construct implements WidgetSet {
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'PostRequests',
+                region: region,
                 dimensionsMap:{
                     BucketName: bucketName
                 },
