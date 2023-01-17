@@ -517,7 +517,7 @@ def debug(resource):
 def get_config(region):
     return Config(
         region_name=region,
-        signature_version='v4',
+        signature_version='s3v4',
         retries={
             'max_attempts': 10,
             'mode': 'standard'
