@@ -27,6 +27,8 @@ import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
 import {LambdaGroupWidgetSet} from "./servicewidgetsets/lambdagroup";
 import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
 import {S3WidgetSet} from "./servicewidgetsets/s3";
+import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -35,7 +37,6 @@ export class GraphFactory extends Construct {
     LambdaDashboard:any = null;
     NetworkDashboard:any = null;
     EdgeDashboard:any = null;
-    overflowDashboards:any = [];
     groupedDashboards = new Map<string,any>();
     groupedLambdaDashboards = new Map<string,any>();
 
@@ -448,6 +449,12 @@ export class GraphFactory extends Construct {
         if (this.alarmSet.length > 0) {
             const height = 1 + Math.floor(this.alarmSet.length / 4) + (this.alarmSet.length % 4 != 0 ? 1 : 0)
             console.log(`Height of alarms is calculated to ${height}. Length is ${this.alarmSet.length}`)
+            if ( config.AlarmTopic ){
+                for (const alarm of this.alarmSet) {
+                    alarm.addAlarmAction(new SnsAction(sns.Topic.fromTopicArn(this,`ALARMTOPIC-${alarm.alarmName}`,config.AlarmTopic)));
+                }
+            }
+
             const alarmStatusWidget = new AlarmStatusWidget({
                 title: 'Alarms',
                 width: 24,
@@ -786,7 +793,7 @@ export class GraphFactory extends Construct {
                 let offset = 0;
                 while ( lambdasRemaining > 0 ){
                     let lambdaIncrement = lambdas.splice(0, lambdasPerWidget);
-                    let lambdaSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset}`,lambdaIncrement);
+                    let lambdaSet = new LambdaGroupWidgetSet(this,`Lambdas-${key}-${region}-${offset}`,lambdaIncrement,this.config);
                     for ( let widget of lambdaSet.getWidgetSets()){
                         widgetSet.push(widget);
                     }

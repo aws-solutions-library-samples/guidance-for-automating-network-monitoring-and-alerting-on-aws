@@ -2,13 +2,15 @@ import {WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {Duration} from "aws-cdk-lib";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
+import * as sns from "aws-cdk-lib/aws-sns";
 
 export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
     namespace: string = 'AWS/Lambda';
     widgetSet: any = [];
     alarmSet: any = [];
 
-    constructor(scope:Construct, id:string, resourceArray:any) {
+    constructor(scope:Construct, id:string, resourceArray:any, config:any) {
         super(scope,id);
         const region = resourceArray[0].ResourceARN.split(':')[3];
         let widgetHeight = 8
@@ -36,6 +38,9 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
                     evaluationPeriods: 3,
                     threshold: 10
                 });
+                if ( config.AlarmTopic ){
+                    alarm.addAlarmAction(new SnsAction(sns.Topic.fromTopicArn(this,`ALARMTOPIC-${metric.dimensions.FunctionName}`,config.AlarmTopic)));
+                }
                 this.alarmSet.push(alarm);
 
             }

@@ -74,6 +74,8 @@ The solution will create metrics and alarms following best practices.
 
 `CompactMaxResourcesPerWidget` (Integer:required) - When `Compact` is set to true, determines how many Lambda functions will be in each widget set.
 
+`AlarmTopic` (String:optional) - When `AlarmTopic` contains a string with an ARN to a SNS topic, all alarms will be created with an action to send notification to that SNS topic.
+
 ## Getting started
 
 1. Check out the project.

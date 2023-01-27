@@ -8,5 +8,6 @@
   "CustomEC2TagKeys": ["Add","Your","TagKeys", "Here"],
   "CustomNamespaceFile": "../data/custom_namespaces.json",
   "Compact": false,
-  "CompactMaxResourcesPerWidget": 10
+  "CompactMaxResourcesPerWidget": 10,
+  "AlarmTopic": "arn:aws:sns:eu-west-1:804485321675:OdcrMonitorStack-SNSTopicBCCC5DD8-7EXVDC451NDT"
 }
