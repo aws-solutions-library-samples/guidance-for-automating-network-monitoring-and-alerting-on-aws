@@ -80,7 +80,7 @@ The solution will create metrics and alarms following best practices.
 
 1. Check out the project.
 2. Change current directory to project directory.
-3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html)
+3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html). In case you don't want to bootstrap read [Deploying without boostraping CDK](BOOTSTRAP.md).
 4. Run `npm install` to install dependencies.
 5. Edit `lib/config.json` and set TagKey to tag key you want to use and TagValues to an array of values. Set Regions to include the regions that contain resources.
 6. Run `cd data; python3 resource_collector.py` to create configuration file `resources.json` in the `data` directory. IMPORTANT NOTICE: `data/getResources.sh`is now deprecated and will not be maintained. Use `data/resource_collector.py` instead.
