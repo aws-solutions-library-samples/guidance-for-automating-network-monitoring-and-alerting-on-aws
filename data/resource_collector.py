@@ -171,6 +171,8 @@ def router(resource, config):
         resource = sns_decorator(resource, config)
     elif ':cloudfront:' in arn and ':distribution/' in arn:
         resource = cloudfront_decorator(resource, config)
+    elif ':elasticache:' in arn:
+        resource = elasticache_decorator(resource, config)
     return resource
 
 
@@ -295,6 +297,9 @@ def ec2_decorator(resource, config):
     print(f'This resource is EC2 {resource["ResourceARN"]}')
     instanceid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     ec2 = boto3.client('ec2', config=config)
+
+    volumes = []
+
     response = ec2.describe_volumes(
         Filters=[
         {
@@ -306,7 +311,33 @@ def ec2_decorator(resource, config):
         ],
         MaxResults=100
     )
-    resource['Volumes'] = response['Volumes']
+
+
+    for record in response['Volumes']:
+        volumes.append(record)
+
+    try:
+        while response['NextToken']:
+            response = ec2.describe_volumes(
+                Filters=[
+                {
+                    'Name': 'attachment.instance-id',
+                    'Values': [
+                        instanceid,
+                    ]
+                },
+                ],
+                MaxResults=100,
+                NextToken=response['NextToken']
+            )
+            for record in response['Volumes']:
+                volumes.append(record)
+
+    except:
+        print(f'Done fetching volumes')
+
+    resource['Volumes'] = volumes
+
     response = ec2.describe_instances(
         Filters=[
             {
@@ -340,6 +371,27 @@ def ec2_decorator(resource, config):
         else:
             print(f'Instance {instanceid} does not have CWAgent')
             resource['CWAgent'] = 'False'
+
+    return resource
+
+def elasticache_decorator(resource, config):
+    print(f'This resource is Elasticache {resource["ResourceARN"]}')
+    if ':cluster:' in resource['ResourceARN']:
+        clusterid = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
+        client = boto3.client('elasticache', config=config)
+        response = client.describe_cache_clusters(
+            CacheClusterId=clusterid
+        )
+        resource['ClusterInfo'] = response['CacheClusters'][0]
+        if 'redis' in resource['ClusterInfo']['Engine']:
+            replication_group = resource['ClusterInfo']['ReplicationGroupId']
+            response2 = client.describe_replication_groups(
+                                   ReplicationGroupId=replication_group
+                               )
+            resource['ReplicationGroup'] = response2['ReplicationGroups'][0]
+            cn = open(f'../data/{resource["ClusterInfo"]["CacheClusterId"]}_replicationgroup.json', "w")
+            cn.write(json.dumps(resource['ReplicationGroup'], indent=4, default=str))
+            cn.close()
 
     return resource
 
