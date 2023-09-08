@@ -27,6 +27,8 @@ import {CloudfrontWidgetSet} from "./servicewidgetsets/cloudfront";
 import {LambdaGroupWidgetSet} from "./servicewidgetsets/lambdagroup";
 import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
 import {S3WidgetSet} from "./servicewidgetsets/s3";
+import {MediaPackageWidgetSet} from "./servicewidgetsets/mediapackage";
+import {MediaLiveWidgetSet} from "./servicewidgetsets/medialive";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 
@@ -75,6 +77,45 @@ export class GraphFactory extends Construct {
             for (let servicekey of servicekeys) {
                 console.log("Processing " + servicekey);
                 switch (servicekey) {
+                    case "mediapackage": {
+                        this.widgetArray.push(new TextWidget({
+                            markdown: "## Media Package",
+                            width: 24,
+                            height: 1
+                        }))
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            if (resource.Id !== undefined) {
+                                let channelid = resource.Id;
+                                let mediapackage = new MediaPackageWidgetSet(this, `MediaPackageWidgetSet-${channelid}-${region}`, resource);
+                                for (const widgetSet of mediapackage.getWidgetSets()) {
+                                    this.widgetArray.push(widgetSet);
+                                }
+                                this.alarmSet = this.alarmSet.concat(mediapackage.getAlarmSet());
+                                
+                            }
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
+                    case "medialive": {
+                        this.widgetArray.push(new TextWidget({
+                            markdown: "## Media Live",
+                            width: 24,
+                            height: 1
+                        }))
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            if (resource.id !== undefined) {
+                                let mlchannelid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1]
+                                let medialive = new MediaLiveWidgetSet(this, `MediaLiveWidgetSet-${mlchannelid}-${region}`, resource);
+                                for (const widgetSet of medialive.getWidgetSets()) {
+                                    this.widgetArray.push(widgetSet);
+                            }
+                            this.alarmSet = this.alarmSet.concat(medialive.getAlarmSet());
+                        }    
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
                     case "appsync": {
                         this.widgetArray.push(new TextWidget({
                             markdown: "## AppSync",
@@ -495,6 +536,18 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["appsync"] = [resource];
                 } else {
                     this.serviceArray[region]["appsync"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes(':mediapackage:')) {
+                if (!this.serviceArray[region]["mediapackage"]) {
+                    this.serviceArray[region]["mediapackage"] = [resource];
+                } else {
+                    this.serviceArray[region]["mediapackage"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes(':medialive:')) {
+                if (!this.serviceArray[region]["medialive"]) {
+                    this.serviceArray[region]["medialive"] = [resource];
+                } else {
+                    this.serviceArray[region]["medialive"].push(resource);
                 }
             } else if (resource.ResourceARN.includes(':dynamodb:') && resource.ResourceARN.includes(":table/")) {
                 if (!this.serviceArray[region]["dynamodb"]) {
