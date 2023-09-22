@@ -29,6 +29,7 @@ import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
 import {S3WidgetSet} from "./servicewidgetsets/s3";
 import {MediaPackageWidgetSet} from "./servicewidgetsets/mediapackage";
 import {MediaLiveWidgetSet} from "./servicewidgetsets/medialive";
+import {EFSWidgetSet} from "./servicewidgetsets/efs";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 
@@ -480,6 +481,25 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "elasticfilesystem": {
+                        const labelWidget = new TextWidget({
+                            markdown: `## EFS volumes`,
+                            width: 24,
+                            height: 1
+                        });
+
+                        this.widgetArray.push(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const fsName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+                            const efs = new EFSWidgetSet(this, `widgetSet-${fsName}`, resource);
+                            for (const widget of efs.getWidgetSets()) {
+                                this.widgetArray.push(widget);
+                            }
+                        }
+                        break;
+                    }
+
                     default: {
                         console.log("Error: not recognised service");
                         break;
@@ -633,7 +653,13 @@ export class GraphFactory extends Construct {
                 } else {
                     this.serviceArray[region]["wafv2"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes(':cloudfront:') && resource.ResourceARN.includes(':distribution/')){
+            } else if ( resource.ResourceARN.includes(':elasticfilesystem:')){
+                if (!this.serviceArray[region]["elasticfilesystem"]){
+                    this.serviceArray[region]["elasticfilesystem"] = [resource];
+                } else {
+                    this.serviceArray[region]["elasticfilesystem"].push(resource);
+                }
+            }else if (resource.ResourceARN.includes(':cloudfront:') && resource.ResourceARN.includes(':distribution/')){
                 if (!this.serviceArray[region]["cloudfront"]){
                     this.serviceArray[region]["cloudfront"] = [resource];
                 } else {

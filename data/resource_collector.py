@@ -177,6 +177,8 @@ def router(resource, config):
         resource = mediapackage_decorator(resource, config)
     elif ':medialive:' in arn and ':channel:' in arn:
         resource = medialive_decorator(resource, config)
+    elif ':elasticfilesystem:' in arn:
+        resource = efs_decorator(resource, config)
     return resource
 
 
@@ -600,6 +602,16 @@ def tgw_decorator(resource, config):
     )
 
     resource['attachments'] = response['TransitGatewayAttachments']
+    return resource
+
+def efs_decorator(resource, config):
+    print(f'This resource is EFS {resource["ResourceARN"]}')
+    fsId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    efs = boto3.client('efs', config=config)
+    response = efs.describe_file_systems(
+        FileSystemId=fsId
+    )
+    resource['ThroughputMode'] = response['FileSystems'][0]['ThroughputMode']
     return resource
 
 

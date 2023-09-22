@@ -1,0 +1,337 @@
+[
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:d05f6fbd-4003-496b-b7ea-87b7ce486113",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:6fdd9a2c-dcba-40cd-a428-4529d69bce2a",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "test-volume"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:e85f454b-861c-4ba2-8bc7-35f90624a4d9",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:8eb0c73e-5ab2-4e96-84ad-081e07885bc3",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "test-volume"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:2119c37e-eb21-4011-9283-17170db79bb7",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:753abb2f-553b-4872-a4f3-14d7db2eaf7f",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:55ae0f2b-d1bd-4a98-b9d5-44b0772319cd",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:7dfd9d26-4699-4ff0-9b76-cf7623976748",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:926ddd10-c44f-4fcc-8870-bb7eabb1b1bf",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:3fa43171-60bb-4823-8f02-39cfc258b8de",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "awcd1"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:ec2:eu-north-1:533535088613:volume/vol-088e536b9c054ed90",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "auto-delete",
+                "Value": "never"
+            },
+            {
+                "Key": "Name",
+                "Value": "acwd-test-volume"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:elasticfilesystem:eu-north-1:533535088613:file-system/fs-0fb93a3ea5e5ca25e",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "aws:elasticfilesystem:default-backup",
+                "Value": "enabled"
+            },
+            {
+                "Key": "Name",
+                "Value": "test-volume"
+            }
+        ],
+        "ThroughputMode": "elastic"
+    },
+    {
+        "ResourceARN": "arn:aws:backup:eu-north-1:533535088613:recovery-point:65bb8a58-1a7d-4a53-aaf5-f5c51cff798d",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "test-volume"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:sqs:eu-north-1:533535088613:testqueue.fifo",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            }
+        ],
+        "Attributes": {
+            "QueueArn": "arn:aws:sqs:eu-north-1:533535088613:testqueue.fifo",
+            "ApproximateNumberOfMessages": "0",
+            "ApproximateNumberOfMessagesNotVisible": "0",
+            "ApproximateNumberOfMessagesDelayed": "0",
+            "CreatedTimestamp": "1694180579",
+            "LastModifiedTimestamp": "1694180579",
+            "VisibilityTimeout": "30",
+            "MaximumMessageSize": "262144",
+            "MessageRetentionPeriod": "345600",
+            "DelaySeconds": "0",
+            "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"__default_policy_ID\",\"Statement\":[{\"Sid\":\"__owner_statement\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::533535088613:root\"},\"Action\":\"SQS:*\",\"Resource\":\"arn:aws:sqs:eu-north-1:533535088613:testqueue.fifo\"}]}",
+            "ReceiveMessageWaitTimeSeconds": "0",
+            "SqsManagedSseEnabled": "true",
+            "FifoQueue": "true",
+            "DeduplicationScope": "queue",
+            "FifoThroughputLimit": "perQueue",
+            "ContentBasedDeduplication": "false"
+        }
+    },
+    {
+        "ResourceARN": "arn:aws:sqs:eu-north-1:533535088613:acwd-queue",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "auto-delete",
+                "Value": "never"
+            }
+        ],
+        "Attributes": {
+            "QueueArn": "arn:aws:sqs:eu-north-1:533535088613:acwd-queue",
+            "ApproximateNumberOfMessages": "0",
+            "ApproximateNumberOfMessagesNotVisible": "0",
+            "ApproximateNumberOfMessagesDelayed": "0",
+            "CreatedTimestamp": "1693337479",
+            "LastModifiedTimestamp": "1693337479",
+            "VisibilityTimeout": "30",
+            "MaximumMessageSize": "262144",
+            "MessageRetentionPeriod": "345600",
+            "DelaySeconds": "0",
+            "Policy": "{\"Version\":\"2012-10-17\",\"Id\":\"__default_policy_ID\",\"Statement\":[{\"Sid\":\"__owner_statement\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::533535088613:root\"},\"Action\":\"SQS:*\",\"Resource\":\"arn:aws:sqs:eu-north-1:533535088613:acwd-queue\"}]}",
+            "ReceiveMessageWaitTimeSeconds": "0",
+            "SqsManagedSseEnabled": "true"
+        }
+    },
+    {
+        "ResourceARN": "arn:aws:backup:us-east-1:533535088613:recovery-point:974b87e0-e526-4f2d-a135-9bdbcbc52db8",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "test",
+                "Value": "123"
+            },
+            {
+                "Key": "Name",
+                "Value": "elastic"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:elasticfilesystem:us-east-1:533535088613:file-system/fs-05ec8160ea219ff2d",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "aws:elasticfilesystem:default-backup",
+                "Value": "enabled"
+            },
+            {
+                "Key": "Name",
+                "Value": "provisioned"
+            }
+        ],
+        "ThroughputMode": "provisioned"
+    },
+    {
+        "ResourceARN": "arn:aws:elasticfilesystem:us-east-1:533535088613:file-system/fs-0bc14b8c7bcfaf43e",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "aws:elasticfilesystem:default-backup",
+                "Value": "enabled"
+            },
+            {
+                "Key": "Name",
+                "Value": "burst-mode"
+            }
+        ],
+        "ThroughputMode": "bursting"
+    },
+    {
+        "ResourceARN": "arn:aws:backup:us-east-1:533535088613:recovery-point:ea80af5d-467c-4e11-bee0-64dc1662c845",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "burst-mode"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:backup:us-east-1:533535088613:recovery-point:c09a869e-4a08-410e-893c-7c2c56e6dffd",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "Name",
+                "Value": "provisioned"
+            }
+        ]
+    },
+    {
+        "ResourceARN": "arn:aws:elasticfilesystem:us-east-1:533535088613:file-system/fs-0dd953ecedcbb8783",
+        "Tags": [
+            {
+                "Key": "iem",
+                "Value": "2022"
+            },
+            {
+                "Key": "aws:elasticfilesystem:default-backup",
+                "Value": "enabled"
+            },
+            {
+                "Key": "test",
+                "Value": "123"
+            },
+            {
+                "Key": "Name",
+                "Value": "elastic"
+            }
+        ],
+        "ThroughputMode": "elastic"
+    }
+]

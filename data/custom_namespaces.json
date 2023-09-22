@@ -1,0 +1,16 @@
+{
+    "RegionNamespaces": [
+        {
+            "Region": "eu-west-1",
+            "Namespaces": []
+        },
+        {
+            "Region": "eu-north-1",
+            "Namespaces": []
+        },
+        {
+            "Region": "us-east-1",
+            "Namespaces": []
+        }
+    ]
+}
