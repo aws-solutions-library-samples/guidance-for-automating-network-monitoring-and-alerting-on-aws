@@ -173,6 +173,10 @@ def router(resource, config):
         resource = cloudfront_decorator(resource, config)
     elif ':elasticache:' in arn:
         resource = elasticache_decorator(resource, config)
+    elif ':mediapackage:' in arn and ':channels/' in arn:
+        resource = mediapackage_decorator(resource, config)
+    elif ':medialive:' in arn and ':channel:' in arn:
+        resource = medialive_decorator(resource, config)
     return resource
 
 
@@ -266,7 +270,43 @@ def cloudfront_decorator(resource, config):
     resource['Origins'] = response['Distribution']['DistributionConfig']['Origins']
     return resource
 
-
+def mediapackage_decorator(resource, config):
+    print(f'this resource is Mediapackage channel')
+    arn = resource['ResourceARN']
+    client = boto3.client('mediapackage', config=config)
+    response = client.list_channels(
+        MaxResults=40,
+    
+    )
+    for i in range(len(response['Channels'])):
+        if (arn == response['Channels'][i]['Arn']):
+            resource['Id'] = response['Channels'][i]['Id']
+            resource['ARN'] = response['Channels'][i]['Arn']
+            response2 = client.describe_channel(Id = response['Channels'][i]['Id'])
+            origin_endpoint = client.list_origin_endpoints(
+                ChannelId = response['Channels'][i]['Id']
+                )
+            resource ['IngestEndpoint'] = response2['HlsIngest']['IngestEndpoints']
+            resource['OriginEndpoint'] = origin_endpoint['OriginEndpoints']
+    return resource
+        
+def medialive_decorator(resource, config):
+    print(f'this resource is Medialive channel')
+    arn = resource['ResourceARN']
+    client = boto3.client('medialive', config=config)
+    response = client.list_channels(
+        MaxResults=40,
+    )
+    for i in range(len(response['Channels'])):
+        if (arn == response['Channels'][i]['Arn']):
+            resource['ARN'] = response['Channels'][i]['Arn']
+            resource['id'] = response['Channels'][i]['Id']
+            response2 = client.describe_channel(
+                ChannelId = response['Channels'][i]['Id']
+                )
+            resource['Pipeline'] = response2['PipelineDetails']
+    return resource
+    
 def odcr_decorator(resource, config):
     print(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
