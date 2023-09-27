@@ -29,6 +29,7 @@ import {SQSGroupWidgetSet} from "./servicewidgetsets/sqsgroup";
 import {S3WidgetSet} from "./servicewidgetsets/s3";
 import {MediaPackageWidgetSet} from "./servicewidgetsets/mediapackage";
 import {MediaLiveWidgetSet} from "./servicewidgetsets/medialive";
+import {EFSWidgetSet} from "./servicewidgetsets/efs";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 
@@ -194,6 +195,28 @@ export class GraphFactory extends Construct {
                             resourcecounter += 1;
                         }
                         this.widgetArray.push(new Spacer({width: 24, height: 2}));
+                        break;
+                    }
+
+                    case "elasticfilesystem": {
+                        const labelWidget = new TextWidget({
+                            markdown: `## EFS volumes`,
+                            width: 24,
+                            height: 1
+                        });
+
+                        this.widgetArray.push(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const fsName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
+                            const efs = new EFSWidgetSet(this, `widgetSet-${fsName}`, resource);
+                            for (const widget of efs.getWidgetSets()) {
+                                this.widgetArray.push(widget);
+                            }
+
+                            /*this.alarmSet = this.alarmSet.concat(sns.getAlarmSet());
+                            resourcecounter += 1*/
+                        }
                         break;
                     }
 
@@ -555,7 +578,13 @@ export class GraphFactory extends Construct {
                 } else {
                     this.serviceArray[region]["dynamodb"].push(resource);
                 }
-            } else if (resource.ResourceARN.includes(':ec2:') && resource.ResourceARN.includes(':instance/')) {
+            }else if ( resource.ResourceARN.includes(':elasticfilesystem:')){
+                if (!this.serviceArray[region]["elasticfilesystem"]){
+                    this.serviceArray[region]["elasticfilesystem"] = [resource];
+                } else {
+                    this.serviceArray[region]["elasticfilesystem"].push(resource);
+                }
+            }else if (resource.ResourceARN.includes(':ec2:') && resource.ResourceARN.includes(':instance/')) {
                 if (!this.serviceArray[region]["ec2instances"]) {
                     this.serviceArray[region]["ec2instances"] = [resource];
                 } else {
