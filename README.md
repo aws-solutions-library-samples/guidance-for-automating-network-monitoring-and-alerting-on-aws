@@ -32,6 +32,8 @@ a configuration file (JSON) to build a CloudWatch Dashboard with _reasonable_ me
 - SQS
 - Transit Gateway
 - WAFv2
+- AWS Elemental MediaPackage
+- AWS Elemental MediaLive
 
 ## How it works
 
