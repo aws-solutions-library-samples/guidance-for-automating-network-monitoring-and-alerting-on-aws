@@ -7,10 +7,12 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/NATGateway';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         const natgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### NATGW [${natgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${natgwId})`
@@ -152,16 +154,16 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
             period: Duration.minutes(1)
         });
 
-        const errorPortAllocationAlarm = errorPortAllocationMetric.createAlarm(this,'errorPortAlarm-'+natgwId,{
-            alarmName: 'Port Allocation Error ' + natgwId,
+        const errorPortAllocationAlarm = errorPortAllocationMetric.createAlarm(this,`errorPortAlarm-${natgwId}-${region}-${this.config.BaseName}`,{
+            alarmName: `errorPortAlarm-${natgwId}-${region}-${this.config.BaseName}`,
             datapointsToAlarm: 3,
             threshold: 3,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 3
         });
 
-        const packetsDropCountAlarm = packetsDropCountMetric.createAlarm(this,'packetDropAlarm-'+natgwId,{
-            alarmName: 'Packets Dropped Error ' + natgwId,
+        const packetsDropCountAlarm = packetsDropCountMetric.createAlarm(this,`packetDropAlarm-${natgwId}-${region}-${this.config.BaseName}`,{
+            alarmName: `packetDropAlarm-${natgwId}-${region}-${this.config.BaseName}`,
             datapointsToAlarm: 3,
             threshold: 3,
             treatMissingData: TreatMissingData.NOT_BREACHING,
@@ -180,7 +182,7 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
             right: [connectionAttemptCountMetric,connectionEstablishedCountMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 6
         });
 
         const bytesTrafficWidget = new GraphWidget({
@@ -189,7 +191,7 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
             right: [bytesInFromDestinationMetric,bytesOutToSourceMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 6
         });
 
         const packetsTrafficWidget = new GraphWidget({
@@ -198,10 +200,19 @@ export class NatgwWidgetSet extends Construct implements WidgetSet{
             right: [packetsInFromDestinationMetric,packetsOutToSourceMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 6
         });
 
-        this.widgetSet.push(new Row(connectionWidget,bytesTrafficWidget,packetsTrafficWidget));
+        const errorsWidget = new GraphWidget({
+            title: 'Port alloc err/Pckt drop err',
+            left:[errorPortAllocationMetric],
+            right:[packetsDropCountMetric],
+            period: Duration.minutes(1),
+            region: region,
+            width: 6
+        })
+
+        this.widgetSet.push(new Row(connectionWidget,bytesTrafficWidget,packetsTrafficWidget,errorsWidget));
 
 
     }

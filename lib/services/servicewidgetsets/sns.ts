@@ -7,9 +7,11 @@ export class SNSWidgetSet extends Construct implements WidgetSet {
     namespace:string='AWS/SNS';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct, id: string, resource: any) {
+    constructor(scope: Construct, id: string, resource: any, config:any) {
         super(scope,id);
+        this.config = config;
         const topicName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### SNS - ${topicName}`

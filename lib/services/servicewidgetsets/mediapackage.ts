@@ -8,7 +8,7 @@ export class MediaPackageWidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/MediaPackage'
     alarmSet:any = [];
 
-    constructor(scope:Construct, id:string, resource:any) {
+    constructor(scope:Construct, id:string, resource:any, config:any) {
         super(scope, id);
         let ChannelId = resource.Id;
         let ingestendpoints = resource.IngestEndpoint;

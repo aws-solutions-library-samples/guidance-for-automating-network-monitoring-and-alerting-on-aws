@@ -8,7 +8,7 @@ export class MediaLiveWidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/MediaLive'
     alarmSet:any = [];
 
-    constructor(scope:Construct, id:string, resource:any) {
+    constructor(scope:Construct, id:string, resource:any, config:any) {
         super(scope, id);
         const Pipeline = resource.Pipeline;
         let ChannelId = resource.id;

@@ -5,42 +5,57 @@
 
 The project is an example how to use AWS Resource Groups Tagging API to retrieve a specific tag
 and then based on found resources pull additional information from respective service APIs to generate
-a configuration file (JSON) to build a CloudWatch Dashboard with _reasonable_ metrics and alarms.
+a configuration file (JSON) to build a CloudWatch Dashboard with _reasonable_ metrics and alarms. Optionally customers
+can also deploy a central alarm dashboard to monitor alarms across an AWS Organization, AWS Organization OU or across 
+arbitrary number of AWS accounts.
 
 ## Features
 
 ### Supported services
 
-- API Gateway v1 (REST)
-- API Gateway v2 (HTTP, WebSockets)
-- AppSync
-- Aurora
-- Autoscaling Groups
+- Amazon API Gateway v1 (REST)
+- Amazon API Gateway v2 (HTTP, WebSockets)
+- AWS AppSync
+- Amazon Aurora
+- Auto Scaling groups
 - On-Demand Capacity Reservations
-- CloudFront
-- DynamoDB
-- EBS (as part of EC2)
-- EC2 (support for t\* burstable instances, support for CloudWatch Agent)
+- Amazon CloudFront
+- Amazon DynamoDB
+- Amazon EBS (as part of EC2)
+- Amazon EC2 (support for t\* burstable instances, support for CloudWatch Agent)
 - ELB v1 (ELB Classic)
 - ELB v2 (ALB, NLB)
-- ECS (EC2 and Fargate)
-- Lambda
+- Amazon ECS (EC2 and Fargate)
+- AWS Lambda
+- AWS Elemental MediaLive
+- AWS Elemental MediaPackage
 - NAT Gateway
 - RDS
 - S3
 - SNS
 - SQS
 - Transit Gateway
-- WAFv2
-- AWS Elemental MediaPackage
-- AWS Elemental MediaLive
+- AWS WAFv2
+
+### Central alarm dashboard features
+- Event-driven for scalability and speed
+- Supports arbitrary source accounts within an AWS Organization (different teams can have own dashboards)
+- Supports automatic source account configuration through stack-sets
+- Supports visualization and sorting of alarm priority (CRITICAL, MEDIUM, LOW) through alarm tags in source accounts.
+- Supports tag data for EC2 instances in source accounts
 
 ## How it works
 
+### Metric dashboards
 1. `data/resource_collector.py` is used to call the Resource Groups Tagging API and to generate the configuration file.
 2. CDK (v2) is used to generate CloudFormation template and deploy it
 
 The solution will create metrics and alarms following best practices.
+
+### Central alarm dashboard
+When a CloudWatch Alarm changes state (going from OK to ALARM state), an event is emitted to EventBridge in the account. 
+An event bus rule forwards the event to the central event bus in the monitoring account. This event is then registered
+in DynamoDB. CloudWatch custom widgets visualize current alarm state on the dashboard.
 
 ## Prerequisites
 
@@ -51,14 +66,15 @@ The solution will create metrics and alarms following best practices.
 
 ### To generate the dashboard
 
-- NodeJS 14+ (required by CDK v2)
+- NodeJS 16+, recommended 18LTS, (required by CDK v2)
 - CDK v2 (Installation: `npm -g install aws-cdk@latest`)
 
 ## Configuration properties in lib/config.json
 
 `BaseName` (String:required) - Base-name of your dashboards. This will be the prefix of the dashboard names.
 
-`ResourceFile` (String:required) - The path for the file where resources are stored. Used by the `resource_collector.py` when generating resource config and by the CDK when generating the CF template.
+`ResourceFile` (String:required) - The path for the file where resources are stored. Used by the `resource_collector.py`
+when generating resource config and by the CDK when generating the CF template.
 
 `TagKey` (String:required) - Configuration of the tag key that will select resources to be included.
 
@@ -66,28 +82,73 @@ The solution will create metrics and alarms following best practices.
 
 `Regions` (Array<String>:required) - List of regions from which resources are displayed.
 
-`GroupingTagKey` (String:optional) - If set, separate Lambda and EC2 dashboards will be created for every value of that tag. Every value groups resources by that value.
+`GroupingTagKey` (String:optional) - If set, separate Lambda and EC2 dashboards will be created for every value of that 
+tag. Every value groups resources by that value.
 
-`CustomEC2TagKeys` (Array<String>:optional) - If set, the tag info will show in the EC2 header widget in format Key:Value. Useful to add auxilary information to the header.
+`CustomEC2TagKeys` (Array<String>:optional) - If set, the tag info will show in the EC2 header widget in format 
+Key:Value. Useful to add auxilary information to the header.
 
 `CustomNamepsaceFile` (String:required) - Detected custom namespaces. Not yet used.
 
-`Compact` (boolean (true/false):required) - When set to true, multiple Lambda functions will be put in a single widget set. Useful when there are many Lambda functions.
+`Compact` (boolean (true/false):required) - When set to true, multiple Lambda functions will be put in a single widget 
+set. Useful when there are many Lambda functions.
 
-`CompactMaxResourcesPerWidget` (Integer:required) - When `Compact` is set to true, determines how many Lambda functions will be in each widget set.
+`CompactMaxResourcesPerWidget` (Integer:required) - When `Compact` is set to true, determines how many Lambda functions 
+will be in each widget set.
 
-`AlarmTopic` (String:optional) - When `AlarmTopic` contains a string with an ARN to a SNS topic, all alarms will be created with an action to send notification to that SNS topic.
+`AlarmTopic` (String:optional) - When `AlarmTopic` contains a string with an ARN to a SNS topic, all alarms will be 
+created with an action to send notification to that SNS topic.
 
-## Getting started
+`AlarmDashboard.enabled` (boolean (true/false):optional) - When set to true deploys the alarm dashboard in the account.
+
+`AlarmDashboard.organizationId` (String: required when `AlarmDashboard.enabled` is true) - Required in order to set 
+resource policy on the custom event bus to allow PutEvents from the AWS Organization.
+
+`MetricDashboards.enabled` (boolean (true/false):optional) - If not defined or set to true, deploy metric dashboards. 
+Recommended if only alarm dashboard is being deployed.
+
+
+## Getting and preparing the code
 
 1. Check out the project.
-2. Change current directory to project directory.
-3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html). In case you don't want to bootstrap read [Deploying without boostraping CDK](BOOTSTRAP.md).
+2. Change current directory to project directory. (`cd tag-based-cloudwatch-dashboard`)
+3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment 
+(https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html). In case you don't want to bootstrap 
+read [Deploying without boostraping CDK](BOOTSTRAP.md).
 4. Run `npm install` to install dependencies.
-5. Edit `lib/config.json` and set TagKey to tag key you want to use and TagValues to an array of values. Set Regions to include the regions that contain resources.
-6. Run `cd data; python3 resource_collector.py` to create configuration file `resources.json` in the `data` directory. IMPORTANT NOTICE: `data/getResources.sh`is now deprecated and will not be maintained. Use `data/resource_collector.py` instead.
-7. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard.
-8. Run `cdk synth` from the project root to generate CF template in `cdk.out` or `cdk deploy` to deploy directly to your AWS account.
+
+## Configuring the dashboards
+1. Open the configuration file `lib/config.json` in your editor of choice.
+2. Set TagKey to tag key you want to use and TagValues to an array of values. Dashboard will collect all resources tagged 
+with that key and the specified values.
+3. Set Regions to include the regions that contain resources you want to monitor. 
+4. **OPTIONAL** if you want to deploy central alarm dashboard set `AlarmDashboard.enabled` to true and provide your AWS
+Organizations id in `AlarmDashboard.organizationId`.
+5. **OPTIONAL** if you don't want to use metric dashboards you can disable creation of those by setting
+`MetricDashboards.enabled` to false. See _Configuration properties in lib/config.json_ above for more information.
+6. Save the configuration file.
+
+## Deploying the dashboards
+
+1. If the deployment of the metric dashboards have been enabled, run `cd data; python3 resource_collector.py` to create 
+the resource configuration file (`resources.json` in the `data` directory).
+2. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard. In case you plan to
+deploy multiple sets of dashboards for different applications in the same account, ensure all subsequent deploys have 
+different `BaseName`.
+3. Run `cd ..` to change directory to project root. 
+4. Run `cdk synth` to generate CF template or use `cdk deploy --all` to deploy directly to your AWS account.
+5. In case central alarm dashboard is enabled in the configuration, take note of deployment output,
+`*-Alarm-Stack.CustomEventBusArn`, and copy the ARN (of the custom event bus).
+
+## Enabling source accounts to share alarms
+_This only applies in case `AlarmDashboard.enabled` is set_
+
+1. Run command `cd stack_sets` to change directory which contains `event_forwarder_template.yaml`.
+2. Run command `sh create_stackset.sh REPLACE_WITH_THE_ARN_OF_CUSTOM_EVENT_BUS`, replace the placeholder with the ARN 
+from the previous step.
+3. Deploy the generated `event_forwarder.yaml`-template manually to each of the source accounts through CloudFormation or
+deploy it automatically to an AWS Organization, OU or list of accounts through service managed stack-sets from your 
+management account or stack-set delegate account.
 
 ## Tips
 

@@ -7,10 +7,12 @@ export class CapacityReservationsWidgetSet extends Construct implements WidgetSe
     namespace:string = 'AWS/EC2CapacityReservations';
     widgetSet:any = [];
     alarmSet: any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         let usedMetricsArray = [];
         let availMetricsArray = [];
         const region = resource[0].ResourceARN.split(':')[3];
@@ -40,8 +42,8 @@ export class CapacityReservationsWidgetSet extends Construct implements WidgetSe
                 period: Duration.minutes(1)
             })
 
-            let availableAlarm = availableMetric.createAlarm(this,crId,{
-                alarmName: 'Alarm ' + crId,
+            let availableAlarm = availableMetric.createAlarm(this,`${crId}-${this.config.BaseName}`,{
+                alarmName: `Alarm-UnusedODCR-${crId}-${this.config.BaseName}`,
                 datapointsToAlarm: 1,
                 evaluationPeriods: 1,
                 threshold: 1,

@@ -9,9 +9,11 @@ export class EcsWidgetSet extends Construct implements WidgetSet {
     namespace:string = "AWS/ECS";
     alarmSet:any = [];
     widgetSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct , id: string, resource:any) {
+    constructor(scope: Construct , id: string, resource:any, config:any) {
         super(scope,id);
+        this.config = config;
         const region = resource.ResourceARN.split(':')[3];
         const cluster = resource.cluster;
         const clusterName = cluster.clusterName;
@@ -92,13 +94,13 @@ export class EcsWidgetSet extends Construct implements WidgetSet {
 
         for (let service of resource.services){
             if ( service.launchType === "EC2" ){
-                const ec2serviceWidgetSet = new EcsEC2WidgetSet(this,`ECSEC2WidgetSet-${service.serviceName}-${region}`,service, clusterName);
+                const ec2serviceWidgetSet = new EcsEC2WidgetSet(this,`ECSEC2WidgetSet-${service.serviceName}-${region}-${this.config.BaseName}`,service, clusterName, this.config);
                 for ( let widget of ec2serviceWidgetSet.getWidgetSets()){
                     this.widgetSet.push(widget);
                 }
                 this.alarmSet = this.alarmSet.concat(ec2serviceWidgetSet.getAlarmSet());
             } else {
-                const fargateServiceWidgetSet = new EcsFargateWidgetSet(this,`FargateWidgetSet-${service.serviceName}-${region}`, service, clusterName);
+                const fargateServiceWidgetSet = new EcsFargateWidgetSet(this,`FargateWidgetSet-${service.serviceName}-${region}-${this.config.BaseName}`, service, clusterName, this.config);
                 for ( let widget of fargateServiceWidgetSet.getWidgetSets()){
                     this.widgetSet.push(widget);
                 }

@@ -9,9 +9,11 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
     namespace: string = 'AWS/Lambda';
     widgetSet: any = [];
     alarmSet: any = [];
+    config:any = {};
 
     constructor(scope:Construct, id:string, resourceArray:any, config:any) {
         super(scope,id);
+        this.config = config;
         const region = resourceArray[0].ResourceARN.split(':')[3];
         let widgetHeight = 8
         if ( resourceArray.length > 5 ){
@@ -28,18 +30,35 @@ export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
         const durationMetricArray = this.getMetricArray(resourceArray,'Duration',Duration.minutes(1),Statistic.AVERAGE);
 
         const errorsMetricArray = this.getMetricArray(resourceArray,'Errors');
-        const throttlesMetricArray = this.getMetricArray(resourceArray,'Throttles');
-        for (const metric of throttlesMetricArray) {
+        for (const metric of errorsMetricArray) {
             if ( metric.dimensions && metric.dimensions.FunctionName ){
 
-                let alarm = metric.createAlarm(this,`Throttles-${metric.dimensions.FunctionName}`,{
-                    alarmName: `Throttles-${metric.dimensions.FunctionName}`,
+                let alarm = metric.createAlarm(this,`Errors-${metric.dimensions.FunctionName}-${region}-${this.config.BaseName}`,{
+                    alarmName: `Errors-${metric.dimensions.FunctionName}-${region}-${this.config.BaseName}`,
                     datapointsToAlarm: 3,
                     evaluationPeriods: 3,
                     threshold: 10
                 });
                 if ( config.AlarmTopic ){
                     alarm.addAlarmAction(new SnsAction(sns.Topic.fromTopicArn(this,`ALARMTOPIC-${metric.dimensions.FunctionName}`,config.AlarmTopic)));
+                }
+                this.alarmSet.push(alarm);
+            }
+        }
+
+
+        const throttlesMetricArray = this.getMetricArray(resourceArray,'Throttles');
+        for (const metric of throttlesMetricArray) {
+            if ( metric.dimensions && metric.dimensions.FunctionName ){
+
+                let alarm = metric.createAlarm(this,`Throttles-${metric.dimensions.FunctionName}-${region}-${this.config.BaseName}`,{
+                    alarmName: `Throttles-${metric.dimensions.FunctionName}-${region}-${this.config.BaseName}`,
+                    datapointsToAlarm: 3,
+                    evaluationPeriods: 3,
+                    threshold: 10
+                });
+                if ( config.AlarmTopic ){
+                    alarm.addAlarmAction(new SnsAction(sns.Topic.fromTopicArn(this,`ALARMTOPIC-${metric.dimensions.FunctionName}-${metric.metricName}`,config.AlarmTopic)));
                 }
                 this.alarmSet.push(alarm);
 

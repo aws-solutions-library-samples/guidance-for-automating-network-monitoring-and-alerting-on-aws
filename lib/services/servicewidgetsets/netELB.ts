@@ -8,9 +8,11 @@ export class NetworkELBWidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/NetworkELB';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct, id: string, resource: any) {
+    constructor(scope: Construct, id: string, resource: any, config:any) {
         super(scope, id);
+        this.config = config;
         const elbName = resource.Extras.LoadBalancerName;
         const targetGroups = resource.TargetGroups;
 
@@ -85,8 +87,8 @@ export class NetworkELBWidgetSet extends Construct implements WidgetSet{
                 region:region
             });
 
-            let unhealthyAlarm = unhealthyMetric.createAlarm(this,'UHAlarm' + targetGroupName,{
-                alarmName: 'Unhealthy Hosts ' + targetGroupName,
+            let unhealthyAlarm = unhealthyMetric.createAlarm(this,`UHAlarm-${targetGroupName}-${region}-${this.config.BaseName}`,{
+                alarmName: `UHAlarm-${targetGroupName}-${region}-${this.config.BaseName}`,
                 datapointsToAlarm: 3,
                 evaluationPeriods: 3,
                 threshold: 3,

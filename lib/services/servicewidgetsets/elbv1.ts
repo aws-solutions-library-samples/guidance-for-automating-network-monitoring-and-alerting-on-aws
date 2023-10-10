@@ -7,9 +7,11 @@ export class ELBv1WidgetSet extends Construct implements WidgetSet {
     namespace:string = 'AWS/ELB'
     widgetSet:any = []
     alarmSet:any = []
+    config:any = {}
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope,id);
+        this.config = config;
         const elbName = resource.Extras.LoadBalancerName
         const region = resource.ResourceARN.split(':')[3];
 
@@ -89,11 +91,11 @@ export class ELBv1WidgetSet extends Construct implements WidgetSet {
             period: Duration.minutes(5)
         })
 
-        const alarmUnhealthyHosts = unhealthyHost.createAlarm(this,'alarmUnhe' + elbName, {
-            alarmName: 'ELB (' + elbName + ') unhealthy hosts',
+        const alarmUnhealthyHosts = unhealthyHost.createAlarm(this,`alarmUnhe-${elbName}-${region}-${this.config.BaseName}`, {
+            alarmName: `ELB-${elbName}-${region}-${this.config.BaseName} unhealthy hosts`,
             datapointsToAlarm: 5,
             treatMissingData: TreatMissingData.NOT_BREACHING,
-            threshold: 2,
+            threshold: 1,
             evaluationPeriods: 5
         })
 
