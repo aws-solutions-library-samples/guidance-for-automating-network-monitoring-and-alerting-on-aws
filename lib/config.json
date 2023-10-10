@@ -12,7 +12,7 @@
   "AlarmTopic": "",
   "AlarmDashboard": {
     "enabled": false,
-    "organizationId": "o-f7ykioh45c"
+    "organizationId": ""
   },
   "MetricDashboards": {
     "enabled": true
