@@ -41,7 +41,8 @@ arbitrary number of AWS accounts.
 - Event-driven for scalability and speed
 - Supports arbitrary source accounts within an AWS Organization (different teams can have own dashboards)
 - Supports automatic source account configuration through stack-sets
-- Supports visualization and sorting of alarm priority (CRITICAL, MEDIUM, LOW) through alarm tags in source accounts.
+- Supports visualization and sorting of alarm priority (CRITICAL, MEDIUM, LOW) through alarm tags in source accounts. 
+Simply add tag with key `priority` and values critical, medium or low.
 - Supports tag data for EC2 instances in source accounts
 
 ## How it works
