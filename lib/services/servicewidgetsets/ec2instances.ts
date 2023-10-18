@@ -97,18 +97,21 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
             width: 12,
             height: 5
         });
+
+        const cpuMetric = new Metric({
+            namespace: this.namespace,
+            metricName: 'CPUUtilization',
+            dimensionsMap: {
+                InstanceId: instanceId
+            },
+            statistic: Statistic.MAXIMUM,
+            period:Duration.minutes(1)
+        });
+
         const cpuwidget = new GraphWidget({
             title: 'CPU '+instanceId,
             region: region,
-            left: [new Metric({
-                namespace: this.namespace,
-                metricName: 'CPUUtilization',
-                dimensionsMap: {
-                    InstanceId: instanceId
-                },
-                statistic: Statistic.MAXIMUM,
-                period:Duration.minutes(1)
-            })],
+            left: [cpuMetric],
             width: 6,
             height: 5,
             leftYAxis:{
@@ -116,6 +119,18 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 max: 100
             }
         });
+
+        const cpuUtilizationAlarm =  cpuMetric.createAlarm(this, `CPUUtilisationAlarm-${instanceId}-${config.BaseName}`,{
+            alarmName: `${instanceId}-CPU-Utilisation-Alarm-${config.BaseName}`,
+            treatMissingData: TreatMissingData.NOT_BREACHING,
+            datapointsToAlarm: 1,
+            evaluationPeriods: 1,
+            threshold: 70
+        })
+
+        this.alarmSet.push(cpuUtilizationAlarm);
+
+
         const networkWidget = new GraphWidget({
             title: 'Network '+instanceId,
             region: region,
@@ -194,8 +209,8 @@ export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
-            const CPUSurplusCreditBalanceAlarm = CPUSurplusCreditBalance.createAlarm(this,`${instanceId}-CPUCredit-Alarm`,{
-                alarmName: `${instanceId}-CPUCredit-Alarm`,
+            const CPUSurplusCreditBalanceAlarm = CPUSurplusCreditBalance.createAlarm(this,`${instanceId}-CPUCredit-Alarm-${config.BaseName}`,{
+                alarmName: `${instanceId}-CPUCredit-Alarm-${config.BaseName}`,
                 treatMissingData: TreatMissingData.NOT_BREACHING,
                 datapointsToAlarm: 1,
                 evaluationPeriods: 1,

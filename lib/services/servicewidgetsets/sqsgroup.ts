@@ -7,9 +7,11 @@ export class SQSGroupWidgetSet extends Construct implements WidgetSet {
     namespace:string = 'AWS/SQS'
     widgetSet: any = [];
     alarmSet: any = [];
+    config: any = {}
 
     constructor(scope:Construct, id:string, resourceArray:any, config:any) {
         super(scope,id);
+        this.config = config;
         const region = resourceArray[0].ResourceARN.split(':')[3];
         let widgetHeight = 8
         const queuesperwidget = Math.min(config.CompactMaxResourcesPerWidget, 100);

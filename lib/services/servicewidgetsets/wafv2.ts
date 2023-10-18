@@ -7,10 +7,12 @@ export class WafV2WidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/WAFV2';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         const webacl = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-2];
         const webaclid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1];
         const region = resource.ResourceARN.split(':')[3];

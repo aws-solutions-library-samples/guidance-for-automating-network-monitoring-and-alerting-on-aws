@@ -6,10 +6,12 @@ export class CloudfrontWidgetSet extends Construct implements WidgetSet {
     namespace: string = 'AWS/CloudFront';
     widgetSet: any = [];
     alarmSet: any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource: any) {
+    constructor(scope: Construct, id: string, resource: any, config:any) {
         super(scope, id);
+        this.config = config;
         const distId = resource['Id'];
         const domainName = resource['DomainName'];
         const aliases = resource['Aliases']['Quantity']

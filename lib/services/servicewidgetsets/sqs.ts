@@ -7,9 +7,11 @@ export class SQSWidgetSet extends Construct implements WidgetSet{
     namespace:string = 'AWS/SQS'
     widgetSet:any=[];
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct, id:string, resource:any) {
+    constructor(scope: Construct, id:string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         let arn = resource.ResourceARN
         let queueName = arn.split(':')[arn.split(':').length - 1];
         let region = arn.split(':')[3];

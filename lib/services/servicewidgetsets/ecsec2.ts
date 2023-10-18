@@ -1,16 +1,18 @@
 import {WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
 export class EcsEC2WidgetSet extends Construct implements WidgetSet {
     namespace:string = 'AWS/ECS';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {}
 
 
-    constructor(scope: Construct, id: string, service:any, clusterName:string) {
+    constructor(scope: Construct, id: string, service:any, clusterName:string, config:any) {
         super(scope, id);
+        this.config = config;
         console.log(`EC2 Service ${clusterName}`);
         const region = service.serviceArn.split(':')[3];
         const serviceName = service.serviceName;
@@ -34,6 +36,16 @@ export class EcsEC2WidgetSet extends Construct implements WidgetSet {
             period: Duration.minutes(1),
             statistic: Statistic.AVERAGE
         });
+
+        const CPUEC2UtilAlarm = CPUUEc2tilisationMetric.createAlarm(this,`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,{
+            alarmName:`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,
+            datapointsToAlarm: 3,
+            evaluationPeriods: 3,
+            threshold: 95,
+            treatMissingData: TreatMissingData.MISSING
+        });
+        this.alarmSet.push(CPUEC2UtilAlarm);
+
 
         const MemoryEc2UtilizationMetric = new Metric({
             namespace: this.namespace,
@@ -70,7 +82,6 @@ export class EcsEC2WidgetSet extends Construct implements WidgetSet {
 
 
 
-
     }
 
     /***
@@ -89,6 +100,16 @@ export class EcsEC2WidgetSet extends Construct implements WidgetSet {
             statistic: Statistic.MAXIMUM,
             period:Duration.minutes(1)
         });
+
+        const cpuAlarm = cpuMetric.createAlarm(this,`CPUAlarm-ECS-${instanceId}-${this.config.BaseName}`,{
+            alarmName:`CPUAlarm-ECS-${instanceId}-${this.config.BaseName}`,
+            treatMissingData: TreatMissingData.MISSING,
+            threshold: 95,
+            datapointsToAlarm: 3,
+            evaluationPeriods: 3
+        });
+
+        this.alarmSet.push(cpuAlarm);
 
         const networkInMetric = new Metric({
             namespace: namespace,

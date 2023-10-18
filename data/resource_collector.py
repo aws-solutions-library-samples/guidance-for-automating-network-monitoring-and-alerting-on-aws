@@ -179,6 +179,8 @@ def router(resource, config):
         resource = medialive_decorator(resource, config)
     elif ':elasticfilesystem:' in arn:
         resource = efs_decorator(resource, config)
+    elif 'arn:aws:elasticbeanstalk:' in arn:
+        resource = beanstalk_decorator(resource,config)
     return resource
 
 
@@ -257,6 +259,9 @@ def aurora_decorator(resource, config):
 
 def autoscaling_decorator(resource, config):
     print(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
+    return resource
+
+def beanstalk_decorator(resource, config):
     return resource
 
 def cloudfront_decorator(resource, config):

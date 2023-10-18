@@ -7,10 +7,12 @@ export class S3WidgetSet extends Construct implements WidgetSet {
     alarmSet:any = [];
     namespace:string = 'AWS/S3';
     widgetSet:any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource: any) {
+    constructor(scope: Construct, id: string, resource: any, config:any) {
         super(scope, id);
+        this.config = config;
         let arn = resource.ResourceARN;
         let bucketName = arn.split(":")[arn.split(':').length-1];
         let region = resource.Region;

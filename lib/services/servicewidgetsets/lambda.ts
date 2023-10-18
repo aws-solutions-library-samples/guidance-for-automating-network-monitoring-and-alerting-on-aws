@@ -7,9 +7,11 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
     namespace:string='AWS/Lambda';
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope:Construct, id:string, resource:any) {
+    constructor(scope:Construct, id:string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         const functionName = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
         let name = functionName
         const region = resource.ResourceARN.split(':')[3];
@@ -60,8 +62,8 @@ export class LambdaWidgetSet extends Construct implements WidgetSet{
             period:Duration.minutes(1)
         });
 
-        const throttleAlarm = throttleMetric.createAlarm(this,`Throttles-${functionName}`,{
-            alarmName: `Throttles-${functionName}`,
+        const throttleAlarm = throttleMetric.createAlarm(this,`Throttles-${functionName}-${region}-${this.config.BaseName}`,{
+            alarmName: `Throttles-${functionName}-${region}-${this.config.BaseName}`,
             datapointsToAlarm: 3,
             evaluationPeriods: 3,
             threshold: 10

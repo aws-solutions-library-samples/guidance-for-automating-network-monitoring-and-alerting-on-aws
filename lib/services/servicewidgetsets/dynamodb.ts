@@ -9,9 +9,11 @@ export class DynamodbWidgetSet extends Construct implements WidgetSet{
 
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {}
 
-    constructor(scope:Construct, id:string, resource:any) {
+    constructor(scope:Construct, id:string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         let arn = resource.ResourceARN;
         let type = resource.type;
         let tablename = arn.split('/')[arn.split('/').length - 1];
@@ -36,8 +38,8 @@ export class DynamodbWidgetSet extends Construct implements WidgetSet{
             }
         })
 
-        const writesAlarm = writesExpression.createAlarm(this,'Writes'+tablename,{
-            alarmName: 'Writes'+tablename,
+        const writesAlarm = writesExpression.createAlarm(this,`Writes-${tablename}-${region}-${this.config.BaseName}`,{
+            alarmName: `Writes-${tablename}-${region}-${this.config.BaseName}`,
             evaluationPeriods: 2,
             threshold: 90,
             datapointsToAlarm: 2,

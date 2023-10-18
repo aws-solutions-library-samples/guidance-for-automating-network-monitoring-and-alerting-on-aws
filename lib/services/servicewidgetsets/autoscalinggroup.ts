@@ -7,9 +7,11 @@ export class ASGWidgetSet extends Construct implements WidgetSet{
     namespace:string='AWS/EC2';
     widgetSet:any=[];
     alarmSet:any = [];
+    config:any = {}
 
-    constructor(scope:Construct, id:string, arn:string) {
+    constructor(scope:Construct, id:string, arn:string, config:any) {
         super(scope, id);
+        this.config = config;
         let asgName = arn.split('/')[arn.split('/').length - 1];
         let region = arn.split(':')[3];
         const networkWidget = new GraphWidget({

@@ -14,10 +14,12 @@ export class EcsFargateWidgetSet extends Construct implements WidgetSet{
     namespace:string = "AWS/ECS";
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string,service:any,clusterName:string) {
+    constructor(scope: Construct, id: string, service:any, clusterName:string, config:any) {
         super(scope, id);
+        this.config = config;
         const region = service.serviceArn.split(':')[3];
         const serviceName = service.serviceName;
         const runningTasks = service.runningCount;
@@ -40,12 +42,12 @@ export class EcsFargateWidgetSet extends Construct implements WidgetSet{
             statistic: Statistic.AVERAGE
         });
 
-        const cpuUtilAlarm = CPUUtilisationMetric.createAlarm(this,`CPU-${serviceName}-alrm`,{
-            alarmName:`CPU-Alarm-${serviceName}`,
+        const CPUEC2UtilAlarm = CPUUtilisationMetric.createAlarm(this,`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,{
+            alarmName:`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,
             datapointsToAlarm: 3,
-            threshold: 5,
             evaluationPeriods: 3,
-            treatMissingData: TreatMissingData.NOT_BREACHING
+            threshold: 95,
+            treatMissingData: TreatMissingData.MISSING
         });
 
         const MemoryUtilizationMetric = new Metric({
@@ -71,7 +73,7 @@ export class EcsFargateWidgetSet extends Construct implements WidgetSet{
         });
 
         this.widgetSet.push(new Row(ServiceCPUUtilisation));
-        this.alarmSet.push(cpuUtilAlarm);
+        this.alarmSet.push(CPUEC2UtilAlarm);
 
     }
 

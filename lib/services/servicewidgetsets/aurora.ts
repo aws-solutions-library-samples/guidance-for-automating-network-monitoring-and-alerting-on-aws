@@ -8,9 +8,11 @@ export class AuroraWidgetSet extends Construct  implements WidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/RDS';
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct, id:string, resource:any) {
+    constructor(scope: Construct, id:string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         let aurora = resource.ResourceARN.split(':')[resource.ResourceARN.split(':').length - 1];
         let maz = resource.MultiAZ?" (MAZ)":" (SAZ)";
         let engine = resource.Engine;

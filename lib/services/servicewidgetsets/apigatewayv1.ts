@@ -16,8 +16,11 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
     widgetSet:any = [];
     alarmSet:any = [];
 
-    constructor(scope: Construct, id:string, resource:any) {
+    config:any = {}
+
+    constructor(scope: Construct, id:string, resource:any, config:any) {
         super(scope,id);
+        this.config = config;
         let apigw = resource.name;
         let region = resource.ResourceARN.split(':')[3];
         let apiid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1]
@@ -82,17 +85,17 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
             period:Duration.minutes(1)
         });
 
-        const error4xxAlarm = status4xxMetric.createAlarm(this, `Error4xxAlarm-${apigw}-${apiid}`,{
+        const error4xxAlarm = status4xxMetric.createAlarm(this, `Error4xxAlarm-${apigw}-${apiid}-${this.config.BaseName}`,{
             datapointsToAlarm: 1,
-            alarmName: `Error4xx-${apigw}-${apiid}`,
+            alarmName: `Error4xxAlarm-${apigw}-${apiid}-${this.config.BaseName}`,
             threshold: 1000,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 1
         })
 
-        const error5xxAlarm = status5xxMetric.createAlarm(this,`Error5xxAlarm-${apigw}-${apiid}`,{
+        const error5xxAlarm = status5xxMetric.createAlarm(this,`Error5xxAlarm-${apigw}-${apiid}-${this.config.BaseName}`,{
             datapointsToAlarm: 1,
-            alarmName: `Error5xx-${apigw}-${apiid}`,
+            alarmName: `Error5xx-${apigw}-${apiid}-${this.config.BaseName}`,
             threshold: 1000,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 1
@@ -155,8 +158,8 @@ export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
                 label: "Miss ratio in %"
             });
 
-            const missAlarm = missPercentage.createAlarm(this,`CacheMissAlarm-${apiid}-${region}`,{
-                alarmName:`CacheMissAlarm-${apiid}-${region}`,
+            const missAlarm = missPercentage.createAlarm(this,`CacheMissAlarm-${apiid}-${region}-${this.config.BaseName}`,{
+                alarmName:`CacheMissAlarm-${apiid}-${region}-${this.config.BaseName}`,
                 datapointsToAlarm: 5,
                 evaluationPeriods: 5,
                 threshold: 25,

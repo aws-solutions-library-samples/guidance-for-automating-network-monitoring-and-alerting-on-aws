@@ -7,9 +7,11 @@ export class ApplicationELBWidgetSet extends Construct implements WidgetSet{
     namespace:string = "AWS/ApplicationELB";
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         const elbName = resource.Extras.LoadBalancerName
         const targetGroups = resource.TargetGroups;
         const region = resource.ResourceARN.split(':')[3];
@@ -159,8 +161,8 @@ export class ApplicationELBWidgetSet extends Construct implements WidgetSet{
                 region:region
             });
 
-            let unhealthyAlarm = unhealthyMetric.createAlarm(this,'UHAlarm' + targetGroupName,{
-                alarmName: 'Unhealthy Hosts ' + targetGroupName,
+            let unhealthyAlarm = unhealthyMetric.createAlarm(this,`UHAlarm-${targetGroupName}-${region}-${this.config.BaseName}`,{
+                alarmName: `Unhealthy-Hosts-Alarm-${targetGroupName}-${region}-${this.config.BaseName}`,
                 datapointsToAlarm: 3,
                 evaluationPeriods: 3,
                 threshold: 3,
@@ -175,16 +177,16 @@ export class ApplicationELBWidgetSet extends Construct implements WidgetSet{
         /***
          * Alarms
          */
-        const elb5xxAlarm = elb5xxMetric.createAlarm(scope,'5xxAlarm-'+elbName,{
-            alarmName: 'ELB 5xx ' + elbName,
+        const elb5xxAlarm = elb5xxMetric.createAlarm(scope,`5xxAlarm-${elbName}-${region}-${this.config.BaseName}`,{
+            alarmName: `5xxAlarm-${elbName}-${region}-${this.config.BaseName}`,
             threshold: 2,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 2,
             datapointsToAlarm: 2
         })
 
-        const backend5xxAlarm = backend5xxMetric.createAlarm(scope,'Backend5xxAlarm' + elbName,{
-            alarmName: 'backend 5xx ' + elbName,
+        const backend5xxAlarm = backend5xxMetric.createAlarm(scope,`Backend5xxAlarm-${elbName}-${region}-${this.config.BaseName}`,{
+            alarmName: `Backend5xxAlarm-${elbName}-${region}-${this.config.BaseName}`,
             threshold: 2,
             treatMissingData: TreatMissingData.NOT_BREACHING,
             evaluationPeriods: 2,

@@ -1,16 +1,18 @@
 import {Construct} from "constructs";
 import {WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, MathExpression, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
 export class TgwWidgetSet extends Construct implements WidgetSet{
     namespace:string = "AWS/TransitGateway";
     widgetSet:any = [];
     alarmSet:any = [];
+    config:any = {};
 
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id);
+        this.config = config;
         const tgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### TGW [${tgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${tgwId}) Attachments:${resource.attachments.length} Peers:${this.countPeers(resource)}`
@@ -58,6 +60,24 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             },
             statistic: Statistic.SUM,
             period: Duration.minutes(1)
+        });
+
+        const packetsInExpression = new MathExpression({
+            expression: 'packetsInMetric/60',
+            label: 'PPS In',
+            period: Duration.minutes(1),
+            usingMetrics: {
+                packetsInMetric: packetsInMetric
+            }
+        });
+
+        const packetsOutExpression = new MathExpression({
+            expression: 'packetsOutMetric/60',
+            label: 'PPS Out',
+            period: Duration.minutes(1),
+            usingMetrics: {
+                packetsOutMetric: packetsOutMetric
+            }
         });
 
         const bytesDropCountBlackhole = new Metric({
@@ -110,9 +130,9 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
         });
 
         const packetsWidget = new GraphWidget({
-            title: 'Packets In/Out',
-            left:[packetsInMetric],
-            right:[packetsOutMetric],
+            title: 'PPS In/Out',
+            left:[packetsInExpression],
+            right:[packetsOutExpression],
             period: Duration.minutes(1),
             region: region,
             width: 8
@@ -174,6 +194,15 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 period: Duration.minutes(1)
             });
 
+            const attPacketsOutExpression = new MathExpression({
+                expression: 'attPacketsOutMetric/60',
+                label: 'PPS Out',
+                usingMetrics:{
+                    attPacketsOutMetric: attPacketsOutMetric
+                },
+                period: Duration.minutes(1)
+            });
+
             const attPacketsInMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'PacketsIn',
@@ -182,6 +211,15 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                     TransitGatewayAttachment: attachmentId
                 },
                 statistic: Statistic.SUM,
+                period: Duration.minutes(1)
+            });
+
+            const attPacketsInExpression = new MathExpression({
+                expression: 'attPacketsInMetric/60',
+                label: 'PPS In',
+                usingMetrics:{
+                    attPacketsInMetric: attPacketsInMetric
+                },
                 period: Duration.minutes(1)
             });
 
@@ -239,9 +277,9 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             });
 
             const attPacketsWidget = new GraphWidget({
-                title: 'Packets In/Out',
-                left:[attPacketsInMetric],
-                right:[attPacketsOutMetric],
+                title: 'PPS In/Out',
+                left:[attPacketsInExpression],
+                right:[attPacketsOutExpression],
                 period: Duration.minutes(1),
                 region: region,
                 width: 8
