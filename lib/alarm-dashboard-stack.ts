@@ -142,6 +142,15 @@ export class AlarmDashboardStack extends cdk.Stack {
             targets: [new LambdaFunction(ddbHandlerLambdaFunction)],
         });
 
+        new Rule(this, 'LocalDDBHandlerTrigger', {
+            eventPattern: {
+                source: ['aws.cloudwatch'],
+                detailType: ['CloudWatch Alarm State Change'],
+            },
+            targets: [new LambdaFunction(ddbHandlerLambdaFunction)],
+        });
+
+
 
         // Dashboard infrastructure
 
