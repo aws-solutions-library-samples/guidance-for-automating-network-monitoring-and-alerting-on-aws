@@ -35,13 +35,15 @@ def lambda_handler(event, context):
     except:
         print(f'No Operations contact found for account id {event["account"]}')
 
-    res = org.describe_account(
-        AccountId=event['account']
-    )
+    try:
+        res = org.describe_account(
+            AccountId=event['account']
+        )
+    except:
+        print(f'Unable to exectute account-lookup')
     print(4)
-    print(res['Account'])
 
-    event['AuxiliaryInfo']['Account'] = res['Account']
+    event['AuxiliaryInfo']['Account'] = event['account']
     event['AuxiliaryInfo']['Suppressed'] = 0
     print(5)
     print(json.dumps(event, default=str))
