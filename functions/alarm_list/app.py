@@ -136,7 +136,10 @@ def lambda_handler(event, context):
                      f'?">https://eu-west-1.console.aws.amazon.com/cloudwatch/'
                      f'home?region=eu-west-1#alarmsV2:alarm/${alarm["detail"]["alarmName"]}?</a>')
         html += f'\t\t<td>{timestamp}</td>'
-        html += f'\t\t<td>{account_id}</td><td>{auxiliary_info["Account"]["Email"]}</td>'
+        email = ""
+        if "Email" in auxiliary_info["Account"]:
+            email = auxiliary_info["Account"]["Email"]
+        html += f'\t\t<td>{account_id}</td><td>{email}</td>'
         html += f'<td>'
         if 'AlternateContact' in auxiliary_info:
             html += (
