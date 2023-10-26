@@ -99,7 +99,7 @@ def lambda_handler(event, context):
                     print(auxiliary_info['AlternateContact'])
                     aux_html += "<hr /><h4>Alternate Contact (OPERATIONS)</h4>"
                     if 'Name' in auxiliary_info['AlternateContact']:
-                        aux_html += f'<div>Name: {auxiliary_info["Account"]["Name"]}<br />'
+                        aux_html += f'<div>Name: {auxiliary_info["AlternateContact"]["Name"]}<br />'
                     if 'Title' in auxiliary_info['AlternateContact']:
                         aux_html += f'Title: {auxiliary_info["AlternateContact"]["Title"]}<br />'
                     if 'PhoneNumber' in auxiliary_info['AlternateContact']:
@@ -111,9 +111,10 @@ def lambda_handler(event, context):
                     print("ACCT")
                     print(auxiliary_info['Account'])
                     aux_html += "<hr /><h4>Account Info</h4>"
-                    aux_html += f'<div>Status: {auxiliary_info["Account"]["Status"]}<br />' \
-                        f'Email: <a href="mailto:{auxiliary_info["Account"]["Email"]}">{auxiliary_info["Account"]["Email"]}</a><br />' \
-                        f'Id: {auxiliary_info["Account"]["Id"]}</div>'
+                    aux_html += f'<div>Id: {auxiliary_info["Account"]["Id"]}</div>'
+                    if 'Status' in auxiliary_info['Account']:
+                        aux_html += f'<div>Status: {auxiliary_info["Account"]["Status"]}<br />' \
+                            f'Email: <a href="mailto:{auxiliary_info["Account"]["Email"]}">{auxiliary_info["Account"]["Email"]}</a></div>'
 
                 aux_html += "<hr /><h4>Alarm Details</h4>"
                 aux_html += f'<div>Detail: {alarm["detail"]["alarmName"]}</div>'

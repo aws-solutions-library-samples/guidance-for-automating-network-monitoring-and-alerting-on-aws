@@ -43,7 +43,8 @@ def lambda_handler(event, context):
         event['AuxiliaryInfo']['Account']['JoinedTimestamp'] = event['AuxiliaryInfo']['Account']['JoinedTimestamp'].strftime("%Y-%m-%dZ%H:%M:%S.%f%Z")
     except:
         print(f'Unable to exectute account-lookup')
-        event['AuxiliaryInfo']['Account'] = event['account']
+        event['AuxiliaryInfo']['Account'] = {}
+        event['AuxiliaryInfo']['Account']['Id'] = event['account']
     print(4)
 
 
