@@ -6,7 +6,16 @@ ec2 = boto3.client('ec2')
 events = boto3.client('events')
 cw = boto3.client('cloudwatch')
 acct = boto3.client('account')
+ssm_client = boto3.client('ssm')
 
+def get_parameter_from_store(param_name):
+    response = ssm_client.get_parameter(
+        Name=param_name,
+        WithDecryption=True  # Use this if the parameter value is encrypted
+    )
+    return response['Parameter']['Value']
+
+config = json.loads(get_parameter_from_store('CloudWatchAlarmWidgetConfigCDK'))
 
 def is_expression_alarm(alarm):
     for metric in alarm["detail"]["configuration"]["metrics"]:
@@ -39,7 +48,7 @@ def forward_event(event):
         'Source': 'aws-ec2-instance-info',
         'DetailType': 'Instance Info',
         'Detail': event,
-        'EventBusName': 'arn:aws:events:eu-west-1:804485321675:event-bus/CWAlarmEventBus'
+        'EventBusName': config['eventBusARN']
         }]
     )
 

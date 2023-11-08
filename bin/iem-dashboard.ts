@@ -3,6 +3,8 @@ import 'source-map-support/register';
 import {App} from 'aws-cdk-lib';
 import { IemDashboardStack } from '../lib/iem-dashboard-stack';
 import {AlarmDashboardStack} from "../lib/alarm-dashboard-stack";
+import { AwsSolutionsChecks } from 'cdk-nag'
+import { Aspects } from 'aws-cdk-lib';
 
 const config = require('../lib/config.json');
 
@@ -12,6 +14,8 @@ if ( config.AlarmDashboard?.enabled && (!config.AlarmDashboard.organizationId ||
 
 
 const app = new App();
+
+Aspects.of(app).add(new AwsSolutionsChecks({verbose: true}));
 
 if ( config.MetricDashboards && ! config.MetricDashboards.enabled ){
     console.log('Not deploying metric dashboards');
