@@ -61,6 +61,18 @@ def get_alarm_tags(alarm_arn):
     return response
 
 
+def get_resource_type(metrics):
+    for metric in metrics:
+        for dimension in list(metric["metricStat"]["metric"]["dimensions"].keys()):
+            match dimension:
+                case 'InstanceId':
+                    return "ec2_instance"
+                case 'TableName':
+                    return "ddb_table"
+                case _:
+                    return "Unknown"
+
+
 def lambda_handler(event, context):
     print(json.dumps(event))
     payload = {}
@@ -103,28 +115,29 @@ def lambda_handler(event, context):
         print('Account has no OPERATIONS contact or request failed')
 
     if get_alarm_type(event) == "standard":
-        for metric in event["detail"]["configuration"]["metrics"]:
-            if "metricStat" in metric and not event_sent:
-                for dimension in list(metric["metricStat"]["metric"]["dimensions"].keys()):
-                    try:
-                        if dimension == "InstanceId":
+        if get_resource_type(event["detail"]["configuration"]["metrics"]) == "ec2_instance":
+            instance_id = ''
+            for metric in event["detail"]["configuration"]["metrics"]:
+                if "metricStat" in metric:
+                    for dimension in list(metric["metricStat"]["metric"]["dimensions"].keys()):
+                        if dimension == 'InstanceId':
                             instance_id = metric["metricStat"]["metric"]["dimensions"][dimension]
-                            instance_info = get_ec2_instance_info(instance_id)
-                            print(instance_info)
-                            if len(instance_info) == 0:
-                                payload['InstanceInfo'] = {'Error': 'Instance not found'}
-                            else:
-                                payload['InstanceInfo'] = instance_info
-                            print('PAYLOAD')
-                            print(payload)
-                            forward_event(json.dumps(payload, indent=4, sort_keys=True, default=str))
-                            event_sent = True
-                            break
-                    except ClientError as error:
-                        print('Error happened: {}'.format(error))
-                        continue
-            else:
-                print("Ignoring metric")
-    else:
-        print(json.dumps(payload, indent=4, sort_keys=True, default=str))
-        forward_event(json.dumps(payload, indent=4, sort_keys=True, default=str))
+                else:
+                    print('Ignoring metric')
+            try:
+                instance_info = get_ec2_instance_info(instance_id)
+                if len(instance_info) == 0:
+                    payload['InstanceInfo'] = {'Error': 'Instance not found'}
+                else:
+                    payload['InstanceInfo'] = instance_info
+                print('PAYLOAD')
+                print(payload)
+            except ClientError as error:
+                print('Error happened: {}'.format(error))
+
+        else:
+            print('Not augmenting resource that is not yet implemented!')
+
+    print('Sending payload:')
+    print(payload)
+    forward_event(json.dumps(payload, indent=4, sort_keys=True, default=str))

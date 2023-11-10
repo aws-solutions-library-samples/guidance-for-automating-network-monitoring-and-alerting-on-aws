@@ -135,8 +135,8 @@ def lambda_handler(event, context):
         }
 
         .grid-item-low {
-          background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white */
-          border: 1px solid rgba(255, 0, 0, 0.8);
+          background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent white */
+          border: 1px solid rgba(0, 0, 0, 0.8);
           padding: 10px;
           padding-left: 4px;
           padding-right: 4px;
@@ -257,6 +257,7 @@ def lambda_handler(event, context):
                 print(f'Unknown alarm type')
         card_html += '<hr />'
         resource_strike_through = ''
+        instance_name = ''
         if 'instanceInfo' in alarm:
             if 'Error' not in alarm['instanceInfo']:
                 card_html += f'<hr /><h4>Instance info</h4>'
@@ -264,6 +265,8 @@ def lambda_handler(event, context):
                     card_html += f'<div><b>Tags:</b></div>'
                     for tag in alarm['instanceInfo']['Tags']:
                         card_html += f'<div>{tag["Key"]}:{tag["Value"]}</div>'
+                        if tag['Key'] == 'Name':
+                            instance_name = tag['Value']
 
                 card_html += f'<div><b>Instance ID:</b> {alarm["instanceInfo"]["InstanceId"]} </div>'
                 card_html += f'<div><b>Instance Type:</b> {alarm["instanceInfo"]["InstanceType"]} </div>'
@@ -292,8 +295,10 @@ def lambda_handler(event, context):
                 priority_class = 'grid-item-low'
 
         body += (f'\t\t<div class="{priority_class}">'
-          f'{alarm_name}<br /><span {resource_strike_through}>{resource_deleted_mark}{resource_id}</span></br>{account_id}<br /><br />'
-          f'<a class="btn btn-primary" style="background-color: rgba(255, 0, 0, 0.5); width: 25px; padding: 5px;"><svg fill="#ffffff" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10px" height="10px" viewBox="0 0 416.979 416.979" xml:space="preserve"><g><path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"/></g></svg></a><cwdb-action action="html" '
+          f'{alarm_name}<br /><span {resource_strike_through}>{resource_deleted_mark}{resource_id}</span></br>')
+        body += f'<span>{instance_name}</span><br />'
+        body += (f'{account_id}<br />'
+          f'<a class="btn btn-primary" style="background-color: rgba(255, 0, 0, 0.5); width: 25px; padding: 5px; margin: 0; border: 1px solid black;"><svg fill="#ffffff" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="10px" height="10px" viewBox="0 0 416.979 416.979" xml:space="preserve"><g><path d="M356.004,61.156c-81.37-81.47-213.377-81.551-294.848-0.182c-81.47,81.371-81.552,213.379-0.181,294.85c81.369,81.47,213.378,81.551,294.849,0.181C437.293,274.636,437.375,142.626,356.004,61.156z M237.6,340.786c0,3.217-2.607,5.822-5.822,5.822h-46.576c-3.215,0-5.822-2.605-5.822-5.822V167.885c0-3.217,2.607-5.822,5.822-5.822h46.576c3.215,0,5.822,2.604,5.822,5.822V340.786z M208.49,137.901c-18.618,0-33.766-15.146-33.766-33.765c0-18.617,15.147-33.766,33.766-33.766c18.619,0,33.766,15.148,33.766,33.766C242.256,122.755,227.107,137.901,208.49,137.901z"/></g></svg></a><cwdb-action action="html" '
           f'display="popup" event="click">{aux_html}</cwdb-action></div>\n')
 
     return body
