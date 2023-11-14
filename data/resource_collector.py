@@ -179,6 +179,8 @@ def router(resource, config):
         resource = medialive_decorator(resource, config)
     elif ':elasticfilesystem:' in arn:
         resource = efs_decorator(resource, config)
+    elif ':route53resolver:' in arn:
+        resource =r53resolver_decorator(resource, config)
     elif 'arn:aws:elasticbeanstalk:' in arn:
         resource = beanstalk_decorator(resource,config)
     return resource
@@ -350,6 +352,26 @@ def efs_decorator(resource, config):
     resource['ThroughputMode'] = response['FileSystems'][0]['ThroughputMode']
     return resource
 
+def r53resolver_decorator(resource, config):
+    resource['rnis'] = []
+    print(f'This resource is a Route 53 Resolver {resource["ResourceARN"]}')
+    resolverId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    r53resolver = boto3.client('route53resolver', config=config)
+    response = r53resolver.get_resolver_endpoint(
+        ResolverEndpointId=resolverId
+    )
+    resolverIps = r53resolver.list_resolver_endpoint_ip_addresses(
+        ResolverEndpointId=resolverId
+    )
+    for ip in resolverIps['IpAddresses']:
+        resource['rnis'].append(ip['IpId'])
+    
+    if "in" in resolverId:
+        resource['ResolverType'] = "inbound"
+    else:
+        resource['ResolverType'] = "outbound"
+
+    return resource
 
 def ec2_decorator(resource, config):
     print(f'This resource is EC2 {resource["ResourceARN"]}')
