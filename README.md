@@ -26,6 +26,7 @@ arbitrary number of AWS accounts.
 - ELB v1 (ELB Classic)
 - ELB v2 (ALB, NLB)
 - Amazon ECS (EC2 and Fargate)
+- Amazon EFS
 - AWS Lambda
 - AWS Elemental MediaLive
 - AWS Elemental MediaPackage

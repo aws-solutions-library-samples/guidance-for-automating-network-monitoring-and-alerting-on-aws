@@ -35,13 +35,19 @@ def lambda_handler(event, context):
     except:
         print(f'No Operations contact found for account id {event["account"]}')
 
-    res = org.describe_account(
-        AccountId=event['account']
-    )
+    try:
+        res = org.describe_account(
+            AccountId=event['account']
+        )
+        event['AuxiliaryInfo']['Account'] = res['Account']
+        event['AuxiliaryInfo']['Account']['JoinedTimestamp'] = event['AuxiliaryInfo']['Account']['JoinedTimestamp'].strftime("%Y-%m-%dZ%H:%M:%S.%f%Z")
+    except:
+        print(f'Unable to exectute account-lookup')
+        event['AuxiliaryInfo']['Account'] = {}
+        event['AuxiliaryInfo']['Account']['Id'] = event['account']
     print(4)
-    print(res['Account'])
 
-    event['AuxiliaryInfo']['Account'] = res['Account']
+
     event['AuxiliaryInfo']['Suppressed'] = 0
     print(5)
     print(json.dumps(event, default=str))
@@ -52,7 +58,7 @@ def lambda_handler(event, context):
     state_value = event['detail']['state']['value']
     timestamp = datetime.strptime(event['time'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d%H%M%S')
     suppressed = event['AuxiliaryInfo']['Suppressed']
-    event['AuxiliaryInfo']['Account']['JoinedTimestamp'] = event['AuxiliaryInfo']['Account']['JoinedTimestamp'].strftime("%Y-%m-%dZ%H:%M:%S.%f%Z")
+
     #event['AuxiliaryInfo']['Account']['JoinedTimestamp'] = event['AuxiliaryInfo']['Account']['JoinedTimestamp'].replace(" ","T")
     response = table.update_item(
         Key={
