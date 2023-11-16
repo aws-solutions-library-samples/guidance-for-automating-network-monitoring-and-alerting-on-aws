@@ -480,48 +480,47 @@ export class AlarmDashboardStack extends cdk.Stack {
         });
 
         //cdk-nag suppression rules
-
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/CloudWatchAlarmDynamoDBHandlerExecutionRole/DefaultPolicy/Resource',[
+        NagSuppressions.addResourceSuppressions(ddbHandlerLambdaRole,[
             {
                 id: 'AwsSolutions-IAM5',
-                reason:'Need CloudWatchAlarmDynamoDBHandlerExecutionRole role to write to arbitrary log groups'
+                reason:'Need CloudWatchAlarmDynamoDBHandlerExecutionRole role to write to arbitrary log groups',
             }
-        ]);
+        ], true);
 
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/alarmCWCustomFunctionExecutionRole/DefaultPolicy/Resource',[
-             {
-                 id: 'AwsSolutions-IAM5',
-                 reason:'Need alarmCWCustomFunctionExecutionRole to write to arbitrary log groups'
-             }
-         ]);
-
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/alarmListCWCustomFunctionRole/DefaultPolicy/Resource',[
+        NagSuppressions.addResourceSuppressions(alarmCWCustomFunctionRole,[
             {
                 id: 'AwsSolutions-IAM5',
                 reason:'Need alarmCWCustomFunctionExecutionRole to write to arbitrary log groups'
             }
-        ]);
+        ], true);
 
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/augmentorLambdaFunctionRole/DefaultPolicy/Resource',[
+        NagSuppressions.addResourceSuppressions(alarmListCWCustomFunctionRole,[
+            {
+                id: 'AwsSolutions-IAM5',
+                reason:'Need alarmCWCustomFunctionExecutionRole to write to arbitrary log groups'
+            }
+        ], true);
+
+        NagSuppressions.addResourceSuppressions(augmentorLambdaFunctionRole,[
             {
                 id: 'AwsSolutions-IAM5',
                 reason:'Need augmentorLambdaFunctionRole to write to arbitrary log groups, query arbitrary ec2 instances, query alarm tags, get alternate contact of self'
             }
-        ]);
+        ], true);
 
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/augmentationReceiverLambdaFunctionRole/DefaultPolicy/Resource',[
+        NagSuppressions.addResourceSuppressions(augmentationReceiverLambdaFunctionRole,[
             {
                 id: 'AwsSolutions-IAM5',
                 reason:'Need augmentationReceiverLambdaFunctionRole to write to arbitrary log groups'
             }
-        ]);
+        ], true);
 
-        NagSuppressions.addResourceSuppressionsByPath(this, '/Application-Alarm-Stack/CloudWatchAlarmDynamoDBTable/Resource',[
+        NagSuppressions.addResourceSuppressions(dynamoTable,[
             {
                 id: 'AwsSolutions-DDB3',
                 reason: "Alarm data doesn't require PITR"
             }
-        ]);
+        ], true);
 
 
 
