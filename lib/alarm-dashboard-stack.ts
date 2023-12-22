@@ -104,7 +104,8 @@ export class AlarmDashboardStack extends cdk.Stack {
             handler: 'app.lambda_handler',
             code: Code.fromAsset('functions/cwalarmdbhandler/'),
             functionName: 'CloudWatchAlarmDynamoDBHandlerCDK',
-            timeout: Duration.seconds(3),
+            timeout: Duration.seconds(60),
+            memorySize: 256,
             tracing: Tracing.ACTIVE,
             role: ddbHandlerLambdaRole
         });
@@ -150,7 +151,37 @@ export class AlarmDashboardStack extends cdk.Stack {
             })
         );
 
-        // EventBus rule as Lambda function trigger
+        ddbHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    'sts:AssumeRole'
+                ],
+                resources:['arn:aws:iam::*:role/CrossAccountAlarmAugmentationAssumeRole-*']
+            })
+        );
+
+        ddbHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    'ec2:DescribeInstances'
+                ],
+                resources:['*']
+            })
+        );
+
+        ddbHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    'cloudwatch:ListTagsForResource'
+                ],
+                resources: ['*']
+            })
+        );
+
+        // EventBus rule as Lambda function trigger (one on the custom eventbus and one on the default eventbus)
         new Rule(this, 'DDBHandlerTrigger', {
             eventBus: cloudwatchEventBus,
             eventPattern: {
@@ -308,7 +339,7 @@ export class AlarmDashboardStack extends cdk.Stack {
                 [new CustomWidget({
                     functionArn: alarmCWCustomFunction.functionArn,
                     title: 'Alarms',
-                    height: 6,
+                    height: 10,
                     width: 24,
                     updateOnRefresh: true,
                     updateOnResize: true,
@@ -324,159 +355,6 @@ export class AlarmDashboardStack extends cdk.Stack {
                     updateOnTimeRangeChange: false
                 })]
             ],
-        });
-
-        // Deploy augmentator-function in the monitoring account
-
-        const augmentorLambdaFunctionRole = new Role(this, 'augmentorLambdaFunctionRole',{
-            description: 'augmentorLambdaFunction Handler Role',
-            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-            roleName:'augmentorLambdaFunctionExecutionRole'
-        });
-
-        const augmentorLambdaFunction = new Function(this, 'AugmentorLambdaFunction', {
-            runtime: Runtime.PYTHON_3_11,
-            handler: 'app.lambda_handler',
-            code: Code.fromAsset(`functions/event_augmentor`),
-            functionName: 'CloudWatchEventAugmentorCDK',
-            timeout: Duration.seconds(60),
-            tracing: Tracing.ACTIVE,
-            role: augmentorLambdaFunctionRole
-        });
-
-        //Adding policy to the lambda execution role
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    "logs:CreateLogGroup",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents"
-                ],
-                resources: ["*"]
-            })
-        );
-
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'ec2:DescribeInstances'
-                ],
-                resources: ['*'],
-            })
-        );
-
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'events:PutEvents'
-                ],
-                resources: [cloudwatchEventBus.eventBusArn],
-            })
-        );
-
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'account:GetAlternateContact'
-                ],
-                resources: ['*'],
-            })
-        );
-
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'cloudwatch:ListTagsForResource'
-                ],
-                resources: ['*'],
-            })
-        );
-
-        augmentorLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: ['ssm:GetParameter'],
-                resources: [configParameter.parameterArn],
-            })
-        );
-
-
-        // EventBus rule as Lambda function trigger
-        new Rule(this, 'AugmentorTrigger', {
-            eventPattern: {
-                source: ['aws.cloudwatch'],
-                detailType: ['CloudWatch Alarm State Change'],
-            },
-            targets: [new LambdaFunction(augmentorLambdaFunction)],
-        });
-
-        // Deploy augmentation receiver function to monitoring account
-        const augmentationReceiverLambdaFunctionRole = new Role(this, 'augmentationReceiverLambdaFunctionRole',{
-            description: 'augmentationReceiverLambdaFunction Handler Role',
-            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-            roleName:'augmentationReceiverLambdaFunctionRole'
-        });
-
-        const augmentationReceiverLambdaFunction = new Function(this, 'AugmentationReceiverLambdaFunction', {
-            runtime: Runtime.PYTHON_3_11,
-            handler: 'app.lambda_handler',
-            code: Code.fromAsset('functions/augmentation_receiver'),
-            functionName: 'CloudWatchEventAugmentationReceiverCDK',
-            timeout: Duration.seconds(60),
-            tracing: Tracing.ACTIVE,
-            role: augmentationReceiverLambdaFunctionRole
-        });
-
-        //Adding policy to the lambda execution role
-        augmentationReceiverLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    "logs:CreateLogGroup",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents"
-                ],
-                resources: ["*"]
-            })
-        );
-
-        augmentationReceiverLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'dynamodb:PutItem',
-                    'dynamodb:GetItem',
-                    'dynamodb:UpdateItem',
-                    'dynamodb:GetRecords',
-                ],
-                resources: [dynamoTable.tableArn],
-            })
-        );
-
-        //Adding ssm policy to augmentation receiver role
-        augmentationReceiverLambdaFunction.addToRolePolicy(
-            new PolicyStatement({
-                effect: Effect.ALLOW,
-                actions: [
-                    'ssm:GetParameter'
-                ],
-                resources: [configParameter.parameterArn]
-            })
-        );
-
-        // EventBus rule as Lambda function trigger
-        new Rule(this, 'AugmentationReceiverTrigger', {
-            eventBus: cloudwatchEventBus,
-            eventPattern: {
-                source: ['aws-ec2-instance-info'],
-                detailType: ['Instance Info'],
-            },
-            targets: [new LambdaFunction(augmentationReceiverLambdaFunction)],
         });
 
         //cdk-nag suppression rules
@@ -501,19 +379,6 @@ export class AlarmDashboardStack extends cdk.Stack {
             }
         ], true);
 
-        NagSuppressions.addResourceSuppressions(augmentorLambdaFunctionRole,[
-            {
-                id: 'AwsSolutions-IAM5',
-                reason:'Need augmentorLambdaFunctionRole to write to arbitrary log groups, query arbitrary ec2 instances, query alarm tags, get alternate contact of self'
-            }
-        ], true);
-
-        NagSuppressions.addResourceSuppressions(augmentationReceiverLambdaFunctionRole,[
-            {
-                id: 'AwsSolutions-IAM5',
-                reason:'Need augmentationReceiverLambdaFunctionRole to write to arbitrary log groups'
-            }
-        ], true);
 
         NagSuppressions.addResourceSuppressions(dynamoTable,[
             {
@@ -528,6 +393,10 @@ export class AlarmDashboardStack extends cdk.Stack {
 
         new CfnOutput(this, 'CustomEventBusArn', {
             value: cloudwatchEventBus.eventBusArn
+        }).value;
+
+        new CfnOutput(this, 'CustomDynamoDBFunctionRoleArn',{
+            value: ddbHandlerLambdaRole.roleArn
         }).value;
     }
 }
