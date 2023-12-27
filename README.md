@@ -152,6 +152,13 @@ placeholder with the ARNs from the previous step.
 to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through 
 service managed stack-sets from your management account or stack-set delegate account.
 
+## Monitoring alarms in "Management Account"
+
+In case you have alarms in the AWS Organizations management account but are deploying the Alarm Dashboard in another 
+account, you will need to manually deploy `event_forwarder.yaml` in the management account in all regions that you want
+to receive alarms from. This is because of that even if the `event_forwarder.yaml` is deployed as a managed stack set it 
+won't get deployed in the management account. 
+
 ## Tips
 
 Try setting up a CodeCommit repository where you store your code. Set up a CI/CD pipeline to automatically redeploy your dashboard.
