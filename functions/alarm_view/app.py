@@ -67,13 +67,13 @@ def lambda_handler(event, context):
 
     number_of_alarms = len(alarms_in_alarm_state)
 
-    if 30 < number_of_alarms <= 45:
+    if 30 < number_of_alarms <= 60:
         grid_size = 15
         font_size = 10
-    elif 45 < number_of_alarms <= 60:
+    elif 60 < number_of_alarms <= 80:
         grid_size = 20
         font_size = 9
-    elif number_of_alarms > 60:
+    elif number_of_alarms > 80:
         grid_size = 25
         font_size = 8
 
