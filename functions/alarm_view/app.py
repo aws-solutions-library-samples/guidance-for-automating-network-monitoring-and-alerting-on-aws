@@ -61,25 +61,22 @@ def lambda_handler(event, context):
         else:
             break
 
-    width = event['widgetContext']['width']/10
-    html = ("<style>td{ border: 1px solid black; "
-            "border-radius: 5px; height: 100px; "
-            "color: white; "
-            "padding: 10px; "
-            "font-family: Amazon Ember,Helvetica Neue,Roboto,Arial,sans-serif; "
-            "font-size: 0.8rem; "
-            "font-weight: 400;} "
-            ".alarm{ background-color: #ffffff; "
-            "border-color: red; "
-            "color: black } "
-            ".OK{ background-color: #6eeb8f; "
-            "color: black; }</style>")
-    html += "<table>"
-    color = "#44ff11"
-
-    rows = len(alarms_in_alarm_state) // 10 + (1 if len(alarms_in_alarm_state) % 10 else 0)
-
     alarms_in_alarm_state = sort_by_priority(alarms_in_alarm_state)
+    grid_size = 10
+    font_size = 12
+
+    number_of_alarms = len(alarms_in_alarm_state)
+
+    if 30 < number_of_alarms <= 60:
+        grid_size = 15
+        font_size = 10
+    elif 60 < number_of_alarms <= 80:
+        grid_size = 20
+        font_size = 9
+    elif number_of_alarms > 80:
+        grid_size = 25
+        font_size = 8
+
 
     body = '''<!DOCTYPE html>
     <html>
@@ -94,9 +91,10 @@ def lambda_handler(event, context):
 
         /* Container holding the grid */
         .grid-container {
-          display: grid;
-          grid-template-columns: repeat(10, 10fr);
-          grid-gap: 10px; /* Space between grid items */
+          display: grid;'''
+    body += f'  grid-template-columns: repeat({grid_size}, {grid_size}fr);'
+
+    body += '''  grid-gap: 10px; /* Space between grid items */
           padding: 0px;
           margin: 0;
         }
@@ -108,9 +106,9 @@ def lambda_handler(event, context):
           padding: 10px;
           padding-left: 4px;
           padding-right: 4px;
-          padding-bottom: 4px;
-          font-size: 12px;
-          text-align: center;
+          padding-bottom: 4px;'''
+    body += f'     font-size: {font_size}px;'
+    body += '''     text-align: center;
           text-overflow: ellipsis;
 
           /* Needed to make it work */
@@ -124,9 +122,9 @@ def lambda_handler(event, context):
           padding: 10px;
           padding-left: 4px;
           padding-right: 4px;
-          padding-bottom: 4px;
-          font-size: 12px;
-          text-align: center;
+          padding-bottom: 4px;'''
+    body += f'     font-size: {font_size}px;'
+    body += '''     text-align: center;
           text-overflow: ellipsis;
 
           /* Needed to make it work */
@@ -140,9 +138,9 @@ def lambda_handler(event, context):
           padding: 10px;
           padding-left: 4px;
           padding-right: 4px;
-          padding-bottom: 4px;
-          font-size: 12px;
-          text-align: center;
+          padding-bottom: 4px;'''
+    body += f'     font-size: {font_size}px;'
+    body += '''     text-align: center;
           text-overflow: ellipsis;
 
           /* Needed to make it work */
@@ -197,6 +195,8 @@ def lambda_handler(event, context):
 
         alarm_name = alarm['alarmKey'].split('#')[1]
         account_id = alarm['alarmKey'].split('#')[0]
+        region = alarm['alarmKey'].split('#')[2]
+
         auxiliary_info = alarm['auxiliaryInfo']
         resource_id = ''
         resource_deleted_mark = ''
@@ -204,7 +204,7 @@ def lambda_handler(event, context):
         if 'AlternateContact' in auxiliary_info:
             card_html += "<h4>Alternate Contact (OPERATIONS)</h4>"
             if 'Name' in auxiliary_info['AlternateContact']:
-                card_html += f'<div>Name: {auxiliary_info["Account"]["Name"]}</div'
+                card_html += f'<div>Name: {auxiliary_info["AlternateContact"]["Name"]}</div'
             if 'Title' in auxiliary_info['AlternateContact']:
                 card_html += f'<div>Title: {auxiliary_info["AlternateContact"]["Title"]}</div>'
             if 'PhoneNumber' in auxiliary_info['AlternateContact']:
@@ -214,9 +214,14 @@ def lambda_handler(event, context):
             card_html += '<hr/>'
         if 'Account' in auxiliary_info:
             card_html += "<h4>Account Info</h4>"
-            card_html += f'<div>Status: {auxiliary_info["Account"]["Status"]}</div>' \
-                f'<div>Email: <a href="mailto:{auxiliary_info["Account"]["Email"]}">{auxiliary_info["Account"]["Email"]}</a></div>' \
-                f'<div>Id: {auxiliary_info["Account"]["Id"]}</div><hr />'
+            if 'Status' not in auxiliary_info['Account']:
+                print(alarm)
+            if 'Status' in auxiliary_info['Account']:
+                card_html += f'<div>Status: {auxiliary_info["Account"]["Status"]}</div>'
+            if 'Email' in auxiliary_info['Account']:
+                card_html += f'<div>Email: <a href="mailto:{auxiliary_info["Account"]["Email"]}">{auxiliary_info["Account"]["Email"]}</a></div>'
+            if 'Id' in auxiliary_info['Account']:
+                card_html += f'<div>Id: {auxiliary_info["Account"]["Id"]}</div><div>Region: {region}</div><hr />'
 
         card_html += "<h4>Alarm Details</h4>"
         card_html += f'<div>Detail: {alarm["detail"]["alarmName"]}</div>'

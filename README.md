@@ -140,17 +140,24 @@ different `BaseName`.
 3. Run `cd ..` to change directory to project root. 
 4. Run `cdk synth` to generate CF template or use `cdk deploy --all` to deploy directly to your AWS account.
 5. In case central alarm dashboard is enabled in the configuration, take note of deployment output,
-`*-Alarm-Stack.CustomEventBusArn`, and copy the ARN (of the custom event bus).
+`*.CustomEventBusArn` and `*.CustomDynamoDBFunctionRoleArn` and copy those ARNs to use in the next stage.
 
 ## Enabling source accounts to share alarms
 _This only applies in case `AlarmDashboard.enabled` is set_
 
 1. Run command `cd stack_sets` to change directory which contains `event_forwarder_template.yaml`.
-2. Run command `sh create_stackset.sh REPLACE_WITH_THE_ARN_OF_CUSTOM_EVENT_BUS`, replace the placeholder with the ARN 
-from the previous step.
-3. Deploy the generated `event_forwarder.yaml`-template manually to each of the source accounts through CloudFormation or
-deploy it automatically to an AWS Organization, OU or list of accounts through service managed stack-sets from your 
-management account or stack-set delegate account.
+2. Run command `sh create_stackset.sh ARN_OF_CUSTOM_EVENT_BUS ARN_OF_THE_LAMBDA_FUNCTION_ROLE_ARN`, replace the
+placeholder with the ARNs from the previous step.
+3. Deploy the generated `event_forwarder.yaml`-template manually to each of the source accounts and each region you wish 
+to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through 
+service managed stack-sets from your management account or stack-set delegate account.
+
+## Monitoring alarms in "Management Account"
+
+In case you have alarms in the AWS Organizations management account but are deploying the Alarm Dashboard in another 
+account, you will need to manually deploy `event_forwarder.yaml` in the management account in all regions that you want
+to receive alarms from. This is because of that even if the `event_forwarder.yaml` is deployed as a managed stack set it 
+won't get deployed in the management account. 
 
 ## Tips
 
