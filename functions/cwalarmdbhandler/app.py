@@ -115,22 +115,28 @@ def get_alternate_contact(account_id, config, region):
     acct_client = get_client('account', account_id, config, region)
     try:
         result = acct_client.get_alternate_contact(
-            AccountId=account_id,
             AlternateContactType='OPERATIONS'
         )
         return result['AlternateContact']
-    except:
+    except Exception as e:
+        print(e)
+        print('ERROR: No alternate contact found')
         return {}
 
 
 def get_ec2_instance_info(account_id, instance_id, config, region):
     print(f'Getting info for {instance_id}')
     ec2_client = get_client('ec2', account_id, config, region)
-    response = ec2_client.describe_instances(
-        InstanceIds=[
-            instance_id
-        ]
-    )
+    try:
+        response = ec2_client.describe_instances(
+            InstanceIds=[
+                instance_id
+            ]
+        )
+    except Exception as e:
+        print(e)
+        print('ERROR: No instance info found')
+
     return response['Reservations'][0]['Instances'][0]
 
 
@@ -144,7 +150,9 @@ def get_account_info(account_id, config, region):
         if 'JoinedTimestamp' in result['Account']:
             del result['Account']['JoinedTimestamp']
         return result['Account']
-    except:
+    except Exception as e:
+        print(e):
+        print('ERROR: No account info found')
         return {}
 
 
@@ -198,9 +206,7 @@ def augment_event(event, config):
 def lambda_handler(event, context):
     config = json.loads(get_parameter_from_store('CloudWatchAlarmWidgetConfigCDK'))
     table = dynamodb.Table(config['dynamoTableName'])
-    print("firstprint")
     print(json.dumps(event, indent=2))
-    print(2)
     print(event['account'])
 
     event['AuxiliaryInfo'] = {}
@@ -208,11 +214,7 @@ def lambda_handler(event, context):
     event = augment_event(event, config)
 
     event['AuxiliaryInfo']['Suppressed'] = 0
-    print(5)
-    #print(json.dumps(event, default=str))
 
-    # alarm_name = event['detail']['alarmName']
-    # account_id = event['account']
     region = event['region']
     alarm_key = f"{event['account']}#{event['detail']['alarmName']}#{region}"
 
