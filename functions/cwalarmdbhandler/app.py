@@ -151,7 +151,7 @@ def get_account_info(account_id, config, region):
             del result['Account']['JoinedTimestamp']
         return result['Account']
     except Exception as e:
-        print(e):
+        print(e)
         print('ERROR: No account info found')
         return {}
 
@@ -189,8 +189,6 @@ def augment_event(event, config):
                     payload['InstanceInfo'] = {'Error': 'Instance not found'}
                 else:
                     payload['InstanceInfo'] = instance_info
-                print('PAYLOAD')
-                print(payload)
             except ClientError as error:
                 print('Error happened: {}'.format(error))
 
@@ -206,8 +204,6 @@ def augment_event(event, config):
 def lambda_handler(event, context):
     config = json.loads(get_parameter_from_store('CloudWatchAlarmWidgetConfigCDK'))
     table = dynamodb.Table(config['dynamoTableName'])
-    print(json.dumps(event, indent=2))
-    print(event['account'])
 
     event['AuxiliaryInfo'] = {}
 
