@@ -5,6 +5,7 @@ import json
 dynamodb = boto3.resource('dynamodb')
 ssm_client = boto3.client('ssm')
 
+
 def get_parameter_from_store(param_name):
     response = ssm_client.get_parameter(
         Name=param_name,
@@ -12,12 +13,30 @@ def get_parameter_from_store(param_name):
     )
     return response['Parameter']['Value']
 
+
 def is_expression_alarm(alarm):
     for metric in alarm["detail"]["configuration"]["metrics"]:
         if 'expression' in metric:
             return True
 
     return False
+
+
+def sort_by_property(alarms, prop):
+    return sorted(alarms, key=lambda x: x[prop])
+
+
+def filter_by_property(alarms, prop, value):
+    if prop == 'region':
+        return [alarm for alarm in alarms if alarm['alarmKey'].split('#')[2] == value]
+    if prop == 'account':
+        return [alarm for alarm in alarms if alarm['alarmKey'].split('#')[0] == value]
+    if prop == 'state':
+        return [alarm for alarm in alarms if alarm['detail']['state']['value'] == value]
+    if prop == 'priority':
+        return [alarm for alarm in alarms if int(alarm['priority']) == int(value)]
+    return alarms
+
 
 def get_filter_icon(color_code):
     return f'''<?xml version="1.0" encoding="iso-8859-1"?>
@@ -34,9 +53,17 @@ def get_filter_icon(color_code):
             </g>
             </svg>'''
 
+
 def lambda_handler(event, context):
     print(event)
     config = json.loads(get_parameter_from_store('CloudWatchAlarmWidgetConfigCDK'))
+    configurator_lambda_function = ""
+    try:
+        configurator_lambda_function = config['configuratorLambdaFunction']
+        print(f'Configurator Lambda function {configurator_lambda_function}')
+    except KeyError:
+        print('Configurator Lambda function not found')
+
     table = dynamodb.Table(config['dynamoTableName'])
     print(f'Accessing table {config["dynamoTableName"]}')
     query_params = {
@@ -72,14 +99,48 @@ def lambda_handler(event, context):
 
     est_monthly_cost = round(total_monthly_cost + (total_monthly_cost*0.75), 2)
 
+    region_filter_icon_color = "000000"
+    account_filter_icon_color = "000000"
+    priority_filter_icon_color = "000000"
+    state_filter_icon_color = "000000"
+
+    if 'region_filter' in config and config['region_filter'] != "none":
+        alarms = filter_by_property(alarms, 'region', config['region_filter'])
+        region_filter_icon_color = "ff0000"
+
+    if 'account_filter' in config and config['account_filter'] != "none":
+        alarms = filter_by_property(alarms, 'account', config['account_filter'])
+        account_filter_icon_color = "ff0000"
+
+    if 'priority_filter' in config and config['priority_filter'] != "none":
+        alarms = filter_by_property(alarms, 'priority', config['priority_filter'])
+        priority_filter_icon_color = "ff0000"
+
+    if 'state_filter' in config and config['state_filter'] != "none":
+        alarms = filter_by_property(alarms, 'state', config['state_filter'])
+        state_filter_icon_color = "ff0000"
+
     html = '<table style="width:100%;">'
-    html += (f'\t<thead><tr>'
-             '<th>Alarm State</th>'
-             '<th>Priority</th><th>Alarm Name</th>'
-             '<th>Alarm updated</th>'
-             '<th>Alarm Account</th>'
-             '<th>Region</th>'
-             '<th>Contact email</th>'
+    html += f'''\t<thead><tr>
+             <th>Alarm State <a>{get_filter_icon(state_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+             display="popup" endpoint="{configurator_lambda_function}">
+             {{ "state": "none" }}
+            </cwdb-action></th>
+             <th>Priority <a>{get_filter_icon(priority_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the priority filter!"
+             display="popup" endpoint="{configurator_lambda_function}">
+             {{ "priority": "none" }}
+            </cwdb-action></th>
+            <th>Alarm Name</th>
+             <th>Alarm updated</th>'''
+    html += f'''<th>Alarm Account <a>{get_filter_icon(account_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the account filter!"
+             display="popup" endpoint="{configurator_lambda_function}">
+             {{ "account": "none" }}
+            </cwdb-action></th>'''
+    html += f'''<th>Region <a>{get_filter_icon(region_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the region filter!"
+             display="popup" endpoint="{configurator_lambda_function}">
+             {{ "region": "none" }}
+            </cwdb-action></th>'''
+    html +=  (f'<th>Contact email</th>'
              '<th>Operations contact</th>'
              f'<th><a>Cost of this</a><cwdb-action action="html" event="click" display="popup">Estimated cost of Alarm Dashboard-solution: <b>${est_monthly_cost}/mo</b><br /><br />'
              '<div style="background-color:rgba(10, 10, 10, 0.1);; padding: 10px; font-size: 12px;">'
@@ -114,12 +175,19 @@ def lambda_handler(event, context):
         auxiliary_info = alarm['auxiliaryInfo']
         aux_html = ""
         color = "black"
+        status_label = "INS_DAT"
         if alarm["detail"]["state"]["value"] == "ALARM":
             color = "red"
+            status_label = alarm["detail"]["state"]["value"]
         if alarm["detail"]["state"]["value"] == "OK":
             color = "green"
-        html += f'\t\t<td style="color:{color}">{alarm["detail"]["state"]["value"]}</td>'
-        html += f'<td>'
+            status_label = alarm["detail"]["state"]["value"]
+        html += f'''\t\t<td style="color:{color}"><a style="color:{color}">{status_label}</a>
+        <cwdb-action action="call" confirmation="This will filter status {status_label}"
+                display="popup" endpoint="{configurator_lambda_function}">
+                {{ "state": "{alarm["detail"]["state"]["value"]}" }} 
+                </cwdb-action></td>'''
+        html += f'<td><a>'
         if 'priority' in alarm:
             match alarm["priority"]:
                 case 1:
@@ -132,7 +200,10 @@ def lambda_handler(event, context):
                     priority_name = 'Not set'
 
             html += priority_name
-        html += f'</td>'
+            html += f'''</a><cwdb-action action="call" confirmation="This will filter {priority_name}"
+                display="popup" endpoint="{configurator_lambda_function}">
+                {{ "priority": "{alarm['priority']}" }} 
+                </cwdb-action></td>'''
 
         if 'AlternateContact' in auxiliary_info:
             aux_html += "<hr /><h4>Alternate Contact (OPERATIONS)</h4>"
@@ -189,11 +260,19 @@ def lambda_handler(event, context):
                      f'home?region=eu-west-1#alarmsV2:alarm/{alarm["detail"]["alarmName"]}'
                      f'?">https://eu-west-1.console.aws.amazon.com/cloudwatch/'
                      f'home?region=eu-west-1#alarmsV2:alarm/${alarm["detail"]["alarmName"]}?</a>')
-        html += f'\t\t<td>{timestamp}</td>'
+        html += f'\t\t<td style="font-size: 0.8rem;">{timestamp}</td>'
         email = ""
         if "Email" in auxiliary_info["Account"]:
             email = auxiliary_info["Account"]["Email"]
-        html += f'\t\t<td>{account_id}</td><td>{region}</td><td>{email}</td>'
+        html += f'''\t\t<td><a>{account_id}</a><cwdb-action action="call" confirmation="This will filter {account_id}"
+                display="popup" endpoint="{configurator_lambda_function}">
+                {{ "account": "{account_id}" }} 
+                </cwdb-action></td>
+        
+        <td style="width: 10%;"><a>{region}</a><cwdb-action action="call" confirmation="This will filter {region}"
+                display="popup" endpoint="{configurator_lambda_function}">
+                {{ "region": "{region}" }} 
+                </cwdb-action></td><td>{email}</td>'''
         html += f'<td>'
         if 'AlternateContact' in auxiliary_info:
             if 'EmailAddress' in auxiliary_info['AlternateContact']:
