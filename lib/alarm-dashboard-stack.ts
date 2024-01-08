@@ -1,5 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {CfnOutput, Duration, RemovalPolicy, Tags} from 'aws-cdk-lib';
+import {Aws, CfnOutput, Duration, RemovalPolicy, Tags} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {EventBus, EventBusPolicy, Rule} from "aws-cdk-lib/aws-events";
 import {Effect, PolicyStatement, Role, ServicePrincipal, StarPrincipal} from "aws-cdk-lib/aws-iam";
@@ -181,6 +181,37 @@ export class AlarmDashboardStack extends cdk.Stack {
             })
         );
 
+        const configurationHandlerLambdaRole = new Role(this, 'CloudWatchAlarmConfigurationHandlerExecutionRole',{
+            description: 'CloudWatchAlarm Configuration Handler Role',
+            assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+            roleName:'CloudWatchAlarmConfigurationHandlerExecutionRole'
+        });
+
+        const configurationHandlerLambdaFunction = new Function(this, 'configurationHandlerLambdaFunction', {
+            runtime: Runtime.PYTHON_3_11,
+            handler: 'app.lambda_handler',
+            code: Code.fromAsset('functions/configuration_handler/'),
+            functionName: 'CloudWatchAlarmConfigurationHandlerCDK',
+            timeout: Duration.seconds(60),
+            memorySize: 128,
+            tracing: Tracing.ACTIVE,
+            role: configurationHandlerLambdaRole
+        });
+
+        configurationHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                ],
+                resources: ["*"]
+            })
+        )
+
+
+
         // EventBus rule as Lambda function trigger (one on the custom eventbus and one on the default eventbus)
         new Rule(this, 'DDBHandlerTrigger', {
             eventBus: cloudwatchEventBus,
@@ -204,6 +235,8 @@ export class AlarmDashboardStack extends cdk.Stack {
         // Dashboard infrastructure
 
         parameterConfig['compact'] = 0
+        parameterConfig['configuratorLambdaFunction'] = configurationHandlerLambdaFunction.functionArn;
+
         const configParameter = new StringParameter(this, 'ConfigParameter', {
             stringValue: JSON.stringify(parameterConfig),
             parameterName: 'CloudWatchAlarmWidgetConfigCDK',
@@ -218,6 +251,18 @@ export class AlarmDashboardStack extends cdk.Stack {
                     'ssm:GetParameter'
                 ],
                 resources: [configParameter.parameterArn]
+            })
+        );
+
+
+        configurationHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    'ssm:GetParameter',
+                    'ssm:PutParameter'
+                ],
+                resources: [`arn:aws:ssm:${Aws.REGION}:${Aws.ACCOUNT_ID}:parameter/CloudWatchAlarmWidgetConfigCDK`]
             })
         );
 
@@ -361,7 +406,15 @@ export class AlarmDashboardStack extends cdk.Stack {
         NagSuppressions.addResourceSuppressions(ddbHandlerLambdaRole,[
             {
                 id: 'AwsSolutions-IAM5',
-                reason:'Need CloudWatchAlarmDynamoDBHandlerExecutionRole role to write to arbitrary log groups',
+                reason:'Need CloudWatchAlarmDynamoDBHandlerExecutionRole role to write to arbitrary log groups. For STS ' +
+                    'the function need to assume roles that have dynamic naming',
+            }
+        ], true);
+
+        NagSuppressions.addResourceSuppressions(configurationHandlerLambdaRole,[
+            {
+                id: 'AwsSolutions-IAM5',
+                reason:'Need CloudWatchAlarmHandlerExecutionRole to write to arbitrary log groups',
             }
         ], true);
 
