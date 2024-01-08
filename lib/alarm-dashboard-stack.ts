@@ -208,7 +208,17 @@ export class AlarmDashboardStack extends cdk.Stack {
                 ],
                 resources: ["*"]
             })
-        )
+        );
+
+        configurationHandlerLambdaFunction.addToRolePolicy(
+            new PolicyStatement({
+                effect: Effect.ALLOW,
+                actions: [
+                    'dynamodb:UpdateItem'
+                ],
+                resources: [dynamoTable.tableArn]
+            })
+        );
 
 
 

@@ -22,6 +22,26 @@ def put_parameter_to_store(param_name, param_value):
     return response
 
 
+def handle_suppression_request(event, config):
+    dynamodb = boto3.resource('dynamodb')
+    table = dynamodb.Table(config['dynamoTableName'])
+    update_expression = f'''SET suppressed=:suppressed'''
+    expression_attribute_values = {
+        ':suppressed': 1
+    }
+
+    table.update_item(
+        Key={
+            'alarmKey': event['suppress']
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values,
+        ReturnValues="ALL_NEW"
+    )
+
+    return f'''<pre>The Alarm "{event['suppress']}" has been suppressed. It won't show up on the widgets!'''
+
+
 def lambda_handler(event, context):
     print(event)
     print(context)
@@ -50,6 +70,11 @@ def lambda_handler(event, context):
     if 'priority' in event:
         config['priority_filter'] = event['priority']
         message += f" priority_filter={event['priority']}"
+
+    if 'suppress' in event:
+        return handle_suppression_request(event,config)
+
+
 
     message += f", current config:"
     if 'region_filter' in config:
