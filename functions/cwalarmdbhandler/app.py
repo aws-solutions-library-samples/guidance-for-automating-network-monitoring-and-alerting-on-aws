@@ -1,11 +1,9 @@
 import json
 import boto3
-from datetime import datetime
 from botocore.exceptions import ClientError
 from botocore.config import Config
 
-print('Loading function')
-### Dodo fix assume role distribution
+# Dodo fix assume role distribution
 dynamodb = boto3.resource('dynamodb')
 ssm_client = boto3.client('ssm')
 
@@ -35,7 +33,7 @@ def get_alarm_type(alarm):
         return "standard"
 
 
-def get_client(service, event_account_id, config, region):
+def get_client(service, event_account_id, region):
     # Get the current AWS account ID
     boto_config = Config(
         region_name=region
@@ -47,7 +45,7 @@ def get_client(service, event_account_id, config, region):
     if current_account_id == event_account_id:
         # Use the default boto3 client for the current account
         print('Not assuming cross account role')
-        return boto3.client(service,config=boto_config)
+        return boto3.client(service, config=boto_config)
     else:
         # Assume the role in the event account
         print('Assuming cross account role')
@@ -78,8 +76,8 @@ def get_resource_type(metrics):
                     return "Unknown"
 
 
-def get_alarm_tags(alarm_arn, account_id, config, region):
-    cw_client = get_client('cloudwatch', account_id, config, region)
+def get_alarm_tags(alarm_arn, account_id, region):
+    cw_client = get_client('cloudwatch', account_id, region)
     response = cw_client.list_tags_for_resource(
         ResourceARN=alarm_arn
     )
@@ -111,8 +109,8 @@ def get_priority(alarm_tags):
     return priority
 
 
-def get_alternate_contact(account_id, config, region):
-    acct_client = get_client('account', account_id, config, region)
+def get_alternate_contact(account_id, region):
+    acct_client = get_client('account', account_id, region)
     try:
         result = acct_client.get_alternate_contact(
             AlternateContactType='OPERATIONS'
@@ -124,25 +122,25 @@ def get_alternate_contact(account_id, config, region):
         return {}
 
 
-def get_ec2_instance_info(account_id, instance_id, config, region):
+def get_ec2_instance_info(account_id, instance_id, region):
     print(f'Getting info for {instance_id}')
-    ec2_client = get_client('ec2', account_id, config, region)
+    ec2_client = get_client('ec2', account_id, region)
     try:
         response = ec2_client.describe_instances(
             InstanceIds=[
                 instance_id
             ]
         )
+        return response['Reservations'][0]['Instances'][0]
     except Exception as e:
         print(e)
         print('ERROR: No instance info found')
+        return {}
 
-    return response['Reservations'][0]['Instances'][0]
 
+def get_account_info(account_id, region):
 
-def get_account_info(account_id, config, region):
-
-    organizations_client = get_client('organizations', account_id, config, region)
+    organizations_client = get_client('organizations', account_id, region)
     try:
         result = organizations_client.describe_account(
             AccountId=account_id
@@ -156,7 +154,7 @@ def get_account_info(account_id, config, region):
         return {}
 
 
-def augment_event(event, config):
+def augment_event(event):
     payload = event
     region = event['region']
     payload['AlarmName'] = event['detail']['alarmName']
@@ -165,13 +163,13 @@ def augment_event(event, config):
     payload['Account'] = account_id
     alarm_arn = event['resources'][0]
 
-    payload['AlarmTags'] = get_alarm_tags(alarm_arn, account_id, config, region)
+    payload['AlarmTags'] = get_alarm_tags(alarm_arn, account_id, region)
     payload['Priority'] = get_priority(payload['AlarmTags'])
 
     payload['AuxiliaryInfo'] = {}
-    payload['AuxiliaryInfo']['AlternateContact'] = get_alternate_contact(account_id, config, region)
+    payload['AuxiliaryInfo']['AlternateContact'] = get_alternate_contact(account_id, region)
 
-    payload['AuxiliaryInfo']['Account'] = get_account_info(account_id, config, region)
+    payload['AuxiliaryInfo']['Account'] = get_account_info(account_id, region)
 
     if get_alarm_type(event) == "standard":
         if get_resource_type(event['detail']['configuration']['metrics']) == 'ec2_instance':
@@ -184,7 +182,7 @@ def augment_event(event, config):
                 else:
                     print('Ignoring metric')
             try:
-                instance_info = get_ec2_instance_info(account_id, instance_id, config, region)
+                instance_info = get_ec2_instance_info(account_id, instance_id, region)
                 if len(instance_info) == 0:
                     payload['InstanceInfo'] = {'Error': 'Instance not found'}
                 else:
@@ -207,7 +205,7 @@ def lambda_handler(event, context):
 
     event['AuxiliaryInfo'] = {}
 
-    event = augment_event(event, config)
+    event = augment_event(event)
 
     event['AuxiliaryInfo']['Suppressed'] = 0
 
@@ -215,13 +213,9 @@ def lambda_handler(event, context):
     alarm_key = f"{event['account']}#{event['detail']['alarmName']}#{region}"
 
     state_value = event['detail']['state']['value']
-    timestamp = datetime.strptime(event['time'], '%Y-%m-%dT%H:%M:%SZ').strftime('%Y%m%d%H%M%S')
-    suppressed = event['AuxiliaryInfo']['Suppressed']
-
-    # event['AuxiliaryInfo']['Account']['JoinedTimestamp'] = event['AuxiliaryInfo']['Account']['JoinedTimestamp'].replace(" ","T")
     update_expression = ("SET stateValue = :state_value, "
-    "suppressed = if_not_exists(suppressed, :suppressed), "
-    "detail = :detail, auxiliaryInfo = :auxiliary")
+                         "suppressed = if_not_exists(suppressed, :suppressed), "
+                         "detail = :detail, auxiliaryInfo = :auxiliary")
     expression_attribute_values = {
                 ':state_value': state_value,
                 ':suppressed': 0,

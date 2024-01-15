@@ -1,5 +1,7 @@
 import boto3
+from boto3.dynamodb.conditions import Attr
 from datetime import datetime
+import math
 import json
 
 dynamodb = boto3.resource('dynamodb')
@@ -71,9 +73,79 @@ def get_suppress_icon():
     <g id="Capa_1_104_"> </g> </g> </g></svg>'''
 
 
+def paginate_items(items, current_page, page_size):
+    pages = math.ceil(len(items) / page_size)
+    print(f'Got total {len(items)} items')
+    print(f'Got total {pages} of pages')
+    print(f'This number ({pages*page_size}) should be higher or same than items ')
+
+    # if current_page < 1 or current_page > pages:
+    #     raise ValueError("Invalid current page number")
+
+    if current_page < 1:
+        current_page = 1
+
+    if current_page > pages:
+        current_page = pages
+
+    start_index = (current_page - 1) * page_size
+    end_index = start_index + page_size
+    page_items = items[start_index:end_index]
+
+    return page_items
+
+
+def put_parameter_to_store(param_name, param_value):
+    response = ssm_client.put_parameter(
+        Name=param_name,
+        Value=param_value,
+        Type='String',
+        Overwrite=True
+    )
+    return response
+
+
+def get_account_list(alarms):
+    unique_accounts = set()
+    for alarm in alarms:
+        unique_accounts.add(alarm['alarmKey'].split('#')[0])
+
+    return sorted(list(unique_accounts))
+
+
+def get_region_list(alarms):
+    unique_regions = set()
+    for alarm in alarms:
+        unique_regions.add(alarm['alarmKey'].split('#')[2])
+
+    return list(unique_regions)
+
+
 def lambda_handler(event, context):
     print(event)
     config = json.loads(get_parameter_from_store('CloudWatchAlarmWidgetConfigCDK'))
+    if 'currentAlarmViewPage' in event:
+        config['currentAlarmViewPage'] = int(event['currentAlarmViewPage'])
+    if 'region' in event:
+        config['region_filter'] = event['region']
+
+    if 'sort_by_region' in event:
+        config['sort_by_region'] = event['sort_by_region']
+
+    if 'account' in event:
+        config['account_filter'] = event['account']
+
+    if 'sort_by_account' in event:
+        config['sort_by_account'] = event['sort_by_account']
+
+    if 'state' in event:
+        config['state_filter'] = event['state']
+
+    if 'priority' in event:
+        config['priority_filter'] = event['priority']
+
+    put_parameter_to_store('CloudWatchAlarmWidgetConfigCDK', json.dumps(config))
+
     configurator_lambda_function = ""
     try:
         configurator_lambda_function = config['configuratorLambdaFunction']
@@ -83,6 +155,29 @@ def lambda_handler(event, context):
 
     table = dynamodb.Table(config['dynamoTableName'])
     print(f'Accessing table {config["dynamoTableName"]}')
+    region_filter_icon_color = "000000"
+    account_filter_icon_color = "000000"
+    priority_filter_icon_color = "000000"
+    state_filter_icon_color = "000000"
+
+    filter_expressions = []
+
+    if 'region_filter' in config and config['region_filter'] != "none":
+        filter_expressions.append(Attr("alarmKey").contains("#" + config['region_filter']))
+        region_filter_icon_color = "ff0000"
+
+    if 'account_filter' in config and config['account_filter'] != "none":
+        filter_expressions.append(Attr("alarmKey").begins_with(config['account_filter'] + "#"))
+        account_filter_icon_color = "ff0000"
+
+    if 'state_filter' in config and config['state_filter'] != "none":
+        filter_expressions.append(Attr("stateValue").eq(config['state_filter']))
+        state_filter_icon_color = "ff0000"
+
+    if 'priority_filter' in config and config['priority_filter'] != "none":
+        filter_expressions.append(Attr("priority").eq(int(config['priority_filter'])))
+        priority_filter_icon_color = "ff0000"
+
     query_params = {
         'IndexName': 'SuppressionIndex',
         'KeyConditionExpression': 'suppressed = :suppressed',
@@ -91,6 +186,21 @@ def lambda_handler(event, context):
         },
         'ReturnConsumedCapacity': 'TOTAL'
     }
+
+    if filter_expressions:
+        combined_filter_expression = filter_expressions[0]
+        for expr in filter_expressions[1:]:
+            combined_filter_expression &= expr
+
+        query_params = {
+            'IndexName': 'SuppressionIndex',
+            'KeyConditionExpression': 'suppressed = :suppressed',
+            'ExpressionAttributeValues': {
+                ':suppressed': 0
+            },
+            'FilterExpression': combined_filter_expression,
+            'ReturnConsumedCapacity': 'TOTAL'
+        }
 
     alarms = []
     consumedRRUs = 0
@@ -116,45 +226,187 @@ def lambda_handler(event, context):
 
     est_monthly_cost = round(total_monthly_cost + (total_monthly_cost*0.75), 2)
 
-    region_filter_icon_color = "000000"
-    account_filter_icon_color = "000000"
-    priority_filter_icon_color = "000000"
-    state_filter_icon_color = "000000"
+    page = 1
+    if 'currentAlarmViewPage' in config and not config['currentAlarmViewPage'] == "none":
+        page = int(config['currentAlarmViewPage'])
 
-    if 'region_filter' in config and config['region_filter'] != "none":
-        alarms = filter_by_property(alarms, 'region', config['region_filter'])
-        region_filter_icon_color = "ff0000"
+    page_size = 100
+    if 'alarmViewListSize' in config and not config['alarmViewListSize'] == "none":
+        page_size = int(config['alarmViewListSize'])
 
-    if 'account_filter' in config and config['account_filter'] != "none":
-        alarms = filter_by_property(alarms, 'account', config['account_filter'])
-        account_filter_icon_color = "ff0000"
+    total_filtered_pages = math.ceil(len(alarms) / page_size)
 
-    if 'priority_filter' in config and config['priority_filter'] != "none":
-        alarms = filter_by_property(alarms, 'priority', config['priority_filter'])
-        priority_filter_icon_color = "ff0000"
+    alarms = paginate_items(alarms, page, page_size)
 
-    if 'state_filter' in config and config['state_filter'] != "none":
-        alarms = filter_by_property(alarms, 'state', config['state_filter'])
-        state_filter_icon_color = "ff0000"
-
-    html = '<table style="width:100%;">'
+    html = '''<div style="width:100%;"><p>'''
+    for total_filtered_page in range(1,total_filtered_pages+1,1):
+        if total_filtered_page == page:
+            html += f'''&nbsp;{total_filtered_page}'''
+        else:
+            html += f'''&nbsp;<a>{total_filtered_page}</a><cwdb-action action="call"
+             endpoint="{context.invoked_function_arn}">
+             {{ "currentAlarmViewPage": {total_filtered_page} }}
+            </cwdb-action>'''
+    html += '''</p></div>
+    '''
+    html += '<table style="width:100%;">'
     html += f'''\t<thead><tr>
-             <th>Alarm State <a>{get_filter_icon(state_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the state filter!"
-             display="popup" endpoint="{configurator_lambda_function}">
-             {{ "state": "none" }}
-            </cwdb-action></th>
-             <th>Priority <a>{get_filter_icon(priority_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the priority filter!"
-             display="popup" endpoint="{configurator_lambda_function}">
+             <th>Alarm State <a>{get_filter_icon(state_filter_icon_color)}</a>'''
+
+    if ('state_filter' in config and config['state_filter'] == "none") or 'state_filter' not in config:
+        html += f'''<cwdb-action action="html" 
+             display="popup" event="click">
+             <style>
+                .center {{
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  padding: 10px;
+                }}
+                
+                .center a {{
+                margin: 10px;
+                
+                }}
+             </style>
+             <div class="center">
+                
+                    <a class="btn btn-primary">OK</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                         endpoint="{context.invoked_function_arn}">
+                         {{ "state": "OK" }}
+                        </cwdb-action>
+                    <a class="btn btn-primary">ALARM</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                         endpoint="{context.invoked_function_arn}">
+                         {{ "state": "ALARM" }}
+                        </cwdb-action>
+                    <a class="btn btn-primary">INSUFFICIENT_DATA</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                         endpoint="{context.invoked_function_arn}">
+                         {{ "state": "INSUFFICIENT_DATA" }}
+                        </cwdb-action>
+            
+            </div>
+            </cwdb-action>'''
+    else:
+        html += f'''<cwdb-action action="call" confirmation="This will remove the state filter!"
+                 endpoint="{context.invoked_function_arn}">
+                 {{ "state": "none" }}
+                </cwdb-action>'''
+    html += f'''</th>
+             <th>Priority <a>{get_filter_icon(priority_filter_icon_color)}</a>'''
+
+    if ('priority_filter' in config and config['priority_filter'] == "none") or 'priority_filter' not in config:
+        html += f'''<cwdb-action action="html" 
+                     display="popup" event="click">
+                     <style>
+                        .center {{
+                          position: absolute;
+                          top: 50%;
+                          left: 50%;
+                          transform: translate(-50%, -50%);
+                          padding: 10px;
+                        }}
+                        
+                        .center a {{
+                        margin: 10px;
+                        
+                        }}
+                     </style>
+                     <div class="center">
+                        
+                            <a class="btn btn-primary">CRITICAL</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                                 endpoint="{context.invoked_function_arn}">
+                                 {{ "priority": 1 }}
+                                </cwdb-action>
+                       
+                            <a class="btn btn-primary">Medium</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                                 endpoint="{context.invoked_function_arn}">
+                                 {{ "priority": 2 }}
+                                </cwdb-action>
+           
+                            <a class="btn btn-primary">Low</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                                 endpoint="{context.invoked_function_arn}">
+                                 {{ "priority": 3 }}
+                                </cwdb-action>
+                
+                    </div>
+                    </cwdb-action>'''
+    else:
+        html += f'''<cwdb-action action="call" confirmation="This will remove the priority filter!"
+             endpoint="{context.invoked_function_arn}">
              {{ "priority": "none" }}
-            </cwdb-action></th>
+            </cwdb-action>'''
+    html += f'''</th>
             <th>Alarm Name</th>
-             <th>Alarm updated</th>'''
-    html += f'''<th>Alarm Account <a>{get_filter_icon(account_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the account filter!"
-             display="popup" endpoint="{configurator_lambda_function}">
+            <th>Alarm updated</th>
+            <th>Alarm Account <a>{get_filter_icon(account_filter_icon_color)}</a>'''
+    if ('account_filter' in config and config['account_filter'] == "none") or 'account_filter' not in config:
+        html += f'''<cwdb-action action="html" 
+                 display="popup" event="click">
+                 <style>
+                    .center {{
+                      position: absolute;
+                      top: 50%;
+                      left: 50%;
+                      transform: translate(-50%, -50%);
+                      padding: 10px;
+                    }}
+                    
+                    .center a {{
+                    margin: 10px;
+                    
+                    }}
+                 </style>
+                 <div class="center">
+                 '''
+
+        for account in get_account_list(alarms):
+            html += f'''
+                    <a class="btn btn-primary">{account}</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                         endpoint="{context.invoked_function_arn}">
+                        {{ "account": "{account}" }}
+                    </cwdb-action>
+                '''
+        html += f'''</div></cwdb-action>'''
+
+    else:
+        html += f'''<cwdb-action action="call" confirmation="This will remove the account filter!"
+             endpoint="{context.invoked_function_arn}">
              {{ "account": "none" }}
             </cwdb-action></th>'''
-    html += f'''<th>Region <a>{get_filter_icon(region_filter_icon_color)}</a><cwdb-action action="call" confirmation="This will remove the region filter!"
-             display="popup" endpoint="{configurator_lambda_function}">
+    html += f'''<th>Region <a>{get_filter_icon(region_filter_icon_color)}</a>'''
+
+    if ('region_filter' in config and config['region_filter'] == "none") or 'region_filter' not in config:
+        html += f'''<cwdb-action action="html" 
+                 display="popup" event="click">
+                 <style>
+                    .center {{
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        padding: 10px;
+                    }}
+                    
+                    .center a {{
+                        margin: 10px;
+                    }}
+                </style>
+                <div class="center">
+        '''
+
+        for region in get_region_list(alarms):
+            html += f'''
+                <a class="btn btn-primary">{region}</a><cwdb-action action="call" confirmation="This will remove the state filter!"
+                     endpoint="{context.invoked_function_arn}">
+                    {{ "region": "{region}" }}
+                </cwdb-action>
+            '''
+        html += f'''</div></cwdb-action>'''
+
+    else:
+        html += f'''<cwdb-action action="call" confirmation="This will remove the region filter!"
+             endpoint="{context.invoked_function_arn}">
              {{ "region": "none" }}
             </cwdb-action></th>'''
     html +=  (f'<th>Contact email</th>'
@@ -201,7 +453,7 @@ def lambda_handler(event, context):
             status_label = alarm["detail"]["state"]["value"]
         html += f'''\t\t<td style="color:{color}"><a style="color:{color}">{status_label}</a>
         <cwdb-action action="call" confirmation="This will filter status {status_label}"
-                display="popup" endpoint="{configurator_lambda_function}">
+                endpoint="{context.invoked_function_arn}">
                 {{ "state": "{alarm["detail"]["state"]["value"]}" }} 
                 </cwdb-action></td>'''
         html += f'<td><a>'
@@ -218,7 +470,7 @@ def lambda_handler(event, context):
 
             html += priority_name
             html += f'''</a><cwdb-action action="call" confirmation="This will filter {priority_name}"
-                display="popup" endpoint="{configurator_lambda_function}">
+                endpoint="{context.invoked_function_arn}">
                 {{ "priority": "{alarm['priority']}" }} 
                 </cwdb-action></td>'''
 
@@ -285,12 +537,12 @@ def lambda_handler(event, context):
         if "Email" in auxiliary_info["Account"]:
             email = auxiliary_info["Account"]["Email"]
         html += f'''\t\t<td><a>{account_id}</a><cwdb-action action="call" confirmation="This will filter {account_id}"
-                display="popup" endpoint="{configurator_lambda_function}">
+                endpoint="{context.invoked_function_arn}">
                 {{ "account": "{account_id}" }} 
                 </cwdb-action></td>
         
         <td style="width: 10%;"><a>{region}</a><cwdb-action action="call" confirmation="This will filter {region}"
-                display="popup" endpoint="{configurator_lambda_function}">
+                endpoint="{context.invoked_function_arn}">
                 {{ "region": "{region}" }} 
                 </cwdb-action></td><td>{email}</td>'''
         html += f'<td>'
@@ -314,4 +566,5 @@ def lambda_handler(event, context):
         html += '\t</tr>'
 
     html += '</table>'
+    print(len(html.encode('utf-8')))
     return html

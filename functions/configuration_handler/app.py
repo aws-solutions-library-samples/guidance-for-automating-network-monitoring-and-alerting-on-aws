@@ -74,6 +74,9 @@ def lambda_handler(event, context):
     if 'suppress' in event:
         return handle_suppression_request(event,config)
 
+    if 'currentAlarmViewPage' in event:
+        config['currentAlarmViewPage'] = int(event['currentAlarmViewPage'])
+
 
 
     message += f", current config:"

@@ -246,6 +246,7 @@ export class AlarmDashboardStack extends cdk.Stack {
 
         parameterConfig['compact'] = 0
         parameterConfig['configuratorLambdaFunction'] = configurationHandlerLambdaFunction.functionArn;
+        parameterConfig['alarmViewListSize'] = config.AlarmDashboard.alarmViewListSize?config.AlarmDashboard.alarmViewListSize:100;
 
         const configParameter = new StringParameter(this, 'ConfigParameter', {
             stringValue: JSON.stringify(parameterConfig),
@@ -258,7 +259,7 @@ export class AlarmDashboardStack extends cdk.Stack {
             new PolicyStatement({
                 effect: Effect.ALLOW,
                 actions: [
-                    'ssm:GetParameter'
+                    'ssm:GetParameter',
                 ],
                 resources: [configParameter.parameterArn]
             })
@@ -380,7 +381,10 @@ export class AlarmDashboardStack extends cdk.Stack {
         alarmListCWCustomFunction.addToRolePolicy(
             new PolicyStatement({
                 effect: Effect.ALLOW,
-                actions: ['ssm:GetParameter'],
+                actions: [
+                    'ssm:GetParameter',
+                    'ssm:PutParameter'
+                ],
                 resources: [configParameter.parameterArn],
             })
         );

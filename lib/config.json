@@ -12,7 +12,8 @@
   "AlarmTopic": "",
   "AlarmDashboard": {
     "enabled": false,
-    "organizationId": ""
+    "organizationId": "",
+    "alarmViewListSize": 100
   },
   "MetricDashboards": {
     "enabled": true
