@@ -67,11 +67,10 @@ def get_regions(default=None):
 def get_tag_key(default=None):
     resource_tagging_api = boto3.client('resourcegroupstaggingapi')
     tag_keys = list(resource_tagging_api.get_paginator('get_tag_keys').paginate().search('TagKeys'))
-    default = default or []
     return inquirer.fuzzy(
         message="Select Tag Key:",
-        choices=[Choice(value=name, enabled=name in default) for name in tag_keys],
-        cycle=False,
+        choices=[Choice(value=name) for name in tag_keys],
+        default=default,
     ).execute()
 
 def get_tag_values(key, default=None):
@@ -93,24 +92,26 @@ def get_tag_values(key, default=None):
 @click.option('--custom-namespaces-file', default="./custom_namespaces.json", help='custom_namespaces file', type=click.Path())
 @click.option('--base-name', default=None, help='Base Name')
 @click.option('--grouping-tag-key', default=None, help='GroupingTagKey')
-def main(base_name, regions, tag, values, config_file, output_file, custom_namespaces_file):
+def main(base_name, regions, tag, values, config_file, output_file, custom_namespaces_file, grouping_tag_key):
     """ Main """
 
     if not config_file and os.path.exists("lib/config.json"):
         config_file = "lib/config.json"
-        print('reading from {config}')
     main_config = {}
     if config_file:
+        print(f'reading from {config_file}')
         main_config = json.load(open(config_file))
+        print(main_config)
         base_name = base_name or main_config.get('BaseName')
+        grouping_tag_key = grouping_tag_key or main_config.get('GroupingTagKey')
         regions = regions or main_config.get('Regions')
         tag = tag or main_config.get('TagKey')
         values = values or main_config.get('TagValues')
         output_file = output_file or main_config.get('ResourceFile')
-    base_name = base_name or inquirer.text('Enter BaseName', default=base_name or 'Application').execute()
-    regions = regions or get_regions()
-    tag = tag or get_tag_key()
-    values = values or get_tag_values(tag)
+    base_name = inquirer.text('Enter BaseName', default=base_name or 'Application').execute()
+    regions = get_regions(default=regions)
+    tag = get_tag_key(default=tag)
+    values = get_tag_values(tag, default=values or [])
 
 
     if not os.path.exists(output_file) or inquirer.confirm(f'Resources scan was done {time.ctime(os.path.getmtime(output_file))}. Re scan?', default=True).execute():
