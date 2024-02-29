@@ -1,109 +1,39 @@
-import boto3
 import json
-import math
+
+import boto3
 from botocore.config import Config
 
-singletons = []
 
 def get_resources(tag_name, tag_values, config):
     """Get resources from resource groups and tagging API.
     Assembles resources in a list containing only ARN and tags
     """
-    resourcetaggingapi = boto3.client('resourcegroupstaggingapi', config=config)
-    resources = []
-
-    tags = len(tag_values)
-    if tags > 5:
-        tags_processed = 0
-        while tags_processed < tags:
-            incremental_tag_values = tag_values[tags_processed:tags_processed+5]
-            resources = get_resources_from_api(resourcetaggingapi, resources, tag_name, incremental_tag_values)
-            tags_processed += 5
-    else:
-        resources = get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values)
-    resources.extend(autoscaling_retriever(tag_name, tag_values, config))
-    return resources
-
-
-def get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values):
-    response = resourcetaggingapi.get_resources(
-        TagFilters=[
-            {
-                'Key': tag_name,
-                'Values': tag_values
-            },
-        ],
-        ResourcesPerPage=40
+    return  (
+        get_resources_from_api(tag_name, tag_values, config)
+        + autoscaling_retriever(tag_name, tag_values, config)
     )
 
-    resources.extend(response['ResourceTagMappingList'])
-    while response['PaginationToken'] != '':
-        print('Got the pagination token')
-        response = resourcetaggingapi.get_resources(
-            PaginationToken=response['PaginationToken'],
-            TagFilters=[
-                {
-                    'Key': tag_name,
-                    'Values': tag_values
-                },
-            ],
-            ResourcesPerPage=40
-        )
-        resources.extend(response['ResourceTagMappingList'])
-
-    return resources
+def get_resources_from_api(tag_name, tag_values, config):
+    resourcetaggingapi = boto3.client('resourcegroupstaggingapi', config=config)
+    return list(
+        resourcetaggingapi.get_paginator('get_resources').paginate(
+            TagFilters=[{'Key': tag_name, 'Values': tag_values}]
+        ).search('ResourceTagMappingList')
+    )
 
 def autoscaling_retriever(tag_name, tag_values, config):
-    resources = []
-    tags = len(tag_values)
-    if tags > 5:
-        tags_processed = 0
-        while tags_processed < tags:
-            incremental_tag_values = tag_values[tags_processed:tags_processed+5]
-            resources.extend(get_asgs_from_api(tag_name, incremental_tag_values, config))
-            tags_processed += 5
-    else:
-        resources.extend(get_asgs_from_api(tag_name, tag_values, config))
-
-    return resources
-
-
-def get_asgs_from_api(tag_name, tag_values, config):
     """Autoscaling is not supported by resource groups and tagging api
     This is
     :return:
     """
     asg = boto3.client('autoscaling', config=config)
-    resources = []
-    response = asg.describe_auto_scaling_groups(
-        Filters=[
-            {
-                'Name': 'tag:'+tag_name,
-                'Values': tag_values
-            }
-        ],
-        MaxRecords=10
+    resources = list(
+        asg.get_paginator('describe_auto_scaling_groups').paginate(
+            TagFilters=[{'Name': 'tag:' + tag_name, 'Values': tag_values}]
+        ).search('AutoScalingGroups')
     )
-    resources.extend(response['AutoScalingGroups'])
-    try:
-        while response['NextToken']:
-            response = asg.describe_auto_scaling_groups(
-                NextToken=response['NextToken'],
-                Filters=[
-                    {
-                        'Name': 'tag:'+tag_name,
-                        'Values': tag_values
-                    }
-                ],
-                MaxRecords=10
-            )
-            resources.extend(response['AutoScalingGroups'])
-    except:
-        print(f'Done fetching autoscaling groups')
-
     for resource in resources:
         resource['ResourceARN'] = resource['AutoScalingGroupARN']
-
     return resources
 
 def cw_custom_namespace_retriever(config):
