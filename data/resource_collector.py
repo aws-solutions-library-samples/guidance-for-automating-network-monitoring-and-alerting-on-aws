@@ -2,7 +2,11 @@ import json
 
 import boto3
 from botocore.config import Config
+from tqdm import tqdm
 
+
+def log(*args, **kwargs):
+    tqdm.write(*args, **kwargs)
 
 def get_resources(tag_name, tag_values, config):
     """Get resources from resource groups and tagging API.
@@ -29,7 +33,7 @@ def autoscaling_retriever(tag_name, tag_values, config):
     asg = boto3.client('autoscaling', config=config)
     resources = list(
         asg.get_paginator('describe_auto_scaling_groups').paginate(
-            TagFilters=[{'Name': 'tag:' + tag_name, 'Values': tag_values}]
+            Filters=[{'Name': 'tag:' + tag_name, 'Values': tag_values}]
         ).search('AutoScalingGroups')
     )
     for resource in resources:
@@ -45,7 +49,7 @@ def cw_custom_namespace_retriever(config):
     for record in response['Metrics']:
         if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
             resources.append(record['Namespace'])
-            print(resources)
+            log(resources)
 
     try:
         while response['NextToken']:
@@ -55,9 +59,9 @@ def cw_custom_namespace_retriever(config):
             for record in response['Metrics']:
                 if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
                     resources.append(record['Namespace'])
-                    print(resources)
+                    log(resources)
     except:
-        print(f'Done fetching cloudwatch namespaces')
+        log(f'Done fetching cloudwatch namespaces')
     return resources
 
 
@@ -115,7 +119,7 @@ def router(resource, config):
 
 
 def apigw1_decorator(resource, config):
-    print(f'This resource is API Gateway 1 {resource["ResourceARN"]}')
+    log(f'This resource is API Gateway 1 {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     apigw = boto3.client('apigateway', config=config)
     response = apigw.get_rest_api(
@@ -131,7 +135,7 @@ def apigw1_decorator(resource, config):
     return resource
 
 def apigw2_decorator(resource, config):
-    print(f'This resource is API Gateway 2 {resource["ResourceARN"]}')
+    log(f'This resource is API Gateway 2 {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/')) - 1]
     apigw = boto3.client('apigatewayv2', config=config)
     response = apigw.get_api(
@@ -146,7 +150,7 @@ def apigw2_decorator(resource, config):
 
 
 def appsync_decorator(resource, config):
-    print(f'This resource is AppSync {resource["ResourceARN"]}')
+    log(f'This resource is AppSync {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/')) - 1]
     appsync = boto3.client('appsync', config=config)
     response = appsync.get_graphql_api(
@@ -162,7 +166,7 @@ def appsync_decorator(resource, config):
 
 
 def aurora_decorator(resource, config):
-    print(f'This resource is Aurora {resource["ResourceARN"]}')
+    log(f'This resource is Aurora {resource["ResourceARN"]}')
     clusterid = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':')) - 1]
     rds = boto3.client('rds', config=config)
     try:
@@ -182,20 +186,20 @@ def aurora_decorator(resource, config):
         resource['Iops'] = response['DBClusters'][0]['Iops']
         resource['PerformanceInsightsEnabled'] = response['DBClusters'][0]['PerformanceInsightsEnabled']
     except:
-        print('Just aurora-resource')
+        log('Just aurora-resource')
 
     return resource
 
 
 def autoscaling_decorator(resource, config):
-    print(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
+    log(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
     return resource
 
 def beanstalk_decorator(resource, config):
     return resource
 
 def cloudfront_decorator(resource, config):
-    print(f'This resource is CloudFront distribution')
+    log(f'This resource is CloudFront distribution')
     client = boto3.client('cloudfront', config=config)
     response = client.get_distribution(
         Id = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
@@ -208,7 +212,7 @@ def cloudfront_decorator(resource, config):
     return resource
 
 def mediapackage_decorator(resource, config):
-    print(f'this resource is Mediapackage channel')
+    log(f'this resource is Mediapackage channel')
     arn = resource['ResourceARN']
     client = boto3.client('mediapackage', config=config)
     response = client.list_channels(
@@ -228,7 +232,7 @@ def mediapackage_decorator(resource, config):
     return resource
         
 def medialive_decorator(resource, config):
-    print(f'this resource is Medialive channel')
+    log(f'this resource is Medialive channel')
     arn = resource['ResourceARN']
     client = boto3.client('medialive', config=config)
     response = client.list_channels(
@@ -245,12 +249,12 @@ def medialive_decorator(resource, config):
     return resource
     
 def odcr_decorator(resource, config):
-    print(f'This resource is ODCR {resource["ResourceARN"]}')
+    log(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
 
 
 def dynamodb_decorator(resource, config):
-    print(f'This resource is DynamoDB {resource["ResourceARN"]}')
+    log(f'This resource is DynamoDB {resource["ResourceARN"]}')
     tablename = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     ddb = boto3.client('dynamodb', config=config)
     response = ddb.describe_table(
@@ -270,7 +274,7 @@ def dynamodb_decorator(resource, config):
     return resource
 
 def efs_decorator(resource, config):
-    print(f'This resource is EFS {resource["ResourceARN"]}')
+    log(f'This resource is EFS {resource["ResourceARN"]}')
     fsId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     efs = boto3.client('efs', config=config)
     response = efs.describe_file_systems(
@@ -282,7 +286,7 @@ def efs_decorator(resource, config):
 
 
 def ec2_decorator(resource, config):
-    print(f'This resource is EC2 {resource["ResourceARN"]}')
+    log(f'This resource is EC2 {resource["ResourceARN"]}')
     instanceid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     ec2 = boto3.client('ec2', config=config)
 
@@ -322,7 +326,7 @@ def ec2_decorator(resource, config):
                 volumes.append(record)
 
     except:
-        print(f'Done fetching volumes')
+        log(f'Done fetching volumes')
 
     resource['Volumes'] = volumes
 
@@ -354,16 +358,16 @@ def ec2_decorator(resource, config):
                 {'Name': 'InstanceId', 'Value': instanceid}
             ], ):
         if len(response['Metrics']) > 0:
-            print(f'Instance {instanceid} has CWAgent')
+            log(f'Instance {instanceid} has CWAgent')
             resource['CWAgent'] = 'True'
         else:
-            print(f'Instance {instanceid} does not have CWAgent')
+            log(f'Instance {instanceid} does not have CWAgent')
             resource['CWAgent'] = 'False'
 
     return resource
 
 def elasticache_decorator(resource, config):
-    print(f'This resource is Elasticache {resource["ResourceARN"]}')
+    log(f'This resource is Elasticache {resource["ResourceARN"]}')
     if ':cluster:' in resource['ResourceARN']:
         clusterid = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
         client = boto3.client('elasticache', config=config)
@@ -385,7 +389,7 @@ def elasticache_decorator(resource, config):
 
 
 def lambda_decorator(resource, config):
-    print(f'This resource is Lambda {resource["ResourceARN"]}')
+    log(f'This resource is Lambda {resource["ResourceARN"]}')
     functionname = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':')) - 1]
     lambdaclient = boto3.client('lambda', config=config)
     response = lambdaclient.get_function(
@@ -396,7 +400,7 @@ def lambda_decorator(resource, config):
 
 
 def elb1_decorator(resource, config):
-    print(f'This resource is ELBv1 {resource["ResourceARN"]}')
+    log(f'This resource is ELBv1 {resource["ResourceARN"]}')
     elbname = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     elb = boto3.client('elb', config=config)
     response = elb.describe_load_balancers(
@@ -409,7 +413,7 @@ def elb1_decorator(resource, config):
 
 
 def elb2_decorator(resource, config):
-    print(f'This resource is ELBv2 {resource["ResourceARN"]}')
+    log(f'This resource is ELBv2 {resource["ResourceARN"]}')
     elb = boto3.client('elbv2', config=config)
     response = elb.describe_load_balancers(
         LoadBalancerArns=[
@@ -425,7 +429,7 @@ def elb2_decorator(resource, config):
 
 
 def ecs_decorator(resource, config):
-    print(f'This resource is ECS {resource["ResourceARN"]}')
+    log(f'This resource is ECS {resource["ResourceARN"]}')
     ecs = boto3.client('ecs', config=config)
     response = ecs.describe_clusters(
         clusters=[
@@ -469,18 +473,18 @@ def ecs_decorator(resource, config):
 
 
 def natgw_decorator(resource, config):
-    print(f'This resource is NAT-gw {resource["ResourceARN"]}')
+    log(f'This resource is NAT-gw {resource["ResourceARN"]}')
     return resource
 
 
 def rds_decorator(resource, config):
-    print(f'This resource is RDS {resource["ResourceARN"]}')
+    log(f'This resource is RDS {resource["ResourceARN"]}')
     return resource
 
 def s3_decorator(resource, config):
     bucket_name = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
     resource['BucketName'] = bucket_name
-    print(f'This resource {bucket_name} is S3 bucket')
+    log(f'This resource {bucket_name} is S3 bucket')
     s3client = boto3.client('s3', config=config)
     try:
         encryption_request = s3client.get_bucket_encryption(
@@ -509,7 +513,7 @@ def s3_decorator(resource, config):
 
 
 def sqs_decorator(resource, config):
-    print(f'This resource is SQS {resource["ResourceARN"]}')
+    log(f'This resource is SQS {resource["ResourceARN"]}')
     queueName = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
     sqs = boto3.client('sqs', config=config)
     response = sqs.get_queue_url(
@@ -523,7 +527,7 @@ def sqs_decorator(resource, config):
     return resource
 
 def sns_decorator(resource, config):
-    print(f'This resource is SNS {resource["ResourceARN"]}')
+    log(f'This resource is SNS {resource["ResourceARN"]}')
 #     sns = boto3.client('sns', config=config)
 #     response = sns.get_topic_attributes(
 #         TopicArn=resource['ResourceARN']
@@ -535,7 +539,7 @@ def sns_decorator(resource, config):
 
 
 def tgw_decorator(resource, config):
-    print(f'This resource is TGW {resource["ResourceARN"]}')
+    log(f'This resource is TGW {resource["ResourceARN"]}')
     tgwid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     tgw = boto3.client('ec2', config=config)
     response = tgw.describe_transit_gateway_attachments(
@@ -552,7 +556,7 @@ def tgw_decorator(resource, config):
 
 
 def debug(resource):
-    print(json.dumps(resource, indent=4, default=str))
+    log(json.dumps(resource, indent=4, default=str))
 
 def get_config(region):
     return Config(
@@ -574,44 +578,44 @@ def handler():
         f = open("../lib/config.json", "r")
         main_config = json.load(f)
     except:
-        print("Could not find config file!!! You should run this from 'data' directory!")
+        log("Could not find config file!!! You should run this from 'data' directory!")
         quit()
 
     try:
         if main_config['ResourceFile']:
             output_file = main_config['ResourceFile']
     except:
-        print('No ResourceFile configured using default')
+        log('No ResourceFile configured using default')
 
     try:
         if main_config['TagKey']:
             tag_name = main_config['TagKey']
     except:
-        print('No tag key configured')
+        log('No tag key configured')
 
     try:
         if main_config['TagValues']:
             tag_values = main_config['TagValues']
     except:
-        print('No tag values configured')
+        log('No tag values configured')
 
     try:
         if main_config['Regions']:
             regions = main_config['Regions']
     except:
-        print('No regions configured')
+        log('No regions configured')
 
     try:
         if main_config['CustomNamespaceFile']:
             custom_namespace_file = main_config['CustomNamespaceFile']
     except:
-        print('No custom namespaces configured')
+        log('No custom namespaces configured')
 
     decorated_resources = []
     region_namespaces = {'RegionNamespaces': []}
     if 'us-east-1' not in regions:
         regions.append('us-east-1')
-        print('Added us-east-1 region for global services')
+        log('Added us-east-1 region for global services')
 
     for region in regions:
         config = get_config(region)
