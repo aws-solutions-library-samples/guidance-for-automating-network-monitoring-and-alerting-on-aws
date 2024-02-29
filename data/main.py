@@ -8,7 +8,6 @@ import boto3
 from tqdm import tqdm
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
-from InquirerPy.separator import Separator
 
 from resource_collector import get_config, get_resources, cw_custom_namespace_retriever, router
 
@@ -101,7 +100,6 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
     if config_file:
         print(f'reading from {config_file}')
         main_config = json.load(open(config_file))
-        print(main_config)
         base_name = base_name or main_config.get('BaseName')
         grouping_tag_key = grouping_tag_key or main_config.get('GroupingTagKey')
         regions = regions or main_config.get('Regions')
@@ -145,11 +143,15 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
         main_config["ResourceFile"] = output_file
         json.dump(main_config, _file, indent=4, default=str)
     print(f'config: {config_file}')
-    print(f'config: {config_file}')
+
+    if not os.path.exists('node_modules') and inquirer.confirm(f'Looks like node dependencies are not installed. Run `npm ic` ?', default=True).execute():
+        os.system('npm ic')
 
     if inquirer.confirm(f'Run `cdk synth` ?', default=True).execute():
         os.system('cdk synth')
 
+        if inquirer.confirm(f'Run `cdk deploy` ?', default=True).execute():
+            os.system('cdk deploy')
 
 if __name__ == '__main__':
     main()
