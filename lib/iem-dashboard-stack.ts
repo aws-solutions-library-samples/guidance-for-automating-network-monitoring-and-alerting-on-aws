@@ -9,7 +9,7 @@ export class IemDashboardStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const dashboard = new Dashboard(this,config.BaseName,{
+    const dashboard = new Dashboard(this, config.BaseName, {
       dashboardName: config.BaseName + '-Dashboard'
     });
 
@@ -17,8 +17,9 @@ export class IemDashboardStack extends Stack {
     try {
       resources = require(config.ResourceFile);
       console.log(`LOADED RESOURCE FILE ${config.ResourceFile}`);
-    } catch {
-      console.log(`ERROR: ${config.ResourceFile} not found, run 'cd data; python resource_collector.py'`);
+    } catch (error) {
+      console.error(`An error occurred: ${error.message}`);
+      console.error(`ERROR: file ${config.ResourceFile} not found, run 'cd data; python resource_collector.py'`);
     }
 
     const graphFactory = new GraphFactory(this,'GraphFactory',resources, config);
