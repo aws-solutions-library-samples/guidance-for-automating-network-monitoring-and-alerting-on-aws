@@ -1,5 +1,17 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
+Parameters:
+
+  CentralBusARN:
+    Type: String
+    Description: ARN of EventBus in the central Account
+    Default: REPLACE_WITH_CENTRAL_BUS_ARN
+
+  LambdaRoleARN:
+    Type: String
+    Description: Central Lambda Function ARN
+    Default: REPLACE_WITH_LAMBDA_ROLE_ARN
+
 Resources:
 
   CentralEventBusForwardingRole:
@@ -19,7 +31,7 @@ Resources:
             Statement:
               - Effect: 'Allow'
                 Action: 'events:PutEvents'
-                Resource: 'REPLACE_WITH_CENTRAL_BUS_ARN'
+                Resource: !Ref CentralBusARN
 
   AlarmStateChangeEventRule:
     Type: 'AWS::Events::Rule'
@@ -32,7 +44,7 @@ Resources:
           - 'CloudWatch Alarm State Change'
       State: 'ENABLED'
       Targets:
-        - Arn: 'REPLACE_WITH_CENTRAL_BUS_ARN'
+        - Arn: !Ref CentralBusARN
           Id: 'Target1'
           RoleArn: !GetAtt [ CentralEventBusForwardingRole, Arn ]
 
@@ -44,7 +56,7 @@ Resources:
           - Action: sts:AssumeRole
             Effect: Allow
             Principal:
-              AWS: 'REPLACE_WITH_LAMBDA_ROLE_ARN'
+              AWS: !Ref LambdaRoleARN
         Version: "2012-10-17"
       Description: Role used by central Alarm event augmentation Lambda function
       RoleName: !Sub "CrossAccountAlarmAugmentationAssumeRole-${AWS::Region}"
