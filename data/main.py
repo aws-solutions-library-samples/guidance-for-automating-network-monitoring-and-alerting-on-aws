@@ -114,7 +114,7 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
     need_scan = True
     decorated_resources = []
     region_namespaces = {'RegionNamespaces': []}
-    if os.path.exists(output_file) and open():
+    if os.path.exists(output_file):
 
         choice = inquirer.select(
             f'Resources file was updated {time.ctime(os.path.getmtime(output_file))}',
