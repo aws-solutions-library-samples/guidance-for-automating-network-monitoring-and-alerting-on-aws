@@ -8,29 +8,29 @@ from tqdm import tqdm
 def log(*args, **kwargs):
     tqdm.write(*args, **kwargs)
 
-def get_resources(tag_name, tag_values, config):
+def get_resources(tag_name, tag_values, session, config):
     """Get resources from resource groups and tagging API.
     Assembles resources in a list containing only ARN and tags
     """
     return  (
-        get_resources_from_api(tag_name, tag_values, config)
-        + autoscaling_retriever(tag_name, tag_values, config)
+        get_resources_from_api(tag_name, tag_values, session, config)
+        + autoscaling_retriever(tag_name, tag_values, session, config)
     )
 
-def get_resources_from_api(tag_name, tag_values, config):
-    resourcetaggingapi = boto3.client('resourcegroupstaggingapi', config=config)
+def get_resources_from_api(tag_name, tag_values, session, config):
+    resourcetaggingapi = session.client('resourcegroupstaggingapi', config=config)
     return list(
         resourcetaggingapi.get_paginator('get_resources').paginate(
             TagFilters=[{'Key': tag_name, 'Values': tag_values}]
         ).search('ResourceTagMappingList')
     )
 
-def autoscaling_retriever(tag_name, tag_values, config):
+def autoscaling_retriever(tag_name, tag_values, session, config):
     """Autoscaling is not supported by resource groups and tagging api
     This is
     :return:
     """
-    asg = boto3.client('autoscaling', config=config)
+    asg = session.client('autoscaling', config=config)
     resources = list(
         asg.get_paginator('describe_auto_scaling_groups').paginate(
             Filters=[{'Name': 'tag:' + tag_name, 'Values': tag_values}]
@@ -40,10 +40,10 @@ def autoscaling_retriever(tag_name, tag_values, config):
         resource['ResourceARN'] = resource['AutoScalingGroupARN']
     return resources
 
-def cw_custom_namespace_retriever(config):
+def cw_custom_namespace_retriever(session, config):
     """Retrieving all custom namespaces
     """
-    cw = boto3.client('cloudwatch', config=config)
+    cw = session.client('cloudwatch', config=config)
     resources = []
     response = cw.list_metrics()
     for record in response['Metrics']:
@@ -67,61 +67,61 @@ def cw_custom_namespace_retriever(config):
 
 
 
-def router(resource, config):
+def router(resource, session, config):
     arn = resource['ResourceARN']
     if ':apigateway:' in arn and '/restapis/' in arn and 'stages' not in arn:
-        resource = apigw1_decorator(resource, config)
+        resource = apigw1_decorator(resource, session, config)
     elif ':apigateway:' in arn and '/apis/' in arn and 'stages' not in arn:
-        resource = apigw2_decorator(resource, config)
+        resource = apigw2_decorator(resource, session, config)
     elif ':appsync:' in arn:
-        resource = appsync_decorator(resource, config)
+        resource = appsync_decorator(resource, session, config)
     elif ':rds:' in arn and ':cluster:' in arn:
-        resource = aurora_decorator(resource, config)
+        resource = aurora_decorator(resource, session, config)
     elif ':autoscaling:' in arn and ':autoScalingGroup:' in arn:
-        resource = autoscaling_decorator(resource, config)
+        resource = autoscaling_decorator(resource, session, config)
     elif ':capacity-reservation/' in arn:
-        resource = odcr_decorator(resource, config)
+        resource = odcr_decorator(resource, session, config)
     elif ':dynamodb:' in arn and ':table/' in arn:
-        resource = dynamodb_decorator(resource, config)
+        resource = dynamodb_decorator(resource, session, config)
     elif ':ec2:' in arn and ':instance/' in arn:
-        resource = ec2_decorator(resource, config)
+        resource = ec2_decorator(resource, session, config)
     elif 'lambda' in arn and 'function' in arn:
-        resource = lambda_decorator(resource, config)
+        resource = lambda_decorator(resource, session, config)
     elif 'elasticloadbalancing' in arn and '/net/' not in arn and '/app/' not in arn and ':targetgroup/' not in arn:
-        resource = elb1_decorator(resource, config)
+        resource = elb1_decorator(resource, session, config)
     elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ) and ':targetgroup/' not in arn:
-        resource = elb2_decorator(resource, config)
+        resource = elb2_decorator(resource, session, config)
     elif ':ecs:' in arn and ':cluster/' in arn:
-        resource = ecs_decorator(resource, config)
+        resource = ecs_decorator(resource, session, config)
     elif ':natgateway/' in arn and ':ec2:' in arn:
-        resource = natgw_decorator(resource, config)
+        resource = natgw_decorator(resource, session, config)
     elif ':transit-gateway/' in arn and ':ec2:' in arn:
-        resource = tgw_decorator(resource, config)
+        resource = tgw_decorator(resource, session, config)
     elif ':sqs:' in arn:
-        resource = sqs_decorator(resource, config)
+        resource = sqs_decorator(resource, session, config)
     elif 'arn:aws:s3:' in arn:
-        resource = s3_decorator(resource, config)
+        resource = s3_decorator(resource, session, config)
     elif ':sns:' in arn:
-        resource = sns_decorator(resource, config)
+        resource = sns_decorator(resource, session, config)
     elif ':cloudfront:' in arn and ':distribution/' in arn:
-        resource = cloudfront_decorator(resource, config)
+        resource = cloudfront_decorator(resource, session, config)
     elif ':elasticache:' in arn:
-        resource = elasticache_decorator(resource, config)
+        resource = elasticache_decorator(resource, session, config)
     elif ':mediapackage:' in arn and ':channels/' in arn:
-        resource = mediapackage_decorator(resource, config)
+        resource = mediapackage_decorator(resource, session, config)
     elif ':medialive:' in arn and ':channel:' in arn:
-        resource = medialive_decorator(resource, config)
+        resource = medialive_decorator(resource, session, config)
     elif ':elasticfilesystem:' in arn:
-        resource = efs_decorator(resource, config)
+        resource = efs_decorator(resource, session, config)
     elif 'arn:aws:elasticbeanstalk:' in arn:
-        resource = beanstalk_decorator(resource,config)
+        resource = beanstalk_decorator(resource,session, config)
     return resource
 
 
-def apigw1_decorator(resource, config):
+def apigw1_decorator(resource, session, config):
     log(f'This resource is API Gateway 1 {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    apigw = boto3.client('apigateway', config=config)
+    apigw = session.client('apigateway', config=config)
     response = apigw.get_rest_api(
         restApiId=apiid
     )
@@ -134,10 +134,10 @@ def apigw1_decorator(resource, config):
     resource['stages'] = response2['item']
     return resource
 
-def apigw2_decorator(resource, config):
+def apigw2_decorator(resource, session, config):
     log(f'This resource is API Gateway 2 {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/')) - 1]
-    apigw = boto3.client('apigatewayv2', config=config)
+    apigw = session.client('apigatewayv2', config=config)
     response = apigw.get_api(
         ApiId=apiid
     )
@@ -149,10 +149,10 @@ def apigw2_decorator(resource, config):
     return resource
 
 
-def appsync_decorator(resource, config):
+def appsync_decorator(resource, session, config):
     log(f'This resource is AppSync {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/')) - 1]
-    appsync = boto3.client('appsync', config=config)
+    appsync = session.client('appsync', config=config)
     response = appsync.get_graphql_api(
         apiId=apiid
     )
@@ -165,10 +165,10 @@ def appsync_decorator(resource, config):
     return resource
 
 
-def aurora_decorator(resource, config):
+def aurora_decorator(resource, session, config):
     log(f'This resource is Aurora {resource["ResourceARN"]}')
     clusterid = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':')) - 1]
-    rds = boto3.client('rds', config=config)
+    rds = session.client('rds', config=config)
     try:
         response = rds.describe_db_clusters(
             DBClusterIdentifier=clusterid
@@ -191,16 +191,16 @@ def aurora_decorator(resource, config):
     return resource
 
 
-def autoscaling_decorator(resource, config):
+def autoscaling_decorator(resource, session, config):
     log(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
     return resource
 
-def beanstalk_decorator(resource, config):
+def beanstalk_decorator(resource, session, config):
     return resource
 
-def cloudfront_decorator(resource, config):
+def cloudfront_decorator(resource, session, config):
     log(f'This resource is CloudFront distribution')
-    client = boto3.client('cloudfront', config=config)
+    client = session.client('cloudfront', config=config)
     response = client.get_distribution(
         Id = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     )
@@ -211,10 +211,10 @@ def cloudfront_decorator(resource, config):
     resource['Origins'] = response['Distribution']['DistributionConfig']['Origins']
     return resource
 
-def mediapackage_decorator(resource, config):
+def mediapackage_decorator(resource, session, config):
     log(f'this resource is Mediapackage channel')
     arn = resource['ResourceARN']
-    client = boto3.client('mediapackage', config=config)
+    client = session.client('mediapackage', config=config)
     response = client.list_channels(
         MaxResults=40,
     
@@ -231,10 +231,10 @@ def mediapackage_decorator(resource, config):
             resource['OriginEndpoint'] = origin_endpoint['OriginEndpoints']
     return resource
         
-def medialive_decorator(resource, config):
+def medialive_decorator(resource, session, config):
     log(f'this resource is Medialive channel')
     arn = resource['ResourceARN']
-    client = boto3.client('medialive', config=config)
+    client = session.client('medialive', config=config)
     response = client.list_channels(
         MaxResults=40,
     )
@@ -248,15 +248,15 @@ def medialive_decorator(resource, config):
             resource['Pipeline'] = response2['PipelineDetails']
     return resource
     
-def odcr_decorator(resource, config):
+def odcr_decorator(resource, session, config):
     log(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
 
 
-def dynamodb_decorator(resource, config):
+def dynamodb_decorator(resource, session, config):
     log(f'This resource is DynamoDB {resource["ResourceARN"]}')
     tablename = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    ddb = boto3.client('dynamodb', config=config)
+    ddb = session.client('dynamodb', config=config)
     response = ddb.describe_table(
         TableName=tablename
     )
@@ -273,10 +273,10 @@ def dynamodb_decorator(resource, config):
     resource['rcu'] = rcu
     return resource
 
-def efs_decorator(resource, config):
+def efs_decorator(resource, session, config):
     log(f'This resource is EFS {resource["ResourceARN"]}')
     fsId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    efs = boto3.client('efs', config=config)
+    efs = session.client('efs', config=config)
     response = efs.describe_file_systems(
         FileSystemId=fsId
     )
@@ -285,10 +285,10 @@ def efs_decorator(resource, config):
     return resource
 
 
-def ec2_decorator(resource, config):
+def ec2_decorator(resource, session, config):
     log(f'This resource is EC2 {resource["ResourceARN"]}')
     instanceid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    ec2 = boto3.client('ec2', config=config)
+    ec2 = session.client('ec2', config=config)
 
     volumes = []
 
@@ -349,7 +349,7 @@ def ec2_decorator(resource, config):
         )
         resource['CPUCreditSpecs'] = response['InstanceCreditSpecifications'][0]
 
-    cw = boto3.client('cloudwatch', config=config)
+    cw = session.client('cloudwatch', config=config)
     results = cw.get_paginator('list_metrics')
     for response in results.paginate(
             MetricName='mem_used_percent',
@@ -366,11 +366,11 @@ def ec2_decorator(resource, config):
 
     return resource
 
-def elasticache_decorator(resource, config):
+def elasticache_decorator(resource, session, config):
     log(f'This resource is Elasticache {resource["ResourceARN"]}')
     if ':cluster:' in resource['ResourceARN']:
         clusterid = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
-        client = boto3.client('elasticache', config=config)
+        client = session.client('elasticache', config=config)
         response = client.describe_cache_clusters(
             CacheClusterId=clusterid
         )
@@ -388,10 +388,10 @@ def elasticache_decorator(resource, config):
     return resource
 
 
-def lambda_decorator(resource, config):
+def lambda_decorator(resource, session, config):
     log(f'This resource is Lambda {resource["ResourceARN"]}')
     functionname = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':')) - 1]
-    lambdaclient = boto3.client('lambda', config=config)
+    lambdaclient = session.client('lambda', config=config)
     response = lambdaclient.get_function(
         FunctionName=functionname
     )
@@ -399,10 +399,10 @@ def lambda_decorator(resource, config):
     return resource
 
 
-def elb1_decorator(resource, config):
+def elb1_decorator(resource, session, config):
     log(f'This resource is ELBv1 {resource["ResourceARN"]}')
     elbname = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    elb = boto3.client('elb', config=config)
+    elb = session.client('elb', config=config)
     response = elb.describe_load_balancers(
        LoadBalancerNames=[
            elbname
@@ -412,9 +412,9 @@ def elb1_decorator(resource, config):
     return resource
 
 
-def elb2_decorator(resource, config):
+def elb2_decorator(resource, session, config):
     log(f'This resource is ELBv2 {resource["ResourceARN"]}')
-    elb = boto3.client('elbv2', config=config)
+    elb = session.client('elbv2', config=config)
     response = elb.describe_load_balancers(
         LoadBalancerArns=[
             resource['ResourceARN']
@@ -428,9 +428,9 @@ def elb2_decorator(resource, config):
     return resource
 
 
-def ecs_decorator(resource, config):
+def ecs_decorator(resource, session, config):
     log(f'This resource is ECS {resource["ResourceARN"]}')
-    ecs = boto3.client('ecs', config=config)
+    ecs = session.client('ecs', config=config)
     response = ecs.describe_clusters(
         clusters=[
             resource['ResourceARN']
@@ -456,7 +456,7 @@ def ecs_decorator(resource, config):
             for lb in service['loadBalancers']:
                 target_groups.append(lb['targetGroupArn'])
 
-        elb = boto3.client('elbv2', config=config)
+        elb = session.client('elbv2', config=config)
         for target_group in target_groups:
             response = elb.describe_target_health(
                 TargetGroupArn=target_group
@@ -472,20 +472,20 @@ def ecs_decorator(resource, config):
     return resource
 
 
-def natgw_decorator(resource, config):
+def natgw_decorator(resource, session, config):
     log(f'This resource is NAT-gw {resource["ResourceARN"]}')
     return resource
 
 
-def rds_decorator(resource, config):
+def rds_decorator(resource, session, config):
     log(f'This resource is RDS {resource["ResourceARN"]}')
     return resource
 
-def s3_decorator(resource, config):
+def s3_decorator(resource, session, config):
     bucket_name = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
     resource['BucketName'] = bucket_name
     log(f'This resource {bucket_name} is S3 bucket')
-    s3client = boto3.client('s3', config=config)
+    s3client = session.client('s3', config=config)
     try:
         encryption_request = s3client.get_bucket_encryption(
             Bucket=bucket_name
@@ -512,10 +512,10 @@ def s3_decorator(resource, config):
     return resource
 
 
-def sqs_decorator(resource, config):
+def sqs_decorator(resource, session, config):
     log(f'This resource is SQS {resource["ResourceARN"]}')
     queueName = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
-    sqs = boto3.client('sqs', config=config)
+    sqs = session.client('sqs', config=config)
     response = sqs.get_queue_url(
         QueueName=queueName
     )
@@ -526,9 +526,9 @@ def sqs_decorator(resource, config):
     resource['Attributes'] = response['Attributes']
     return resource
 
-def sns_decorator(resource, config):
+def sns_decorator(resource, session, config):
     log(f'This resource is SNS {resource["ResourceARN"]}')
-#     sns = boto3.client('sns', config=config)
+#     sns = session.client('sns', config=config)
 #     response = sns.get_topic_attributes(
 #         TopicArn=resource['ResourceARN']
 #     )
@@ -538,10 +538,10 @@ def sns_decorator(resource, config):
     return resource
 
 
-def tgw_decorator(resource, config):
+def tgw_decorator(resource, session, config):
     log(f'This resource is TGW {resource["ResourceARN"]}')
     tgwid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
-    tgw = boto3.client('ec2', config=config)
+    tgw = session.client('ec2', config=config)
     response = tgw.describe_transit_gateway_attachments(
         Filters=[{
             'Name': 'transit-gateway-id',
@@ -575,10 +575,10 @@ def handler():
     output_file = "resources.json"
     custom_namespace_file = "custom_namespaces.json"
     try:
-        f = open("../lib/config.json", "r")
+        f = open("../lib/session.json", "r")
         main_config = json.load(f)
     except:
-        log("Could not find config file!!! You should run this from 'data' directory!")
+        log("Could not find session file!!! You should run this from 'data' directory!")
         quit()
 
     try:
@@ -619,11 +619,12 @@ def handler():
 
     for region in regions:
         config = get_config(region)
-        resources = get_resources(tag_name, tag_values, config)
-        region_namespace = {'Region': region, 'Namespaces' : cw_custom_namespace_retriever(config) }
+        session = boto3.Session(profile_name=None)
+        resources = get_resources(tag_name, tag_values, session, config)
+        region_namespace = {'Region': region, 'Namespaces' : cw_custom_namespace_retriever(session, config) }
         region_namespaces['RegionNamespaces'].append(region_namespace)
         for resource in resources:
-            decorated_resources.append(router(resource, config))
+            decorated_resources.append(router(resource, session, config))
     cn = open(custom_namespace_file, "w")
     cn.write(json.dumps(region_namespaces, indent=4, default=str))
     cn.close()
