@@ -111,10 +111,27 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
     tag = get_tag_key(default=tag)
     values = get_tag_values(tag, default=values or [])
 
+    need_scan = True
+    decorated_resources = []
+    if os.path.exists(output_file):
 
-    if not os.path.exists(output_file) or inquirer.confirm(f'Resources scan was done {time.ctime(os.path.getmtime(output_file))}. Re scan?', default=True).execute():
-        decorated_resources = []
-        region_namespaces = {'RegionNamespaces': []}
+        choice = inquirer.select(
+            f'Resources file was updated {time.ctime(os.path.getmtime(output_file))}',
+            choices=["Amend/update", "Override", "Skip scan and use previous results"],
+            default="Amend/update",
+        ).execute()
+        if choice == "Amend/update":
+            with open(config_file, "w") as :
+                decorated_resources = json.load(main_config, _file)
+            account_id = boto3.client('sts').get_caller_identity()['Account']
+            # clean from current account resources
+            decorated_resources = [resource for resource in decorated_resources if account_id not in resource.get('ResourceARN', '')]
+        elif choice == "Override":
+            need_scan = True
+        else:
+            need_scan = False
+
+    if need_scan:
         if 'us-east-1' not in regions:
             regions.append('us-east-1')
             print('Added us-east-1 region for global services')
