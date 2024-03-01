@@ -70,10 +70,11 @@ Enabling of alarms feature requires modifications on 2 accounts: source account 
 ```bash
 python3 data/main.py
 ```
+Once CDK deploy is done, identify in the output of the Stack `AlarmDashboardStack` value of output `eventBusArn` and `CustomDynamoDBFunctionRoleArn`. 
 
-2. Deploy `event_forwarder.yaml` template manually to each of the source accounts and each region you wish to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through service managed StackSets from your management account or StackSet delegate account.
+2. Deploy [`event_forwarder.yaml`](/stack_sets/event_forwarder_template.yaml) template manually to each of the source accounts and each region you wish to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through service managed StackSets from your management account or StackSet delegate account. Use `eventBusArn` and `CustomDynamoDBFunctionRoleArn` as parameters of the Stack/StackSets.
 
-If you are using StackSets please note that StackSets are not deploying Stacks in the Management Account. If you want Alerts from Management account you will need additionally to deploy `event_forwarder.yaml` in all relevant regions of your Management Account.
+If you are using StackSets please note that StackSets are not deploying Stacks in the Management Account. If you want Alerts from Management account you will need additionally to deploy [`event_forwarder.yaml`](/stack_sets/event_forwarder_template.yaml) in all relevant regions of your Management Account.
 
 ## Advanced configuration
 You can fine tune configuration of dashboards in by editing a configuration file `lib/config.json`
