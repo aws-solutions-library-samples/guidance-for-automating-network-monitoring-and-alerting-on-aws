@@ -1,14 +1,15 @@
-# TAG Based CloudWatch Dashboard using CDK
+# Tag Based CloudWatch Dashboard using CDK
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)
 
-The project is an example how to use AWS Resource Groups Tagging API to retrieve a list of AWS resources with a specific tag and building a CloudWatch Dashboard with _reasonable_ metrics and alarms. Optionally customers can also deploy a Central Alarm Dashboard to monitor alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
+The project is an example building a CloudWatch Dashboard. It provides users with a set of CloudWatch Dashboard with _reasonable_ metrics and alarms. It uses the list of AWS resources with a specific tag using AWS Resource Groups Tagging API. Optionally it provides a Central Alarm Dashboard to monitor Alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
 
 ## Features
 ### 1. Metric dashboards
-- Discover AWS resources based on Tag
+- Discovers AWS resources based on Tags.
 - Generates a set of CloudWatch Dashboards for AWS Resources. Dashboards are specifically designed to monitor the most important operational metrics.
+- Can build CloudWatch Dashboards for resources in other accounts if CloudWatch cross-account observability is enabled.
 
 ### 2. Alarm dashboard
 - Event-driven for scalability and speed
@@ -25,7 +26,7 @@ The project is an example how to use AWS Resource Groups Tagging API to retrieve
 
   ![Architecture ](screenshots/Architecture-Dashboards-SingleAccount.png)
 
-For MultiAccount use cases this [diagram](screenshots/Architecture-Dashboards-MulitAccount.png).
+For MultiAccount use cases this [diagram](screenshots/Architecture-Dashboards-MultiAccount.png).
 
 
 ### Central Alarm Dashboard
