@@ -113,7 +113,8 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
 
     need_scan = True
     decorated_resources = []
-    if os.path.exists(output_file):
+    region_namespaces = {'RegionNamespaces': []}
+    if os.path.exists(output_file) and open():
 
         choice = inquirer.select(
             f'Resources file was updated {time.ctime(os.path.getmtime(output_file))}',
@@ -121,8 +122,8 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
             default="Amend/update",
         ).execute()
         if choice == "Amend/update":
-            with open(config_file, "w") as :
-                decorated_resources = json.load(main_config, _file)
+            with open(output_file) as _file :
+                decorated_resources = json.load(_file)
             account_id = boto3.client('sts').get_caller_identity()['Account']
             # clean from current account resources
             decorated_resources = [resource for resource in decorated_resources if account_id not in resource.get('ResourceARN', '')]
