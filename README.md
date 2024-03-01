@@ -61,7 +61,7 @@ When a CloudWatch Alarm changes state (going from OK to ALARM state), an event i
     python3 data/main.py
     ```
 
-    The tool will read existing configuration file, the read resources from your AWS Account in given regions and generate for all resources with a given Tag a CloudWatch Dashboards. You can fine tune Dashboards using Configuration File and repeating the command above.
+    The tool will read existing configuration file, then read resources from your AWS Account in given regions and generate CloudWatch Dashboards for all resources with a given Tag. You can fine tune Dashboards using Configuration File and repeating the command above.
 
 3. Explore Dashboards in your [CloudWatch Console](https://console.aws.amazon.com/cloudwatch/home?#dashboards/).
 
