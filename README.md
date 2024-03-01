@@ -3,7 +3,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)
 
-The project is an example building a CloudWatch Dashboard. It provides users with a set of CloudWatch Dashboard with _reasonable_ metrics and alarms. It uses the list of AWS resources with a specific tag using AWS Resource Groups Tagging API. Optionally it provides a Central Alarm Dashboard to monitor Alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
+The project is an example building a CloudWatch Dashboard. It provides users with a set of CloudWatch Dashboard with _reasonable_ metrics and alarms. It gets the list of AWS resources with a specific Tag using AWS Resource Groups Tagging API. Optionally it provides a Central Alarm Dashboard to monitor Alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
+
+  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](screenshots/EC2-burstable-instance.png)   [![Click to open screenshot](screenshots/ECS-EC2-service-thumb.png)](screenshots/ECS-EC2-service.png) [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](screenshots/LambdaCompact.png)
+
+
+
 
 ## Features
 ### 1. Metric dashboards
