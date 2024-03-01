@@ -3,8 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)
 
-The project is an example how to use AWS Resource Groups Tagging API to retrieve a specific tag and then based on found resources pull additional information from respective service APIs to generate a configuration file (JSON) to build a CloudWatch Dashboard with _reasonable_ metrics and alarms. Optionally customers
-can also deploy a central alarm dashboard to monitor alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
+The project is an example how to use AWS Resource Groups Tagging API to retrieve a list of AWS resources with a specific tag and building a CloudWatch Dashboard with _reasonable_ metrics and alarms. Optionally customers can also deploy a Central Alarm Dashboard to monitor alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
 
 ## Features
 ### 1. Metric dashboards
@@ -22,10 +21,18 @@ can also deploy a central alarm dashboard to monitor alarms across an AWS Organi
 
 ### Metric dashboards
 1. A python tool `data/main.py` is used to retrieve a list of resources using Resource Groups Tagging API and to generate the configuration file.
-2. CDK (v2) is used to generate CloudFormation template and deploy it
+2. CDK is used to generate CloudFormation template and deploy it
+
+  [![Architecture ](screenshots/ECS-EC2-service-thumb.png)](screenshots/Architecture-Dashboards-SingleAccount.png)
+
+For MultiAccount use cases this [diagram](screenshots/Architecture-Dashboards-MulitAccount.png).
+
 
 ### Central Alarm Dashboard
 When a CloudWatch Alarm changes state (going from OK to ALARM state), an event is emitted to EventBridge in the account. An event bus rule forwards the event to the central event bus in the monitoring account. This event is then registered in DynamoDB. CloudWatch custom widgets visualize current alarm state on the dashboard.
+
+  [![Architecture ](screenshots/ECS-EC2-service-thumb.png)](screenshots/Architecture-Alerts.png)
+
 
 ## Prerequisites
 - Python3
@@ -80,16 +87,6 @@ You can fine tune configuration of dashboards in by editing a configuration file
 * `AlarmDashboard.organizationId` (String: required when `AlarmDashboard.enabled` is true) - Required in order to set resource policy on the custom event bus to allow PutEvents from the AWS Organization.
 * `MetricDashboards.enabled` (boolean (true/false):optional) - If not defined or set to true, deploy metric dashboards. Recommended if only alarm dashboard is being deployed.
 
-
-## Tips
-You can setting up a CodeCommit repository where you store your code. Set up a CI/CD pipeline to automatically redeploy your dashboard.
-This way, if you want to change/add/remove any metrics for any of the services you change the code, commit it, and it will be automatically deployed.
-
-You can also create an EventBridge rule that will listen to specific tag change and trigger the CodeBuild project to redeploy the dashboard.
-This way, if you have an autoscaling group or just tag additional resources the dashboard will deploy automatically. In case you do so, monitor your builds
-to avoid rare situations where a lot of tag changes could cause excessive amounts of concurrent or queued builds (for example event bridge rule misconfiguration or
-variable loads that causes ASG to scale up and down quickly). This can be done by specifying tag value in the Event Bridge rule or instead of triggering the build
-directly from Event Bridge sending it to a Lambda function for more flexible decision-making on whether to trigger a build or not.
 
 ## Screenshots
 
@@ -159,6 +156,15 @@ directly from Event Bridge sending it to a Lambda function for more flexible dec
 - Transit Gateway
 - AWS WAFv2
 
+## Tips
+You can setting up a CodeCommit repository where you store your code. Set up a CI/CD pipeline to automatically redeploy your dashboard.
+This way, if you want to change/add/remove any metrics for any of the services you change the code, commit it, and it will be automatically deployed.
+
+You can also create an EventBridge rule that will listen to specific tag change and trigger the CodeBuild project to redeploy the dashboard.
+This way, if you have an autoscaling group or just tag additional resources the dashboard will deploy automatically. In case you do so, monitor your builds
+to avoid rare situations where a lot of tag changes could cause excessive amounts of concurrent or queued builds (for example event bridge rule misconfiguration or
+variable loads that causes ASG to scale up and down quickly). This can be done by specifying tag value in the Event Bridge rule or instead of triggering the build
+directly from Event Bridge sending it to a Lambda function for more flexible decision-making on whether to trigger a build or not.
 
 ## Developing
 [Developing](DEVELOPING.md)
