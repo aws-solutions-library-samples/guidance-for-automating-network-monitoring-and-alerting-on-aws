@@ -48,20 +48,22 @@ When a CloudWatch Alarm changes state (going from OK to ALARM state), an event i
 ## Installation and Run deployment of CloudWatch Dashboards
 
 1. Check out the project, install dependencies and initiate CDK 
-```bash
-git checkout git@github.com:aws-samples/tag-based-cloudwatch-dashboard.git
-cd tag-based-cloudwatch-dashboard
-pip3 install -r requirements.txt
-npm ic
-cdk bootstrap
-```
-2. Run 
-```bash
-python3 data/main.py
-```
-The tool will read existing configuration file, the read resources from your AWS Account in given regions and generate for all resources with a given Tag a CloudWatch Dashboards. You can fine tune Dashboards using Configuration File and repeating the command above.
+    ```bash
+    git checkout git@github.com:aws-samples/tag-based-cloudwatch-dashboard.git
+    cd tag-based-cloudwatch-dashboard
+    pip3 install -r requirements.txt
+    npm ic
+    cdk bootstrap
+    ```
 
-3. Explore Dashboards in your CloudWatch console https://console.aws.amazon.com/cloudwatch/home?#dashboards/
+2. Run 
+    ```bash
+    python3 data/main.py
+    ```
+
+    The tool will read existing configuration file, the read resources from your AWS Account in given regions and generate for all resources with a given Tag a CloudWatch Dashboards. You can fine tune Dashboards using Configuration File and repeating the command above.
+
+3. Explore Dashboards in your [CloudWatch Console](https://console.aws.amazon.com/cloudwatch/home?#dashboards/).
 
 ## Enabling Alarms Feature
 Enabling of alarms feature requires modifications on 2 accounts: source account and destination account.
