@@ -56,9 +56,9 @@ class App():
     def get_regions(self, default=None):
         ec2_client =  self.session.client('ec2')
         all_regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
-        if default is None:
+        if not default:
             try:
-                default = get_active_regions() + ['us-east-1']
+                default = self.get_active_regions() + ['us-east-1']
             except:
                 default = ['us-east-1']
         return inquirer.checkbox(
@@ -94,7 +94,7 @@ class App():
 @click.option('--regions', default=None, help='Comma Separated list of regions')
 @click.option('--tag', default=None, help='a Tag name')
 @click.option('--values', default=None, help='Comma Separated list of values')
-@click.option('--config-file', default=None, help='Json config file', type=click.Path())
+@click.option('--config-file', default="lib/config.json", help='Json config file', type=click.Path())
 @click.option('--output-file', default="./resources.json", help='output file', type=click.Path())
 @click.option('--custom-namespaces-file', default="./custom_namespaces.json", help='custom_namespaces file', type=click.Path())
 @click.option('--base-name', default=None, help='Base Name')
@@ -103,18 +103,22 @@ class App():
 def main(base_name, regions, tag, values, config_file, output_file, custom_namespaces_file, grouping_tag_key, profile):
     """ Main """
     app = App(profile)
-    if not config_file and os.path.exists("lib/config.json"):
-        config_file = "lib/config.json"
-    main_config = {}
-    if config_file:
-        print(f'reading from {config_file}')
+    if not os.path.exists("lib/config.json"):
+        print('Reading from default config')
+        main_config = json.load(open("lib/config-example.json"))
+    else:
+        print('Reading from {config_file}')
         main_config = json.load(open(config_file))
-        base_name = base_name or main_config.get('BaseName')
-        grouping_tag_key = grouping_tag_key or main_config.get('GroupingTagKey')
-        regions = regions or main_config.get('Regions')
-        tag = tag or main_config.get('TagKey')
-        values = values or main_config.get('TagValues')
-        output_file = output_file or main_config.get('ResourceFile')
+
+    # Read from command line and parameters
+    base_name = base_name or main_config.get('BaseName')
+    grouping_tag_key = grouping_tag_key or main_config.get('GroupingTagKey')
+    regions = regions or main_config.get('Regions')
+    tag = tag or main_config.get('TagKey')
+    values = values or main_config.get('TagValues')
+    output_file = output_file or main_config.get('ResourceFile')
+
+    # Confirm from user
     base_name = inquirer.text('Enter BaseName', default=base_name or 'Application').execute()
     regions = app.get_regions(default=regions)
     tag = app.get_tag_key(default=tag)
@@ -124,7 +128,6 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
     decorated_resources = []
     region_namespaces = {'RegionNamespaces': []}
     if os.path.exists(output_file):
-
         choice = inquirer.select(
             f'Resources file was updated {time.ctime(os.path.getmtime(output_file))}',
             choices=["Amend/update", "Override", "Skip scan and use previous results"],
