@@ -23,7 +23,7 @@ The project is an example how to use AWS Resource Groups Tagging API to retrieve
 1. A python tool `data/main.py` is used to retrieve a list of resources using Resource Groups Tagging API and to generate the configuration file.
 2. CDK is used to generate CloudFormation template and deploy it
 
-  [![Architecture ](screenshots/ECS-EC2-service-thumb.png)](screenshots/Architecture-Dashboards-SingleAccount.png)
+  ![Architecture ](screenshots/Architecture-Dashboards-SingleAccount.png)
 
 For MultiAccount use cases this [diagram](screenshots/Architecture-Dashboards-MulitAccount.png).
 
@@ -31,7 +31,7 @@ For MultiAccount use cases this [diagram](screenshots/Architecture-Dashboards-Mu
 ### Central Alarm Dashboard
 When a CloudWatch Alarm changes state (going from OK to ALARM state), an event is emitted to EventBridge in the account. An event bus rule forwards the event to the central event bus in the monitoring account. This event is then registered in DynamoDB. CloudWatch custom widgets visualize current alarm state on the dashboard.
 
-  [![Architecture ](screenshots/ECS-EC2-service-thumb.png)](screenshots/Architecture-Alerts.png)
+  ![Architecture ](screenshots/Architecture-Alerts.png)
 
 
 ## Prerequisites
