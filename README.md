@@ -5,7 +5,7 @@
 
 The project is an example building a CloudWatch Dashboard. It provides users with a set of CloudWatch Dashboard with _reasonable_ metrics and alarms. It gets the list of AWS resources with a specific Tag using AWS Resource Groups Tagging API. Optionally it provides a Central Alarm Dashboard to monitor Alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
 
-  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](screenshots/EC2-burstable-instance.png)  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](screenshots/LambdaCompact.png)
+  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](#screenshots)  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](#screenshots)
 
 
 
