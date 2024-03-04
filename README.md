@@ -99,8 +99,6 @@ You can fine tune configuration of dashboards in by editing a configuration file
 
 ## Screenshots
 
-> Click on the thumbnails to see the full res screenshot
-
 > Note that all blue labels in the headers (text widgets) are links that will take you to the respective resource in the console for quick access.
 
 ### Lambda in "compact" mode
