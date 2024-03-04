@@ -107,14 +107,14 @@ You can fine tune configuration of dashboards in by editing a configuration file
 
 - Number of Lambda functions per widget is controlled through `CompactMaxResourcesPerWidget` parameter in `lib/config.json`
 
-  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](screenshots/LambdaCompact.png)
+  ![screenshots/LambdaCompact](screenshots/LambdaCompact.png)
 
 ### EC2 Instance
 
 - Individual EBS volumes are presented with additional volume information (type and IOPS)
 - PIO volumes are presented with additional metrics
 
-  [![Click to open screenshot](screenshots/EC2-instance-thumb.png)](screenshots/EC2-instance.png)
+  ![screenshots/EC2-instance](screenshots/EC2-instance.png)
 
 ### Burstable EC2 Instance with CloudWatch agent configured
 
@@ -122,21 +122,21 @@ You can fine tune configuration of dashboards in by editing a configuration file
 - Additional metrics to keep track of CPU-credits usage are shown
 - If CloudWatch agent is configured then the widgets are shown automatically
 
-  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](screenshots/EC2-burstable-instance.png)
+  ![screenshots/EC2-burstable](screenshots/EC2-burstable-instance.png)]
 
 ### Network dashboard - TGW view
 
 - Metrics are shown on TGW and on attachment level
 - Type of attachment is shown
 
-  [![Click to open screenshot](screenshots/Network-TGW-thumb.png)](screenshots/Network-TGW.png)
+  ![screenshots/Network-TGW](screenshots/Network-TGW.png)
 
 ### ECS with EC2 service
 
 - Cluster level and service level metrics are shown separately
 - If service is EC2-type then high level metrics for EC2 instances are shown
 
-  [![Click to open screenshot](screenshots/ECS-EC2-service-thumb.png)](screenshots/ECS-EC2-service.png)
+  ![screenshots/ECS-EC2-service](screenshots/ECS-EC2-service.png)
 
 
 ## Supported services
