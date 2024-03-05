@@ -4,6 +4,10 @@ import boto3
 from botocore.config import Config
 from tqdm import tqdm
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 def log(*args, **kwargs):
     tqdm.write(*args, **kwargs)
@@ -18,24 +22,29 @@ def get_resources(tag_name, tag_values, session, config):
     )
 
 def get_resources_from_api(tag_name, tag_values, session, config):
+    """Get resources from resource groups tagging api
+    """
     resourcetaggingapi = session.client('resourcegroupstaggingapi', config=config)
-    return list(
-        resourcetaggingapi.get_paginator('get_resources').paginate(
-            TagFilters=[{'Key': tag_name, 'Values': tag_values}]
-        ).search('ResourceTagMappingList')
-    )
+    resources = []
+    for chunk_of_tag_values in chunks(tag_values, 5): # api supports only 5 values
+        resources += list(
+            resourcetaggingapi.get_paginator('get_resources').paginate(
+                TagFilters=[{'Key': tag_name, 'Values': chunk_of_tag_values}]
+            ).search('ResourceTagMappingList')
+        )
+    return resources
 
 def autoscaling_retriever(tag_name, tag_values, session, config):
     """Autoscaling is not supported by resource groups and tagging api
-    This is
-    :return:
     """
     asg = session.client('autoscaling', config=config)
-    resources = list(
-        asg.get_paginator('describe_auto_scaling_groups').paginate(
-            Filters=[{'Name': 'tag:' + tag_name, 'Values': tag_values}]
-        ).search('AutoScalingGroups')
-    )
+    resources = []
+    for chunk_of_tag_values in chunks(tag_values, 5): # api supports only 5 values
+        resources += list(
+            asg.get_paginator('describe_auto_scaling_groups').paginate(
+                Filters=[{'Name': 'tag:' + tag_name, 'Values': chunk_of_tag_values}]
+            ).search('AutoScalingGroups')
+        )
     for resource in resources:
         resource['ResourceARN'] = resource['AutoScalingGroupARN']
     return resources
