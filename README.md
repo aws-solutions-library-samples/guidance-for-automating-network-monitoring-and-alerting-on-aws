@@ -5,7 +5,7 @@
 
 The project is an example building a CloudWatch Dashboard. It provides users with a set of CloudWatch Dashboard with _reasonable_ metrics and alarms. It gets the list of AWS resources with a specific Tag using AWS Resource Groups Tagging API. Optionally it provides a Central Alarm Dashboard to monitor Alarms across an AWS Organization, AWS Organization OU or across arbitrary number of AWS accounts.
 
-  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](screenshots/EC2-burstable-instance.png)  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](screenshots/LambdaCompact.png)
+  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](#screenshots)  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](#screenshots)
 
 
 
@@ -69,14 +69,14 @@ When a CloudWatch Alarm changes state (going from OK to ALARM state), an event i
 Enabling of alarms feature requires modifications on 2 accounts: source account and destination account.
 
 1. In addition to CloudWatch Dashboards dashboards deployment, modify in `lib/config.json` by setting `AlarmDashboard.enabled` to `True` and provide your AWS-Organizations id in `AlarmDashboard.organizationId` (o-xxxxx, not ou-xxxx). Then update dashboards using the tool: 
-```bash
-python3 data/main.py
-```
-Once CDK deploy is done, identify in the output of the Stack `AlarmDashboardStack` and note values of output `CustomEventBusArn` and `CustomDynamoDBFunctionRoleArn`.
+    ```bash
+    python3 data/main.py
+    ```
+    Once CDK deploy is done, identify in the output of the Stack `AlarmDashboardStack` and note values of output `CustomEventBusArn` and `CustomDynamoDBFunctionRoleArn`.
 
 2. Deploy [`event_forwarder.yaml`](/stack_sets/event_forwarder_template.yaml) template manually to each of the source accounts and each region you wish to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through service managed StackSets from your management account or StackSet delegate account. Use values of outputs `CustomEventBusArn` and `CustomDynamoDBFunctionRoleArn` as input parameters of the Stack/StackSets.
 
-If you are using StackSets please note that StackSets are not deploying Stacks in the Management Account. If you want Alerts from Management account you will need additionally to deploy [`event_forwarder.yaml`](/stack_sets/event_forwarder_template.yaml) in all relevant regions of your Management Account.
+    If you are using StackSets please note that StackSets are not deploying Stacks in the Management Account. If you want Alerts from Management account you will need additionally to deploy [`event_forwarder.yaml`](/stack_sets/event_forwarder_template.yaml) in all relevant regions of your Management Account.
 
 ## Advanced configuration
 You can fine tune configuration of dashboards in by editing a configuration file `lib/config.json`
@@ -99,22 +99,20 @@ You can fine tune configuration of dashboards in by editing a configuration file
 
 ## Screenshots
 
-> Click on the thumbnails to see the full res screenshot
-
 > Note that all blue labels in the headers (text widgets) are links that will take you to the respective resource in the console for quick access.
 
 ### Lambda in "compact" mode
 
 - Number of Lambda functions per widget is controlled through `CompactMaxResourcesPerWidget` parameter in `lib/config.json`
 
-  [![Click to open screenshot](screenshots/LambdaCompact-thumb.png)](screenshots/LambdaCompact.png)
+  ![screenshots/LambdaCompact](screenshots/LambdaCompact.png)
 
 ### EC2 Instance
 
 - Individual EBS volumes are presented with additional volume information (type and IOPS)
 - PIO volumes are presented with additional metrics
 
-  [![Click to open screenshot](screenshots/EC2-instance-thumb.png)](screenshots/EC2-instance.png)
+  ![screenshots/EC2-instance](screenshots/EC2-instance.png)
 
 ### Burstable EC2 Instance with CloudWatch agent configured
 
@@ -122,21 +120,21 @@ You can fine tune configuration of dashboards in by editing a configuration file
 - Additional metrics to keep track of CPU-credits usage are shown
 - If CloudWatch agent is configured then the widgets are shown automatically
 
-  [![Click to open screenshot](screenshots/EC2-burstable-instance-thumb.png)](screenshots/EC2-burstable-instance.png)
+  ![screenshots/EC2-burstable](screenshots/EC2-burstable-instance.png)]
 
 ### Network dashboard - TGW view
 
 - Metrics are shown on TGW and on attachment level
 - Type of attachment is shown
 
-  [![Click to open screenshot](screenshots/Network-TGW-thumb.png)](screenshots/Network-TGW.png)
+  ![screenshots/Network-TGW](screenshots/Network-TGW.png)
 
 ### ECS with EC2 service
 
 - Cluster level and service level metrics are shown separately
 - If service is EC2-type then high level metrics for EC2 instances are shown
 
-  [![Click to open screenshot](screenshots/ECS-EC2-service-thumb.png)](screenshots/ECS-EC2-service.png)
+  ![screenshots/ECS-EC2-service](screenshots/ECS-EC2-service.png)
 
 
 ## Supported services
