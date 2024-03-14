@@ -2,6 +2,9 @@
 !jest.config.js
 *.d.ts
 node_modules
+*/__pycache__/*
+lib/*.json
+data/*.json
 
 # CDK asset staging directory
 .cdk.staging
