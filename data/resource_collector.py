@@ -155,7 +155,7 @@ def router(resource, config):
         resource = lambda_decorator(resource, config)
     elif 'elasticloadbalancing' in arn and '/net/' not in arn and '/app/' not in arn and ':targetgroup/' not in arn:
         resource = elb1_decorator(resource, config)
-    elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ) and ':targetgroup/' not in arn:
+    elif 'elasticloadbalancing' in arn and ( '/net/' in arn or '/app/' in arn ) and ':targetgroup/' not in arn and ':listener/' not in arn:
         resource = elb2_decorator(resource, config)
     elif ':ecs:' in arn and ':cluster/' in arn:
         resource = ecs_decorator(resource, config)
