@@ -1,6 +1,6 @@
 {
     "BaseName": "Application",
-    "ResourceFile": "./data/resources.json",
+    "ResourceFile": "../data/resources.json",
     "TagKey": "Name",
     "TagValues": [],
     "Regions": [],

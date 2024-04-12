@@ -16,7 +16,7 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
     widgetSet:any = [];
     alarmSet:any = [];
 
-    constructor(scope: Construct, id: string, resource:any) {
+    constructor(scope: Construct, id: string, resource:any, config:any) {
         super(scope, id)
         let region = resource[0].ResourceARN.split(':')[3];
         this.widgetSet.push(new TextWidget({
@@ -51,7 +51,16 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
             region: region,
             left: cpuUtilMetricArray,
             right: [averageCpuMetric],
-            width: 12
+            width: 12,
+            height: 8,
+            leftYAxis: {
+                min: 0,
+                max: 100
+            },
+            rightYAxis: {
+                min: 0,
+                max: 100
+            }
         })
 
         const avgCpuAlarm = averageCpuMetric.createAlarm(this,'AvgEC2CpuAlarm-' + region,{
@@ -69,12 +78,55 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
             region: region,
             left: networkInMetricArray,
             right: networkOUtMetricArray,
-            width: 12
+            width: 12,
+            height: 8,
+            leftYAxis: {
+                label: 'Network In',
+            },
+            rightYAxis: {
+                label: 'Network Out',
+            }
         })
 
         this.alarmSet.push(avgCpuAlarm)
         this.widgetSet.push(new Row(cpuwidget,netwidget))
         this.widgetSet.push(new Row(ebsWriteBytesWidget,ebsReadBytesWidget));
+
+        const cwagentInstances = this.getCWAgentInstances(resource);
+        if ( cwagentInstances.length > 0 ){
+            const memorywidget = new GraphWidget({
+                title: 'Memory Utilisation',
+                region: region,
+                left: this.getCWAgentMetricArray(cwagentInstances,'mem_used_percent'),
+                width: 12,
+                height: 8,
+                leftYAxis: {
+                    min: 0,
+                    max: 100
+                },
+                rightYAxis: {
+                    min: 0,
+                    max: 100
+                }
+            });
+
+            const diskwidget = new GraphWidget({
+                title: 'Disk Utilisation',
+                region: region,
+                left: this.getCWAgentMetricArray(cwagentInstances, 'disk_used_percent'),
+                width: 12,
+                height: 8,
+                leftYAxis: {
+                    min: 0,
+                    max: 100
+                },
+                rightYAxis: {
+                    min: 0,
+                    max: 100
+                }
+            });
+            this.widgetSet.push(new Row(memorywidget, diskwidget));
+        }
     }
 
     private getMetricArray(instances:any,metric:string,period?:Duration,statistic?:Statistic){
@@ -100,6 +152,84 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements WidgetSet {
             }))
         }
         return metricarray;
+    }
+
+    private getCWAgentMetricArray(instances:any,metric:string,period?:Duration,statistic?:Statistic){
+        let metricarray:Metric[] = [];
+        let metricperiod = Duration.minutes(1);
+        let metricstatistic = Statistic.SUM
+        if ( period ){
+            metricperiod = period;
+        }
+        if ( statistic ){
+            metricstatistic = statistic;
+        }
+
+        for (let instance of instances){
+            let instanceId = instance.ResourceARN.split('/')[instance.ResourceARN.split('/').length - 1];
+            for ( let CWAgentMetric of instance.CWAgentMetrics){
+
+                if ( CWAgentMetric['MetricName'] == metric ){
+                    let path:any = false;
+                    if  ( metric == 'disk_used_percent'){
+                        for (const dimension of CWAgentMetric['Dimensions']){
+                            if ( dimension['Name'] === 'path' ){
+
+                                if ( ! dimension['Value'].includes('/proc')
+                                && ! dimension['Value'].includes('/sys')
+                                && ! dimension['Value'].includes('/dev')
+                                && ! dimension['Value'].includes('/run') ){
+                                    path = dimension['Value'];
+
+                                    metricarray.push(new Metric({
+                                        namespace: 'CWAgent',
+                                        label: `${instanceId}-${path}`,
+                                        metricName: CWAgentMetric['MetricName'],
+                                        dimensionsMap: this.generateDimensionMap(CWAgentMetric),
+                                        statistic: metricstatistic,
+                                        period:metricperiod,
+                                    }));
+
+                                }
+
+
+                            }
+                        }
+                    } else {
+                        metricarray.push(new Metric({
+                            namespace: 'CWAgent',
+                            label: `${instanceId}`,
+                            metricName: CWAgentMetric['MetricName'],
+                            dimensionsMap: this.generateDimensionMap(CWAgentMetric),
+                            statistic: metricstatistic,
+                            period:metricperiod,
+                        }));
+                    }
+
+
+                }
+            }
+
+        }
+        return metricarray;
+    }
+
+    private generateDimensionMap(agentMetric:any){
+        let dimensionMap:any = {};
+        for (const dimension of agentMetric['Dimensions']){
+            dimensionMap[dimension['Name']] = dimension['Value'];
+        }
+        return dimensionMap;
+    }
+
+    private getCWAgentInstances(instances:any){
+        let cwagentInstanceArray:any[] = [];
+        for (const instance of instances) {
+            if (instance['CWAgentMetrics']){
+                cwagentInstanceArray.push(instance);
+            }
+        }
+        return cwagentInstanceArray;
     }
 
     getWidgetSets(){

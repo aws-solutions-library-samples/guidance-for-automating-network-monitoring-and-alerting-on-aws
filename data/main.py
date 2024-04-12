@@ -9,7 +9,7 @@ from tqdm import tqdm
 from InquirerPy import inquirer
 from InquirerPy.base.control import Choice
 
-from resource_collector import get_config, get_resources, cw_custom_namespace_retriever, router
+from resource_collector import get_config, get_resources, router
 
 class App():
     def __init__(self, profile=None):
@@ -95,7 +95,7 @@ class App():
 @click.option('--tag', default=None, help='a Tag name')
 @click.option('--values', default=None, help='Comma Separated list of values')
 @click.option('--config-file', default="lib/config.json", help='Json config file', type=click.Path())
-@click.option('--output-file', default="./resources.json", help='output file', type=click.Path())
+@click.option('--output-file', default="../data/resources.json", help='output file', type=click.Path())
 @click.option('--custom-namespaces-file', default="./custom_namespaces.json", help='custom_namespaces file', type=click.Path())
 @click.option('--base-name', default=None, help='Base Name')
 @click.option('--grouping-tag-key', default=None, help='GroupingTagKey')
@@ -109,7 +109,7 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
     else:
         print('Reading from {config_file}')
         main_config = json.load(open(config_file))
-
+    print(main_config)
     # Read from command line and parameters
     base_name = base_name or main_config.get('BaseName')
     grouping_tag_key = grouping_tag_key or main_config.get('GroupingTagKey')
@@ -126,7 +126,7 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
 
     need_scan = True
     decorated_resources = []
-    region_namespaces = {'RegionNamespaces': []}
+    print(output_file)
     if os.path.exists(output_file):
         choice = inquirer.select(
             f'Resources file was updated {time.ctime(os.path.getmtime(output_file))}',
@@ -153,21 +153,16 @@ def main(base_name, regions, tag, values, config_file, output_file, custom_names
         for region in tqdm(regions, desc='Regions', leave=False):
             config = get_config(region)
             resources = get_resources(tag, values, app.session, config)
-            region_namespace = {'Region': region, 'Namespaces' : cw_custom_namespace_retriever(app.session, config) }
-            region_namespaces['RegionNamespaces'].append(region_namespace)
             for resource in tqdm(resources, desc='Resources', leave=False):
                 decorated_resources.append(router(resource, app.session, config))
 
-        with open(custom_namespaces_file, "w") as _file:
-            json.dump(region_namespaces, _file, indent=4, default=str)
-            print(f'custom_namespaces: {output_file}')
-
-        with open(output_file, "w") as _file:
+        with open(output_file[1:], "w") as _file:
             json.dump(decorated_resources, _file, indent=4, default=str)
             print(f'output: {output_file}')
 
     config_file = config_file or "lib/config.json"
     with open(config_file, "w") as _file:
+        main_config["BaseName"] = base_name
         main_config["Regions"] = regions
         main_config["TagKey"] = tag
         main_config["TagValues"] = values

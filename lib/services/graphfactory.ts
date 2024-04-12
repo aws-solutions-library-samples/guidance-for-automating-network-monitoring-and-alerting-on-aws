@@ -32,6 +32,7 @@ import {MediaLiveWidgetSet} from "./servicewidgetsets/medialive";
 import {EFSWidgetSet} from "./servicewidgetsets/efs";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
+import {Ec2InstanceGroupWidgetSet} from "./servicewidgetsets/ec2group";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
@@ -148,6 +149,7 @@ export class GraphFactory extends Construct {
                         }))
                         for (const resource of this.serviceArray[region][servicekey]) {
                             let apiid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1]
+                            console.log(`APIGWV1WidgetSet-${apiid}-${region}-${this.config.BaseName}`);
                             let apigw = new ApiGatewayV1WidgetSet(this, `APIGWV1WidgetSet-${apiid}-${region}-${this.config.BaseName}`, resource, this.config);
                             for (const widgetSet of apigw.getWidgetSets()) {
                                 this.widgetArray.push(widgetSet);
@@ -225,7 +227,12 @@ export class GraphFactory extends Construct {
 
                     case "ec2instances": {
                         //We create the dashboard only if we actually have EC2s in the workload
-                        this.processEC2(region, servicekey);
+                        if (this.config.Compact){
+                            this.processCompactEC2(region, servicekey);
+                        } else {
+                            this.processEC2(region, servicekey);
+                        }
+
                         break;
                     }
                     case "lambda": {
@@ -594,11 +601,14 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["elasticfilesystem"].push(resource);
                 }
             }else if (resource.ResourceARN.includes(':ec2:') && resource.ResourceARN.includes(':instance/')) {
-                if (!this.serviceArray[region]["ec2instances"]) {
-                    this.serviceArray[region]["ec2instances"] = [resource];
-                } else {
-                    this.serviceArray[region]["ec2instances"].push(resource);
+                if ( resource.Instance && resource.Instance.State && resource.Instance.State.Name != 'terminated'){
+                    if (!this.serviceArray[region]["ec2instances"]) {
+                        this.serviceArray[region]["ec2instances"] = [resource];
+                    } else {
+                        this.serviceArray[region]["ec2instances"].push(resource);
+                    }
                 }
+
             } else if (resource.ResourceARN.includes(':lambda:') && resource.ResourceARN.includes(':function:')) {
                 if (!this.serviceArray[region]["lambda"]) {
                     this.serviceArray[region]["lambda"] = [resource];
@@ -763,6 +773,90 @@ export class GraphFactory extends Construct {
             }
         }
 
+    }
+
+    private processCompactEC2(region: string, servicekey: any) {
+        const resourceGroups = new Map<string, Array<any>>();
+
+        for (const resource of this.serviceArray[region][servicekey]) {
+            let groupName = 'default';
+
+            if (this.groupResourcesByTag) {
+                for (const tag of resource.Tags) {
+                    if (tag.Key === this.config.GroupingTagKey) {
+                        tag.Value = tag.Value.replace(/\s/g, '');
+                        groupName = tag.Value;
+                        break;
+                    }
+                }
+            }
+
+            if (!resourceGroups.has(groupName)) {
+                resourceGroups.set(groupName, []);
+            }
+            resourceGroups?.get(groupName)?.push(resource);
+        }
+
+        const instancesPerWidget = Math.min(
+            100,
+            this.config.CompactMaxResourcesPerWidget
+        );
+
+        for (const [key, instances] of resourceGroups) {
+            console.log(`processing key ${key}`);
+            let dashboard: any = new Dashboard(
+                this,
+                `${this.config.BaseName}-EC2-${key}-${region}`,
+                {
+                    dashboardName: `${this.config.BaseName}-EC2-${key}-${region}`
+                }
+            );
+            this.estimatedCost += 3;
+            let widgetSet: any = [];
+            let alarmSet: any = [];
+
+            if (instances) {
+                let instancesRemaining = 0;
+                if (instances.length && instances.length > 0) {
+                    instancesRemaining = instances.length;
+                }
+                let offset = 0;
+                while (instancesRemaining > 0) {
+                    let instanceIncrement = instances.splice(
+                        0,
+                        instancesPerWidget
+                    );
+                    let instanceSet = new Ec2InstanceGroupWidgetSet(
+                        this,
+                        `EC2-${key}-${region}-${offset}-${this.config.BaseName}`,
+                        instanceIncrement,
+                        this.config
+                    );
+                    for (let widget of instanceSet.getWidgetSets()) {
+                        widgetSet.push(widget);
+                    }
+                    alarmSet = alarmSet.concat(instanceSet.getAlarmSet());
+                    instancesRemaining -= instancesPerWidget;
+                    offset += 1;
+                }
+            }
+
+            if (alarmSet.length > 0) {
+                this.estimatedCost += alarmSet.length * 0.1;
+                const height =
+                    1 + Math.floor(alarmSet.length / 4) + (alarmSet.length % 4 != 0 ? 1 : 0);
+                const ec2AlarmStatusWidget = new AlarmStatusWidget({
+                    title: 'Alarms',
+                    width: 24,
+                    height: height,
+                    alarms: alarmSet
+                });
+                widgetSet = [ec2AlarmStatusWidget].concat(widgetSet);
+            }
+            for (const widgetSetElement of widgetSet) {
+                dashboard.addWidgets(widgetSetElement);
+            }
+        }
     }
 
     private processLambda(region: string, servicekey: any) {

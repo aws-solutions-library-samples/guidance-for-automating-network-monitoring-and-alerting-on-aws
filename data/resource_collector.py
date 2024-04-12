@@ -34,6 +34,7 @@ def get_resources_from_api(tag_name, tag_values, session, config):
         )
     return resources
 
+
 def autoscaling_retriever(tag_name, tag_values, session, config):
     """Autoscaling is not supported by resource groups and tagging api
     """
@@ -48,32 +49,6 @@ def autoscaling_retriever(tag_name, tag_values, session, config):
     for resource in resources:
         resource['ResourceARN'] = resource['AutoScalingGroupARN']
     return resources
-
-def cw_custom_namespace_retriever(session, config):
-    """Retrieving all custom namespaces
-    """
-    cw = session.client('cloudwatch', config=config)
-    resources = []
-    response = cw.list_metrics()
-    for record in response['Metrics']:
-        if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
-            resources.append(record['Namespace'])
-            log(resources)
-
-    try:
-        while response['NextToken']:
-            response = cw.list_metrics(
-                NextToken = response['NextToken']
-            )
-            for record in response['Metrics']:
-                if not record['Namespace'].startswith('AWS/') and not record['Namespace'].startswith('CWAgent') and record['Namespace'] not in resources:
-                    resources.append(record['Namespace'])
-                    log(resources)
-    except:
-        log(f'Done fetching cloudwatch namespaces')
-    return resources
-
-
 
 
 def router(resource, session, config):
@@ -93,7 +68,9 @@ def router(resource, session, config):
     elif ':dynamodb:' in arn and ':table/' in arn:
         resource = dynamodb_decorator(resource, session, config)
     elif ':ec2:' in arn and ':instance/' in arn:
-        resource = ec2_decorator(resource, session, config)
+        tmpresource = ec2_decorator(resource, session, config)
+        if len(tmpresource) > 0:
+            resource = tmpresource
     elif 'lambda' in arn and 'function' in arn:
         resource = lambda_decorator(resource, session, config)
     elif 'elasticloadbalancing' in arn and '/net/' not in arn and '/app/' not in arn and ':targetgroup/' not in arn:
@@ -220,6 +197,7 @@ def cloudfront_decorator(resource, session, config):
     resource['Origins'] = response['Distribution']['DistributionConfig']['Origins']
     return resource
 
+
 def mediapackage_decorator(resource, session, config):
     log(f'this resource is Mediapackage channel')
     arn = resource['ResourceARN']
@@ -239,7 +217,8 @@ def mediapackage_decorator(resource, session, config):
             resource ['IngestEndpoint'] = response2['HlsIngest']['IngestEndpoints']
             resource['OriginEndpoint'] = origin_endpoint['OriginEndpoints']
     return resource
-        
+
+
 def medialive_decorator(resource, session, config):
     log(f'this resource is Medialive channel')
     arn = resource['ResourceARN']
@@ -256,7 +235,8 @@ def medialive_decorator(resource, session, config):
                 )
             resource['Pipeline'] = response2['PipelineDetails']
     return resource
-    
+
+
 def odcr_decorator(resource, session, config):
     log(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
@@ -299,26 +279,28 @@ def ec2_decorator(resource, session, config):
     instanceid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     ec2 = session.client('ec2', config=config)
 
-    volumes = []
-
-    response = ec2.describe_volumes(
-        Filters=[
-        {
-            'Name': 'attachment.instance-id',
-            'Values': [
-                instanceid,
+    response = ec2.describe_instances(
+            Filters=[
+                {
+                   'Name': 'instance-id',
+                   'Values': [
+                       instanceid
+                   ]
+                }
             ]
-        },
-        ],
-        MaxResults=100
-    )
+        )
 
+    reservations = response.get('Reservations', [])
+    if len(reservations) > 0:
+        instances = reservations[0].get('Instances', [])
+        instance = instances[0]
 
-    for record in response['Volumes']:
-        volumes.append(record)
+        resource['Instance'] = instance
 
-    try:
-        while response['NextToken']:
+        if 'State' in resource['Instance'] and 'Name' in resource['Instance']['State'] and resource['Instance']['State']['Name'] != 'terminated':
+            print('This instance is not terminated')
+            volumes = []
+
             response = ec2.describe_volumes(
                 Filters=[
                 {
@@ -328,52 +310,68 @@ def ec2_decorator(resource, session, config):
                     ]
                 },
                 ],
-                MaxResults=100,
-                NextToken=response['NextToken']
+                MaxResults=100
             )
+
             for record in response['Volumes']:
                 volumes.append(record)
 
-    except:
-        log(f'Done fetching volumes')
+            try:
+                while response['NextToken']:
+                    response = ec2.describe_volumes(
+                        Filters=[
+                        {
+                            'Name': 'attachment.instance-id',
+                            'Values': [
+                                instanceid,
+                            ]
+                        },
+                        ],
+                        MaxResults=100,
+                        NextToken=response['NextToken']
+                    )
+                    for record in response['Volumes']:
+                        volumes.append(record)
 
-    resource['Volumes'] = volumes
+            except:
+                log(f'Done fetching volumes')
 
-    response = ec2.describe_instances(
-        Filters=[
-            {
-               'Name': 'instance-id',
-               'Values': [
-                   instanceid
-               ]
-            }
-        ]
-    )
-    resource['Instance'] = response['Reservations'][0]['Instances'][0]
-    instanceType = resource['Instance']['InstanceType']
+            resource['Volumes'] = volumes
 
-    if 't2' in instanceType or 't3' in instanceType or 't4' in instanceType:
-        response = ec2.describe_instance_credit_specifications(
-            InstanceIds=[instanceid]
-        )
-        resource['CPUCreditSpecs'] = response['InstanceCreditSpecifications'][0]
 
-    cw = session.client('cloudwatch', config=config)
-    results = cw.get_paginator('list_metrics')
-    for response in results.paginate(
-            MetricName='mem_used_percent',
-            Namespace='CWAgent',
-            Dimensions=[
-                {'Name': 'InstanceId', 'Value': instanceid}
-            ], ):
-        if len(response['Metrics']) > 0:
-            log(f'Instance {instanceid} has CWAgent')
-            resource['CWAgent'] = 'True'
+            instanceType = resource['Instance']['InstanceType']
+
+            if 't2' in instanceType or 't3' in instanceType or 't4' in instanceType:
+                response = ec2.describe_instance_credit_specifications(
+                    InstanceIds=[instanceid]
+                )
+                resource['CPUCreditSpecs'] = response['InstanceCreditSpecifications'][0]
+
+            cw = session.client('cloudwatch', config=config)
+            results = cw.get_paginator('list_metrics')
+            for response in results.paginate(
+                    Namespace='CWAgent',
+                    Dimensions=[
+                        {'Name': 'InstanceId', 'Value': instanceid}
+                    ], ):
+                if len(response['Metrics']) > 0:
+                    log(f'Instance {instanceid} has CWAgent')
+                    resource['CWAgent'] = 'True'
+                    resource['CWAgentMetrics'] = response['Metrics']
+                else:
+                    log(f'Instance {instanceid} does not have CWAgent')
+                    resource['CWAgent'] = 'False'
+
+            return resource
         else:
-            log(f'Instance {instanceid} does not have CWAgent')
-            resource['CWAgent'] = 'False'
+            print('This instance is terminated, ignoring')
+            return []
+    else:
+        print('Resource is not found')
+        return []
 
-    return resource
+
+
 
 def elasticache_decorator(resource, session, config):
     log(f'This resource is Elasticache {resource["ResourceARN"]}')
