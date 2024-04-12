@@ -7,7 +7,7 @@
     "GroupingTagKey": "groupby",
     "CustomEC2TagKeys": [],
     "CustomNamespaceFile": "./data/custom_namespaces.json",
-    "Compact": false,
+    "Compact": true,
     "CompactMaxResourcesPerWidget": 10,
     "AlarmTopic": "",
     "AlarmDashboard": {
