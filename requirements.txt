@@ -1,4 +1,4 @@
 boto3
 botocore
 tqdm
-PyInquirer
+InquirerPy
