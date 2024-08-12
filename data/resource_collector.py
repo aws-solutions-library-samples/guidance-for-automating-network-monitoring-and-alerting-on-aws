@@ -449,7 +449,7 @@ def elasticache_decorator(resource, config):
                                )
             resource['ReplicationGroup'] = response2['ReplicationGroups'][0]
             try:
-                with open(f'../data/{resource["ClusterInfo"]["CacheClusterId"]}_replicationgroup.json', "w") as cn:
+                with open(f'../data/{resource["ClusterInfo"]["CacheClusterId"]}_replicationgroup.json', "w", encoding="utf-8") as cn:
                     cn.write(json.dumps(resource['ReplicationGroup'], indent=4, default=str))
             finally:
                 cn.close()
@@ -695,13 +695,13 @@ def handler():
             decorated_resources.append(router(resource, config))
 
     try:
-        with open(custom_namespace_file, "w") as cn:
+        with open(custom_namespace_file, "w", encoding="utf-8") as cn:
             cn.write(json.dumps(region_namespaces, indent=4, default=str))
     finally:
         cn.close()
 
     try:
-        with open(output_file, "w") as n:
+        with open(output_file, "w", encoding="utf-8") as n:
             n.write(json.dumps(decorated_resources, indent=4, default=str))
     finally:
         n.close()
