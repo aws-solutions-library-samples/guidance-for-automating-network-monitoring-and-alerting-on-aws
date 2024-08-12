@@ -432,6 +432,7 @@ def ec2_decorator(resource, config):
 
     return resource
 
+
 def elasticache_decorator(resource, config):
     print(f'This resource is Elasticache {resource["ResourceARN"]}')
     if ':cluster:' in resource['ResourceARN']:
@@ -447,9 +448,11 @@ def elasticache_decorator(resource, config):
                                    ReplicationGroupId=replication_group
                                )
             resource['ReplicationGroup'] = response2['ReplicationGroups'][0]
-            cn = open(f'../data/{resource["ClusterInfo"]["CacheClusterId"]}_replicationgroup.json', "w")
-            cn.write(json.dumps(resource['ReplicationGroup'], indent=4, default=str))
-            cn.close()
+            try:
+                with open(f'../data/{resource["ClusterInfo"]["CacheClusterId"]}_replicationgroup.json', "w") as cn:
+                    cn.write(json.dumps(resource['ReplicationGroup'], indent=4, default=str))
+            finally:
+                cn.close()
 
     return resource
 
