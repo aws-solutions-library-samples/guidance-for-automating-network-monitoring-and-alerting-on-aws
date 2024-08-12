@@ -423,7 +423,7 @@ def ec2_decorator(resource, config):
             Dimensions=[
                 {'Name': 'InstanceId', 'Value': instanceid}
             ], ):
-        if len(response['Metrics']) > 0:
+        if response['Metrics']:
             print(f'Instance {instanceid} has CWAgent')
             resource['CWAgent'] = 'True'
         else:
@@ -641,10 +641,9 @@ def handler():
     output_file = "resources.json"
     custom_namespace_file = "custom_namespaces.json"
     try:
-        f = open("../lib/config.json", "r")
-        main_config = json.load(f)
-        f.close()
-    except:
+        with open("../lib/config.json", "r", encoding="utf-8") as f:
+            main_config = json.load(f)
+    except FileNotFoundError:
         print("Could not find config file!!! You should run this from 'data' directory!")
         quit()
 
@@ -691,12 +690,18 @@ def handler():
         region_namespaces['RegionNamespaces'].append(region_namespace)
         for resource in resources:
             decorated_resources.append(router(resource, config))
-    cn = open(custom_namespace_file, "w")
-    cn.write(json.dumps(region_namespaces, indent=4, default=str))
-    cn.close()
-    n = open(output_file, "w")
-    n.write(json.dumps(decorated_resources, indent=4, default=str))
-    n.close()
+
+    try:
+        with open(custom_namespace_file, "w") as cn:
+            cn.write(json.dumps(region_namespaces, indent=4, default=str))
+    finally:
+        cn.close()
+
+    try:
+        with open(output_file, "w") as n:
+            n.write(json.dumps(decorated_resources, indent=4, default=str))
+    finally:
+        n.close()
 
 if __name__ == '__main__':
     handler()

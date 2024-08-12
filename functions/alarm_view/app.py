@@ -244,18 +244,20 @@ def lambda_handler(event, context):
                     if 'metricStat' in metric:
                         card_html += f'<div>Namespace: {metric["metricStat"]["metric"]["namespace"]}</div>'
                         card_html += f'<div>Metric Name: {metric["metricStat"]["metric"]["name"]}</div>'
-                        if len(list(metric["metricStat"]["metric"]["dimensions"].keys())) > 0:
+                        dimensions = metric.get("metricStat", {}).get("metric", {}).get("dimensions", {})
+                        if dimensions:
                             card_html += f'<div>Metric Dimensions: <br /></div>'
-                            for dimension in list(metric["metricStat"]["metric"]["dimensions"].keys()):
+                            for dimension in dimensions:
                                 card_html += f'<div>{dimension}: {metric["metricStat"]["metric"]["dimensions"][dimension]}</div>'
             case "standard":
                 for metric in alarm["detail"]["configuration"]["metrics"]:
                     card_html += f'<div>Namespace: {metric["metricStat"]["metric"]["namespace"]}</div>'
                     card_html += f'<div>Metric Name: {metric["metricStat"]["metric"]["name"]}</div>'
                     alarm_name = metric["metricStat"]["metric"]["name"]
-                    if len(list(metric["metricStat"]["metric"]["dimensions"].keys())) > 0:
+                    dimensions = metric.get("metricStat", {}).get("metric", {}).get("dimensions", {})
+                    if dimensions:
                         card_html += f'<div>Metric Dimensions: <br /></div>'
-                        for dimension in list(metric["metricStat"]["metric"]["dimensions"].keys()):
+                        for dimension in dimensions:
                             card_html += f'<div>{dimension}: {metric["metricStat"]["metric"]["dimensions"][dimension]}</div>'
                             resource_id = metric["metricStat"]["metric"]["dimensions"][dimension]
             case _:
@@ -266,7 +268,7 @@ def lambda_handler(event, context):
         if 'instanceInfo' in alarm:
             if 'Error' not in alarm['instanceInfo']:
                 card_html += f'<hr /><h4>Instance info</h4>'
-                if 'Tags' in alarm['instanceInfo'] and len(list(alarm['instanceInfo']['Tags'])) > 0:
+                if 'Tags' in alarm['instanceInfo'] and alarm['instanceInfo']['Tags']:
                     card_html += f'<div><b>Tags:</b></div>'
                     for tag in alarm['instanceInfo']['Tags']:
                         card_html += f'<div>{tag["Key"]}:{tag["Value"]}</div>'

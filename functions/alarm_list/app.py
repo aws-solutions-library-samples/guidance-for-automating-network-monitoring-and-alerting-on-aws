@@ -208,7 +208,7 @@ def lambda_handler(event, context):
         response = table.query(**query_params)
         alarms.extend(response.get('Items', []))
         if 'ConsumedCapacity' in response:
-            consumedRRUs += response['ConsumedCapacity']['CapacityUnits']
+            consumedRRUs += int(response['ConsumedCapacity']['CapacityUnits'])
         if 'LastEvaluatedKey' in response:
             query_params['ExclusiveStartKey'] = response['LastEvaluatedKey']
         else:
@@ -409,28 +409,35 @@ def lambda_handler(event, context):
              endpoint="{context.invoked_function_arn}">
              {{ "region": "none" }}
             </cwdb-action></th>'''
-    html +=  (f'<th>Contact email</th>'
-             '<th>Operations contact</th>'
-             f'<th><a>Cost of this</a><cwdb-action action="html" event="click" display="popup">Estimated cost of Alarm Dashboard-solution: <b>${est_monthly_cost}/mo</b><br /><br />'
-             '<div style="background-color:rgba(10, 10, 10, 0.1);; padding: 10px; font-size: 12px;">'
-             'The cost of this dashboard is mainly driven by WRU and RRUs used to store and retrieve records from the DynamoDB table and Lambda execution cost. Primary cost driver will be WRUs and RRUs and Lambda cost will be ignored as it has smaller cost impact. <br /><br />'
-             'WRUs are used when an Alarm changes state and the event is forwarded to be stored in the DynamoDB. Currently two Lambda functions will update the Alarm record. This will cost at least 2 WRUs whenever an Alarm changes the state. <br /><br />'
-             'RRUs are used when ever user opens the dashboard or refreshes the dashboard. Two Lambda functions fetch the data. One for the Alarms in ALARM state and second fetches all Alarms. No RRUs are used when user doesn’t have the dashboard open. <br /><br />'
-             'This estimation assumes user has the dashboard open 24/7 with refresh set to every 10 seconds in order to estimate maximum cost per month. <br /><br />'
-             'Since it’s difficult to do real-time calculation of the cost without doubling the cost the estimation uses the most expensive operation (retrieval of the full list of Alarms) as base to calculate the cost.<br /><br />'
-             'Then two assumptions are done:<br />'
-             'An assumption that retrieval of Alarms in ALARM state will be less than 50% of it. 50% is then used as value. <br /><br />'
-             'Finally assumption is that updates of Alarms (using WRUs) will be FAR less than RRUs but to be sure 25% of base is used. <br /><br />'
-             'If you have a high number of Alarms that constantly change state, this can drive a higher than estimated cost.<br /><br />'
-             'Formula is: <b>actual_RRUs_for_full_list + (actual_RRUs_for_full_list * 0.75)</b><br /><br />'
-             f'In this case:<br /><b>6*60*24*30 = monthly_executions = {monthly_executions}</b><br />'
-             f'<b>consumedRRUs (by single request) = {consumedRRUs}</b><br />'
-             f'<b>total_monthly_RRUs = monthly_executions * consumedRRUs = {monthly_executions} * {consumedRRUs} = {total_monthly_RRUs}</b><br />'
-             f'<b>monthly_cost_base = total_monthly_RRUs * ($0.283 per million RRUs (eu-west-1)) = {total_monthly_RRUs} * ($0.283/1 000 000) = {round(total_monthly_RRUs*(0.283/1000000),2)}</b><br />'
-             f'<b>estimated_monthly_cost = monthly_cost_base + (monthly_cost_base * 0.75) = {total_monthly_cost} + {round(total_monthly_cost*0.75,2)} ~= {round(total_monthly_cost + round((total_monthly_cost*0.75),2), 2)}</b><br />'
-             'Remember to verify the cost using Cost Explorer!'
-             '</div>'
-             '</cwdb-action></th></tr></thead>')
+
+    html += f'''<th>Contact email</th><th>Operations contact</th>
+             <th>
+                <a>
+                    Cost of this
+                </a>
+                <cwdb-action action="html" event="click" display="popup">Estimated cost of Alarm Dashboard-solution: <b>${est_monthly_cost}/mo</b><br /><br />
+                    <div style="background-color:rgba(10, 10, 10, 0.1);; padding: 10px; font-size: 12px;">
+                         The cost of this dashboard is mainly driven by WRU and RRUs used to store and retrieve records from the DynamoDB table and Lambda execution cost. Primary cost driver will be WRUs and RRUs and Lambda cost will be ignored as it has smaller cost impact. <br /><br />
+                         WRUs are used when an Alarm changes state and the event is forwarded to be stored in the DynamoDB. Currently two Lambda functions will update the Alarm record. This will cost at least 2 WRUs whenever an Alarm changes the state. <br /><br />
+                         RRUs are used when ever user opens the dashboard or refreshes the dashboard. Two Lambda functions fetch the data. One for the Alarms in ALARM state and second fetches all Alarms. No RRUs are used when user doesn’t have the dashboard open. <br /><br />
+                         This estimation assumes user has the dashboard open 24/7 with refresh set to every 10 seconds in order to estimate maximum cost per month. <br /><br />
+                         Since it’s difficult to do real-time calculation of the cost without doubling the cost the estimation uses the most expensive operation (retrieval of the full list of Alarms) as base to calculate the cost.<br /><br />
+                         Then two assumptions are done:<br />
+                         An assumption that retrieval of Alarms in ALARM state will be less than 50% of it. 50% is then used as value. <br /><br />
+                         Finally assumption is that updates of Alarms (using WRUs) will be FAR less than RRUs but to be sure 25% of base is used. <br /><br />
+                         If you have a high number of Alarms that constantly change state, this can drive a higher than estimated cost.<br /><br />
+                         Formula is: <b>actual_RRUs_for_full_list + (actual_RRUs_for_full_list * 0.75)</b><br /><br />
+                         In this case:<br /><b>6*60*24*30 = monthly_executions = {monthly_executions}</b><br />
+                         <b>consumedRRUs (by single request) = {consumedRRUs}</b><br />
+                         <b>total_monthly_RRUs = monthly_executions * consumedRRUs = {monthly_executions} * {consumedRRUs} = {total_monthly_RRUs}</b><br />
+                         <b>monthly_cost_base = total_monthly_RRUs * ($0.283 per million RRUs (eu-west-1)) = {total_monthly_RRUs} * ($0.283/1 000 000) = {round(total_monthly_RRUs * (0.283 / 1000000), 2)}</b><br />
+                         <b>estimated_monthly_cost = monthly_cost_base + (monthly_cost_base * 0.75) = {total_monthly_cost} + {round(total_monthly_cost * 0.75, 2)} ~= {round(total_monthly_cost + round((total_monthly_cost * 0.75), 2), 2)}</b><br />
+                         Remember to verify the cost using Cost Explorer!
+                    </div>
+                </cwdb-action>
+            </th>
+            </tr>
+            </thead>'''
 
     for alarm in alarms:
         html += '\t<tr>'

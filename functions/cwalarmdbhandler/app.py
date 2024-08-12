@@ -183,7 +183,7 @@ def augment_event(event):
                     print('Ignoring metric')
             try:
                 instance_info = get_ec2_instance_info(account_id, instance_id, region)
-                if len(instance_info) == 0:
+                if not instance_info:
                     payload['InstanceInfo'] = {'Error': 'Instance not found'}
                 else:
                     payload['InstanceInfo'] = instance_info
