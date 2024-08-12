@@ -643,6 +643,7 @@ def handler():
     try:
         f = open("../lib/config.json", "r")
         main_config = json.load(f)
+        f.close()
     except:
         print("Could not find config file!!! You should run this from 'data' directory!")
         quit()
