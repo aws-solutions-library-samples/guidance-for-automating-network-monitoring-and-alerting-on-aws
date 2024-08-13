@@ -5,8 +5,8 @@ import { IemDashboardStack } from '../lib/iem-dashboard-stack';
 import {AlarmDashboardStack} from "../lib/alarm-dashboard-stack";
 import { AwsSolutionsChecks } from 'cdk-nag'
 import { Aspects } from 'aws-cdk-lib';
+import config from '../lib/config.json';
 
-const config = require('../lib/config.json');
 
 if ( config.AlarmDashboard?.enabled && (!config.AlarmDashboard.organizationId || !config.AlarmDashboard.organizationId.startsWith("o-") ) ){
     throw new Error('Please edit `lib/config.json` and add `organizationId` before continuing');

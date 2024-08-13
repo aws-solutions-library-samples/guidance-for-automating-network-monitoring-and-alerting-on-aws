@@ -288,7 +288,8 @@ export class AlarmDashboardStack extends cdk.Stack {
             handler: 'app.lambda_handler',
             runtime: Runtime.PYTHON_3_11,
             architecture: Architecture.X86_64,
-            role: alarmCWCustomFunctionRole
+            role: alarmCWCustomFunctionRole,
+            tracing: Tracing.ACTIVE,
         });
 
         alarmCWCustomFunction.addToRolePolicy(
@@ -343,6 +344,7 @@ export class AlarmDashboardStack extends cdk.Stack {
             runtime: Runtime.PYTHON_3_11,
             architecture: Architecture.X86_64,
             memorySize: 165,
+            tracing: Tracing.ACTIVE,
             role: alarmListCWCustomFunctionRole
         });
 
