@@ -5,6 +5,7 @@ from botocore.config import Config
 
 singletons = []
 
+
 def get_resources(tag_name, tag_values, config):
     """Get resources from resource groups and tagging API.
     Assembles resources in a list containing only ARN and tags
@@ -52,6 +53,7 @@ def get_resources_from_api(resourcetaggingapi, resources, tag_name, tag_values):
         resources.extend(response['ResourceTagMappingList'])
 
     return resources
+
 
 def autoscaling_retriever(tag_name, tag_values, config):
     resources = []
@@ -106,6 +108,7 @@ def get_asgs_from_api(tag_name, tag_values, config):
 
     return resources
 
+
 def cw_custom_namespace_retriever(config):
     """Retrieving all custom namespaces
     """
@@ -129,8 +132,6 @@ def cw_custom_namespace_retriever(config):
     except:
         print(f'Done fetching cloudwatch namespaces')
     return resources
-
-
 
 
 def router(resource, config):
@@ -200,6 +201,7 @@ def apigw1_decorator(resource, config):
     resource['stages'] = response2['item']
     return resource
 
+
 def apigw2_decorator(resource, config):
     print(f'This resource is API Gateway 2 {resource["ResourceARN"]}')
     apiid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/')) - 1]
@@ -261,8 +263,10 @@ def autoscaling_decorator(resource, config):
     print(f'This resource is Autoscaling Group {resource["ResourceARN"]}')
     return resource
 
+
 def beanstalk_decorator(resource, config):
     return resource
+
 
 def cloudfront_decorator(resource, config):
     print(f'This resource is CloudFront distribution')
@@ -276,6 +280,7 @@ def cloudfront_decorator(resource, config):
     resource['Aliases'] = response['Distribution']['DistributionConfig']['Aliases']
     resource['Origins'] = response['Distribution']['DistributionConfig']['Origins']
     return resource
+
 
 def mediapackage_decorator(resource, config):
     print(f'this resource is Mediapackage channel')
@@ -296,7 +301,8 @@ def mediapackage_decorator(resource, config):
             resource ['IngestEndpoint'] = response2['HlsIngest']['IngestEndpoints']
             resource['OriginEndpoint'] = origin_endpoint['OriginEndpoints']
     return resource
-        
+
+
 def medialive_decorator(resource, config):
     print(f'this resource is Medialive channel')
     arn = resource['ResourceARN']
@@ -313,7 +319,8 @@ def medialive_decorator(resource, config):
                 )
             resource['Pipeline'] = response2['PipelineDetails']
     return resource
-    
+
+
 def odcr_decorator(resource, config):
     print(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
@@ -339,6 +346,7 @@ def dynamodb_decorator(resource, config):
     resource['rcu'] = rcu
     return resource
 
+
 def efs_decorator(resource, config):
     print(f'This resource is EFS {resource["ResourceARN"]}')
     fsId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
@@ -358,41 +366,21 @@ def ec2_decorator(resource, config):
 
     volumes = []
 
-    response = ec2.describe_volumes(
+    volume_paginator = ec2.get_paginator('describe_volumes')
+    volume_iterator = volume_paginator.paginate(
         Filters=[
-        {
-            'Name': 'attachment.instance-id',
-            'Values': [
-                instanceid,
-            ]
-        },
-        ],
-        MaxResults=100
+            {
+                'Name': 'attachment.instance-id',
+                'Values': [
+                    instanceid,
+                ]
+            },
+        ]
     )
 
-
-    for record in response['Volumes']:
-        volumes.append(record)
-
-    try:
-        while response['NextToken']:
-            response = ec2.describe_volumes(
-                Filters=[
-                {
-                    'Name': 'attachment.instance-id',
-                    'Values': [
-                        instanceid,
-                    ]
-                },
-                ],
-                MaxResults=100,
-                NextToken=response['NextToken']
-            )
-            for record in response['Volumes']:
-                volumes.append(record)
-
-    except:
-        print(f'Done fetching volumes')
+    for page in volume_iterator:
+        for volume in page['Volumes']:
+            volumes.append(volume)
 
     resource['Volumes'] = volumes
 
@@ -490,10 +478,18 @@ def elb2_decorator(resource, config):
         ]
     )
     resource['Extras'] = response['LoadBalancers'][0]
-    response = elb.describe_target_groups(
+
+    target_groups = []
+
+    tg_paginator = elb.get_paginator('describe_target_groups')
+    tg_page_iterator = tg_paginator.paginate(
         LoadBalancerArn=resource['ResourceARN']
     )
-    resource['TargetGroups'] = response['TargetGroups']
+
+    for tg_page in tg_page_iterator:
+        target_groups.extend(tg_page['TargetGroups'])
+
+    resource['TargetGroups'] = target_groups
     return resource
 
 
@@ -506,13 +502,18 @@ def ecs_decorator(resource, config):
         ]
     )
     resource['cluster'] = response['clusters'][0]
-    response = ecs.list_services(
+
+    services = []
+    sv_paginator = ecs.get_paginator('list_services')
+    sv_page_iterator = sv_paginator.paginate(
         cluster=resource['ResourceARN']
     )
+    for sv_page in sv_page_iterator:
+        services.extend(sv_page['serviceArns'])
 
     response = ecs.describe_services(
         cluster=resource['ResourceARN'],
-        services=response['serviceArns']
+        services=services
     )
     for service in response['services']:
         del service['events']
@@ -611,16 +612,20 @@ def tgw_decorator(resource, config):
     print(f'This resource is TGW {resource["ResourceARN"]}')
     tgwid = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     tgw = boto3.client('ec2', config=config)
-    response = tgw.describe_transit_gateway_attachments(
-        Filters=[{
+
+    attachments = []
+    attachment_paginator = tgw.get_paginator('describe_transit_gateway_attachments')
+    attachment_iterator = attachment_paginator.paginate(Filters=[{
             'Name': 'transit-gateway-id',
             'Values': [
                 tgwid
             ]
-        }],
-    )
+        }])
 
-    resource['attachments'] = response['TransitGatewayAttachments']
+    for attachment_page in attachment_iterator:
+        attachments.extend(attachment_page['TransitGatewayAttachments'])
+
+    resource['attachments'] = attachments
     return resource
 
 
