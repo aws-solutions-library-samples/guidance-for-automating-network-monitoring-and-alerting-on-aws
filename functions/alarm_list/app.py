@@ -437,7 +437,7 @@ def lambda_handler(event, context):
                 </cwdb-action>
             </th>
             </tr>
-            </thead>'''
+            </thead>''' #nosec not using user input here
 
     for alarm in alarms:
         html += '\t<tr>'
