@@ -126,7 +126,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             right:[bytesOutMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 8,
+            height: 5
         });
 
         const packetsWidget = new GraphWidget({
@@ -135,7 +136,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             right:[packetsOutExpression],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 8,
+            height: 5
         });
 
         const droppedWidget = new GraphWidget({
@@ -144,7 +146,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             right:[bytesDropCountNoRoute,bytesDropCountBlackhole],
             period: Duration.minutes(1),
             region: region,
-            width: 8
+            width: 8,
+            height: 5
         });
 
         this.widgetSet.push(new Row(bytesWidget,packetsWidget,droppedWidget));
@@ -273,7 +276,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 right:[attBytesOutMetric],
                 period: Duration.minutes(1),
                 region: region,
-                width: 8
+                width: 8,
+                height: 3
             });
 
             const attPacketsWidget = new GraphWidget({
@@ -282,7 +286,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 right:[attPacketsOutExpression],
                 period: Duration.minutes(1),
                 region: region,
-                width: 8
+                width: 8,
+                height: 3
             });
 
             const attDroppedWidget = new GraphWidget({
@@ -291,7 +296,8 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 right:[attBytesDropCountNoRoute,attBytesDropCountBlackhole],
                 period: Duration.minutes(1),
                 region: region,
-                width: 8
+                width: 8,
+                height: 3
             });
 
             this.widgetSet.push(new Row(attBytesWidget,attPacketsWidget,attDroppedWidget));

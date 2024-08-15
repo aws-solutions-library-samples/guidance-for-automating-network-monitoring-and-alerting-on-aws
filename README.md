@@ -31,6 +31,7 @@ arbitrary number of AWS accounts.
 - AWS Elemental MediaLive
 - AWS Elemental MediaPackage
 - NAT Gateway
+- AWS Network Firewall
 - RDS
 - S3
 - SNS
@@ -117,7 +118,7 @@ Recommended if only alarm dashboard is being deployed.
 3. If deploying for the first time, run `cdk bootstrap` to bootstrap the environment 
 (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html). In case you don't want to bootstrap 
 read [Deploying without boostraping CDK](BOOTSTRAP.md).
-4. Run `npm install` to install dependencies.
+4. Run `npm ci` to install dependencies.
 
 ## Configuring the dashboards
 1. Open the configuration file `lib/config.json` in your editor of choice.

@@ -181,7 +181,9 @@ def router(resource, config):
     elif ':elasticfilesystem:' in arn:
         resource = efs_decorator(resource, config)
     elif 'arn:aws:elasticbeanstalk:' in arn:
-        resource = beanstalk_decorator(resource,config)
+        resource = beanstalk_decorator(resource, config)
+    elif 'arn:aws:network-firewall:' in arn and ':firewall/' in arn:
+        resource = network_firewall_decorator(resource, config)
     return resource
 
 
@@ -547,9 +549,53 @@ def natgw_decorator(resource, config):
     return resource
 
 
+def network_firewall_decorator(resource, config):
+    print(f'This resource is a Network Firewall')
+    nfw_client = boto3.client('network-firewall', config=config)
+    response = nfw_client.describe_firewall(
+        FirewallArn=resource['ResourceARN']
+    )
+    resource['Firewall'] = response['Firewall']
+    resource['FirewallStatus'] = response['FirewallStatus']
+
+    if 'SyncStates' in resource['FirewallStatus']:
+        for az in resource['FirewallStatus']['SyncStates'].items():
+            print(f"Checking {az[1]['Attachment']['EndpointId']}")
+            vpc_endpoint_id = az[1]['Attachment']['EndpointId']
+            ec2_client = boto3.client('ec2', config=config)
+            response = ec2_client.describe_vpc_endpoints(
+                VpcEndpointIds=[
+                    vpc_endpoint_id,
+                ]
+            )
+            az[1]['Attachment']['ServiceName'] = response['VpcEndpoints'][0]['ServiceName']
+
+    response = nfw_client.describe_logging_configuration(
+        FirewallArn=resource['ResourceARN']
+    )
+
+    resource['LoggingConfiguration'] = response['LoggingConfiguration']
+
+    cw_client = boto3.client('cloudwatch', config=config)
+    response = cw_client.list_metrics(
+        Namespace='AWS/NetworkFirewall',
+        Dimensions=[
+            {
+                'Name': 'FirewallName',
+                'Value': resource['ResourceARN'].split('/')[1:][0]
+            }
+        ]
+
+    )
+    resource['Metrics'] = response['Metrics']
+
+    return resource
+
+
 def rds_decorator(resource, config):
     print(f'This resource is RDS {resource["ResourceARN"]}')
     return resource
+
 
 def s3_decorator(resource, config):
     bucket_name = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
@@ -596,6 +642,7 @@ def sqs_decorator(resource, config):
     resource['Attributes'] = response['Attributes']
     return resource
 
+
 def sns_decorator(resource, config):
     print(f'This resource is SNS {resource["ResourceARN"]}')
 #     sns = boto3.client('sns', config=config)
@@ -632,6 +679,7 @@ def tgw_decorator(resource, config):
 def debug(resource):
     print(json.dumps(resource, indent=4, default=str))
 
+
 def get_config(region):
     return Config(
         region_name=region,
@@ -641,6 +689,7 @@ def get_config(region):
             'mode': 'standard'
         }
     )
+
 
 def handler():
     tag_name = 'iem'
@@ -710,6 +759,7 @@ def handler():
             n.write(json.dumps(decorated_resources, indent=4, default=str))
     finally:
         n.close()
+
 
 if __name__ == '__main__':
     handler()

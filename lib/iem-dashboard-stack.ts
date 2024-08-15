@@ -9,10 +9,6 @@ export class IemDashboardStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    const dashboard = new Dashboard(this,config.BaseName,{
-      dashboardName: config.BaseName + '-Dashboard'
-    });
-
     let resources:any = [];
     try {
       resources = require(config.ResourceFile);
@@ -23,8 +19,14 @@ export class IemDashboardStack extends Stack {
 
     const graphFactory = new GraphFactory(this,'GraphFactory',resources, config);
 
-    for (let widget of graphFactory.getWidgets()){
-      dashboard.addWidgets(widget);
+    if (graphFactory.getWidgets().length > 1) {
+      const dashboard = new Dashboard(this,config.BaseName,{
+        dashboardName: config.BaseName + '-Dashboard'
+      });
+      for (let widget of graphFactory.getWidgets()){
+        dashboard.addWidgets(widget);
+      }
     }
+
   }
 }

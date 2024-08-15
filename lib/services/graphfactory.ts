@@ -32,10 +32,12 @@ import {MediaLiveWidgetSet} from "./servicewidgetsets/medialive";
 import {EFSWidgetSet} from "./servicewidgetsets/efs";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
+import {NetworkFirewallWidgetSet} from "./servicewidgetsets/networkfirewall";
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
+    MainDashboard:any;
     EC2Dashboard:any = null;
     LambdaDashboard:any = null;
     NetworkDashboard:any = null;
@@ -418,6 +420,34 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "network_firewall": {
+                        if (!this.NetworkDashboard) {
+                            this.NetworkDashboard = new Dashboard(this, config.BaseName + '-Network-Dashboard', {
+                                dashboardName: config.BaseName + '-Network-Dashboard'
+                            });
+                            this.estimatedCost += 3;
+                        }
+
+                        const labelWidget = new TextWidget({
+                            markdown: "## Network Firewalls",
+                            width: 24,
+                            height: 1
+                        });
+
+                        this.NetworkDashboard.addWidgets(labelWidget)
+
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const firewallName = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
+                            const firewall = new NetworkFirewallWidgetSet(this,`networkfirewall-${firewallName}-${region}-${this.config.BaseName}`, resource, this.config);
+                            for (const widget of firewall.getWidgetSets()){
+                                this.NetworkDashboard.addWidgets(widget);
+                            }
+                            this.alarmSet = this.alarmSet.concat(firewall.getAlarmSet());
+                            resourcecounter += 1;
+                        }
+                        break;
+                    }
+
                     case "sns": {
                         const labelWidget = new TextWidget({
                             markdown: `## SNS Topics`,
@@ -682,6 +712,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["s3"] = [resource];
                 } else {
                     this.serviceArray[region]["s3"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes('arn:aws:network-firewall:') && resource.ResourceARN.includes(':firewall/')){
+                if (!this.serviceArray[region]["network_firewall"]){
+                    this.serviceArray[region]["network_firewall"] = [resource];
+                } else {
+                    this.serviceArray[region]["network_firewall"].push(resource);
                 }
             }
         }
