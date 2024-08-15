@@ -1,8 +1,6 @@
 import {Construct} from "constructs";
 import {WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
-import {EmrCreateCluster} from "aws-cdk-lib/aws-stepfunctions-tasks";
-import CloudWatchAlarmStatistic = EmrCreateCluster.CloudWatchAlarmStatistic;
 import {Duration} from "aws-cdk-lib";
 
 export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
