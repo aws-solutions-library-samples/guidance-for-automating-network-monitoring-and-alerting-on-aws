@@ -78,7 +78,7 @@ The following table provides a sample cost breakdown for deploying this guidance
 | [Amazon EventBridge](https://aws.amazon.com/eventbridge/pricing/) | 1 million custom events per month and 1 million cross region events | \$ 2.00      |
 |**Total estimated cost per month:**|                                                                                                         | **\$15.85**  |
 
-A sample cost breakdown for production scale load (10 000 Alarms, each triggering 10 times a month) can be found in this [AWS Pricing Calculator estimate](https://calculator.aws/#/estimate?id=10b6390878f085cdc97d169543459d8b669103e6) and is estimated around **$15.73 USD/month**
+A sample cost breakdown for production scale load (10 000 Alarms, each triggering 10 times a month) can be found in this [AWS Pricing Calculator estimate](https://calculator.aws/#/estimate?id=10b6390878f085cdc97d169543459d8b669103e6) and is estimated around **$15.85 USD/month**
 
 
 ## How it works
