@@ -47,6 +47,40 @@ arbitrary number of AWS accounts.
 Simply add tag with key `priority` and values critical, medium or low.
 - Supports tag data for EC2 instances in source accounts
 
+### Services Used
+
+| **AWS service**                                              | Role       | Description                                                                                                                                                                                                                                                                                                                                  |
+|--------------------------------------------------------------|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [AWS CloudFormation](https://aws.amazon.com/cloudformation/) | Supporting | Deployment of CDK generated core components.                                                                                                                                                                                                                                                                                                 |
+| [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/)      | Core       | Collects Metrics, Dashboards, Alarms.                                                                                                                                                                                                                                                                                                        |
+| [Amazon Eventbridge](https://aws.amazon.com/eventbridge/)    | Core       | An EventBridge default event bus is paired with EventBridge rules to route CloudWatch Alarm events to a central custom event bus. The received events are then processed and stored in a DynamoDB database.                                                                                                                                  |
+| [AWS Lambda](https://aws.amazon.com/lambda/)                 | Core       | Runs custom code in response to events. This guidance contains Lambda functions to 1. Collect alarm events, look up additional information about the resource that triggered the alarm and then store the data in DynamoDB database 2. Render the two CloudWatch custom widgets on the Alarm Dashboard.                                      |
+| [Amazon DynamoDB](https://aws.amazon.com/dynamodb/)          | Core       | Acts as a storage for alarm objects. Alarm objects (event and the additional information about the resource) are written to a DynamoDB table. Two CloudWatch custom widgets invoke respective Lambda functions that retrieve filtered Alarm objects from the table and render the Alarms on the Dashboard each time the Dashboard refreshes. |
+
+### Cost
+
+You are responsible for the cost of the AWS services used while running this guidance. As of April 2024, the cost for running this guidance with the default settings in the US East (N. Virginia) Region is approximately **\$1 per month**, assuming 3,000 transactions.
+
+This guidance uses [Serverless services](https://aws.amazon.com/serverless/), which use a pay-for-value billing model. Costs are incurred with usage of the deployed resources. Refer to the [Sample cost table](#sample-cost-table) for a service-by-service cost breakdown.
+
+We recommend creating a [budget](https://alpha-docs-aws.amazon.com/awsaccountbilling/latest/aboutv2/budgets-create.html) through [AWS Cost Explorer](http://aws.amazon.com/aws-cost-management/aws-cost-explorer/) to help manage costs. Prices are subject to change. For full details, refer to the pricing webpage for each AWS service used in this guidance.
+
+
+#### Sample Cost Table
+
+The following table provides a sample cost breakdown for deploying this guidance with the default parameters in the US East (N. Virginia) Region for one month assuming "non-production" level traffic volume.
+
+| **AWS service**  | Dimensions                                                                                              | Cost \[USD\] |
+|-----------|---------------------------------------------------------------------------------------------------------|--------------|
+| [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/) | 1 Charged dashboard                                                                                     | \$ 3.00      |
+| [Amazon DynamoDB](https://aws.amazon.com/dynamodb/pricing/) | 1Gb data storage, Standard table class on-demand capacity, 1 million writes/month, 2 million reads/month | \$ 3.00      |
+| [AWS Lambda](https://aws.amazon.com/lambda/pricing/) | 618 400 requests per month with 3000 ms avg duration, 256 MB memory, 512 MB ephemeral storage           | \$ 7.85      |
+| [Amazon EventBridge](https://aws.amazon.com/eventbridge/pricing/) | 1 million custom events per month and 1 million cross region events | \$ 2.00      |
+|**Total estimated cost per month:**|                                                                                                         | **\$15.85**  |
+
+A sample cost breakdown for production scale load (10 000 Alarms, each triggering 10 times a month) can be found in this [AWS Pricing Calculator estimate](https://calculator.aws/#/estimate?id=10b6390878f085cdc97d169543459d8b669103e6) and is estimated around **$15.73 USD/month**
+
+
 ## How it works
 
 ### Metric dashboards
