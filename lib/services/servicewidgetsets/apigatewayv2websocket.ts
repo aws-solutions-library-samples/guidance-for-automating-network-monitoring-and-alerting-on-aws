@@ -1,9 +1,9 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class ApiGatewayV2WebSocketWidgetSet extends Construct implements WidgetSet{
+export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/ApiGateway';
     widgetSet:any = [];
     alarmSet:any = [];

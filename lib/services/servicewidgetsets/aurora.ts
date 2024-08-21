@@ -1,10 +1,10 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {RdsWidgetSet} from "./rds";
 import {Construct} from "constructs";
 
-export class AuroraWidgetSet extends Construct  implements WidgetSet{
+export class AuroraWidgetSet extends Construct  implements IWidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/RDS';
     alarmSet:any = [];

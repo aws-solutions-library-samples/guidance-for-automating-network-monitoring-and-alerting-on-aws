@@ -1,10 +1,10 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {ApplicationTargetGroup} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 
-export class NetworkELBWidgetSet extends Construct implements WidgetSet{
+export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/NetworkELB';
     widgetSet:any = [];
     alarmSet:any = [];

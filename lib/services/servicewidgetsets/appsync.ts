@@ -1,9 +1,9 @@
 import {GraphWidget, MathExpression, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class AppsyncWidgetSet extends Construct implements WidgetSet{
+export class AppsyncWidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/AppSync';
     widgetSet:any = [];
     alarmSet:any = [];

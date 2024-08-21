@@ -1,9 +1,9 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {GraphWidget, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class CapacityReservationsWidgetSet extends Construct implements WidgetSet{
+export class CapacityReservationsWidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/EC2CapacityReservations';
     widgetSet:any = [];
     alarmSet: any = [];

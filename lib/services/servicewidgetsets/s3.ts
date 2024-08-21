@@ -1,9 +1,9 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class S3WidgetSet extends Construct implements WidgetSet {
+export class S3WidgetSet extends Construct implements IWidgetSet {
     alarmSet:any = [];
     namespace:string = 'AWS/S3';
     widgetSet:any = [];

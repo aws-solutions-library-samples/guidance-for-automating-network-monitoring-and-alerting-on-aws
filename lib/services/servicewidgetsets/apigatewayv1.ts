@@ -1,4 +1,4 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet} from "./widgetset";
 import {
     GraphWidget,
     MathExpression,
@@ -11,7 +11,7 @@ import {
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class ApiGatewayV1WidgetSet extends Construct implements WidgetSet{
+export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/ApiGateway';
     widgetSet:any = [];
     alarmSet:any = [];

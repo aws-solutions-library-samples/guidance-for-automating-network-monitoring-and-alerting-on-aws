@@ -1,10 +1,10 @@
 import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {EbsWidgetSet} from "./ebs";
 import {Construct} from "constructs";
 
-export class Ec2InstancesWidgetSet extends Construct implements WidgetSet{
+export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
     namespace:string='AWS/EC2';
     widgetSet:any = [];
     alarmSet:any = [];

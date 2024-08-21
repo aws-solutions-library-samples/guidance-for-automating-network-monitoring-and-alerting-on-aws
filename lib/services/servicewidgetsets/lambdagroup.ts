@@ -1,11 +1,11 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {Duration} from "aws-cdk-lib";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 
-export class LambdaGroupWidgetSet extends Construct implements WidgetSet {
+export class LambdaGroupWidgetSet extends Construct implements IWidgetSet {
     namespace: string = 'AWS/Lambda';
     widgetSet: any = [];
     alarmSet: any = [];

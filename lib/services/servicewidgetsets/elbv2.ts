@@ -1,9 +1,9 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {NetworkELBWidgetSet} from "./netELB";
 import {ApplicationELBWidgetSet} from "./appELB";
 
-export class ELBv2WidgetSet extends Construct implements WidgetSet {
+export class ELBv2WidgetSet extends Construct implements IWidgetSet {
     namespace:string = 'AWS/ELB'
     widgetSet:any = []
     alarmSet:any = [];

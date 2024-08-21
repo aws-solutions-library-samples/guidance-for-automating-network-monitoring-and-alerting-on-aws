@@ -1,10 +1,10 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import { MaximumExecutionFrequency } from "aws-cdk-lib/aws-config";
 
-export class EFSWidgetSet extends Construct implements WidgetSet {
+export class EFSWidgetSet extends Construct implements IWidgetSet {
     namespace:string='AWS/EFS';
     widgetSet:any = [];
     alarmSet:any = [];

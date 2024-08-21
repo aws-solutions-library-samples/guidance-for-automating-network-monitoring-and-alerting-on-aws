@@ -1,9 +1,9 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class ApplicationELBWidgetSet extends Construct implements WidgetSet{
+export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
     namespace:string = "AWS/ApplicationELB";
     widgetSet:any = [];
     alarmSet:any = [];

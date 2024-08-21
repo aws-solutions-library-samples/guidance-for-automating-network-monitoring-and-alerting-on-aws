@@ -1,9 +1,9 @@
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class WafV2WidgetSet extends Construct implements WidgetSet{
+export class WafV2WidgetSet extends Construct implements IWidgetSet{
     namespace:string = 'AWS/WAFV2';
     widgetSet:any = [];
     alarmSet:any = [];
