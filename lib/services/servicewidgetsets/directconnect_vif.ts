@@ -3,18 +3,19 @@ import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class DirectConnectWidgetSet extends Construct implements IWidgetSet {
+export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
     namespace: string = 'AWS/DX';
     widgetSet: any = [];
     alarmSet: any = [];
     config: any = {};
+    widgetCount:number = 0;
 
     constructor(scope: Construct, id: string, resource: any, config: any) {
         super(scope, id);
         this.config = config;
         const region = resource.ResourceARN.split(':')[3];
         const account = resource.ResourceARN.split(':')[4];
-        const virtualInterfaceId = resource.vif['virtualInterfaceId'];
+        const virtualInterfaceId = resource.vif.virtualInterfaceId;
         const connectionId = resource.vif['connectionId'];
         const vifName = resource.vif['virtualInterfaceName'];
         const type = resource.vif['virtualInterfaceType'];
@@ -25,11 +26,13 @@ export class DirectConnectWidgetSet extends Construct implements IWidgetSet {
         let markDown = `#### VIF: [${virtualInterfaceId}/${vifName}](https://us-east-1.console.aws.amazon.com/directconnect/v2/home?region=${region}#/virtual-interfaces/arn:aws:directconnect:${region}:${account}:${virtualInterfaceId})`
         markDown = `${markDown} DCGID: [${directConnectGatewayId}](https://us-east-1.console.aws.amazon.com/directconnect/v2/home?region=${region}#/dxgateways/${directConnectGatewayId}) CID: ${connectionId} ASN: ${asn} TYPE: ${type} MTU: ${mtu}`;
 
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1,
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         let azs = [
             `${region}a`,
@@ -113,7 +116,8 @@ export class DirectConnectWidgetSet extends Construct implements IWidgetSet {
         });
 
 
-        this.widgetSet.push(new Row(bandwitdhWdiget,ppsWdiget));
+        //this.widgetSet.push(new Row(bandwitdhWdiget,ppsWdiget));
+        this.addWidgetRow(bandwitdhWdiget,ppsWdiget);
     }
 
     getAlarmSet(): [] {

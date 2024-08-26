@@ -3,7 +3,7 @@ import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class NatgwWidgetSet extends Construct implements IWidgetSet{
+export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/NATGateway';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -182,7 +182,8 @@ export class NatgwWidgetSet extends Construct implements IWidgetSet{
             right: [connectionAttemptCountMetric,connectionEstablishedCountMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 6
+            width: 6,
+            height: 4
         });
 
         const bytesTrafficWidget = new GraphWidget({
@@ -191,7 +192,8 @@ export class NatgwWidgetSet extends Construct implements IWidgetSet{
             right: [bytesInFromDestinationMetric,bytesOutToSourceMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 6
+            width: 6,
+            height: 4
         });
 
         const packetsTrafficWidget = new GraphWidget({
@@ -200,7 +202,8 @@ export class NatgwWidgetSet extends Construct implements IWidgetSet{
             right: [packetsInFromDestinationMetric,packetsOutToSourceMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 6
+            width: 6,
+            height: 4
         });
 
         const errorsWidget = new GraphWidget({
@@ -209,7 +212,8 @@ export class NatgwWidgetSet extends Construct implements IWidgetSet{
             right:[packetsDropCountMetric],
             period: Duration.minutes(1),
             region: region,
-            width: 6
+            width: 6,
+            height: 4
         })
 
         this.widgetSet.push(new Row(connectionWidget,bytesTrafficWidget,packetsTrafficWidget,errorsWidget));

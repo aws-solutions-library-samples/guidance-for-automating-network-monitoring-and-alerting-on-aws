@@ -4,6 +4,8 @@ import math
 from botocore.config import Config
 
 singletons = []
+direct_connects = []
+direct_connect_vifs = []
 
 
 def get_resources(tag_name, tag_values, config):
@@ -184,7 +186,56 @@ def router(resource, config):
         resource = beanstalk_decorator(resource, config)
     elif 'arn:aws:network-firewall:' in arn and ':firewall/' in arn:
         resource = network_firewall_decorator(resource, config)
+    elif 'arn:aws:directconnect:' in arn and ':dxvif/' in arn:
+        resource = direct_connect_handler(resource, config)
     return resource
+
+
+def direct_connect_handler(resource, config):
+    print(f'This resource is DX VIF {resource["ResourceARN"]}')
+    vif_id = resource['ResourceARN'].split('/')[1:][0]
+    client = boto3.client('directconnect', config=config)
+    response = client.describe_virtual_interfaces(
+        virtualInterfaceId=vif_id
+    )
+    resource['vif'] = response['virtualInterfaces'][0]
+    connection_id = resource['vif']['connectionId']
+
+    if direct_connects:
+        for direct_connect in direct_connects:
+            if connection_id not in direct_connect['connectionId']:
+                handle_new_direct_connect_connection(resource, config, connection_id)
+                break
+            else:
+                direct_connect['VIFs'].append(resource)
+                break
+    else:
+        handle_new_direct_connect_connection(resource, config, connection_id)
+
+
+
+def handle_new_direct_connect_connection(resource, config, connection_id):
+    client = boto3.client('directconnect', config=config)
+    region = resource['ResourceARN'].split(':')[3]
+    account_id = resource['ResourceARN'].split(':')[4]
+    response = client.describe_connections(
+        connectionId=resource['vif']['connectionId']
+    )
+    if response['connections']:
+        top_resource = {'DirectConnect': response['connections'][0],
+                        'ResourceARN': f'arn:aws:directconnect:{region}:{account_id}:dxcon/{connection_id}',
+                        'connectionId': connection_id,
+                        'VIFs': [resource]}
+        direct_connects.append(top_resource)
+    else:  # Some VIFs do not attach to real connection, handle them separately
+        append = True
+        for vif in direct_connect_vifs:
+            if vif['ResourceARN'] == resource['ResourceARN']:
+                append = False
+                break
+
+        if append:
+            direct_connect_vifs.append(resource)
 
 
 def apigw1_decorator(resource, config):
@@ -569,6 +620,9 @@ def network_firewall_decorator(resource, config):
                 ]
             )
             az[1]['Attachment']['ServiceName'] = response['VpcEndpoints'][0]['ServiceName']
+            for tag in response['VpcEndpoints'][0]['Tags']:
+                if tag['Key'] == 'Name':
+                    az[1]['Attachment']['vpceEndpointName'] = tag['Value']
 
     response = nfw_client.describe_logging_configuration(
         FirewallArn=resource['ResourceARN']
@@ -630,10 +684,10 @@ def s3_decorator(resource, config):
 
 def sqs_decorator(resource, config):
     print(f'This resource is SQS {resource["ResourceARN"]}')
-    queueName = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
+    queue_name = resource['ResourceARN'].split(':')[len(resource['ResourceARN'].split(':'))-1]
     sqs = boto3.client('sqs', config=config)
     response = sqs.get_queue_url(
-        QueueName=queueName
+        QueueName=queue_name
     )
     response = sqs.get_queue_attributes(
         AttributeNames=['All'],
@@ -746,7 +800,13 @@ def handler():
         region_namespace = {'Region': region, 'Namespaces' : cw_custom_namespace_retriever(config) }
         region_namespaces['RegionNamespaces'].append(region_namespace)
         for resource in resources:
-            decorated_resources.append(router(resource, config))
+            decorated_resource = router(resource, config)
+            if decorated_resource:
+                print(f'Adding {decorated_resource["ResourceARN"]}')
+                decorated_resources.append(decorated_resource)
+
+    decorated_resources.extend(direct_connects)
+    decorated_resources.extend(direct_connect_vifs)
 
     try:
         with open(custom_namespace_file, "w", encoding="utf-8") as cn:

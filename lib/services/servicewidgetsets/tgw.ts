@@ -1,13 +1,15 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, MathExpression, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
+import {ConcreteWidget} from "aws-cdk-lib/aws-cloudwatch/lib/widget";
 
-export class TgwWidgetSet extends Construct implements WidgetSet{
+export class TgwWidgetSet extends Construct implements IWidgetSet{
     namespace:string = "AWS/TransitGateway";
     widgetSet:any = [];
     alarmSet:any = [];
     config:any = {};
+    widgetCount:number = 0;
 
 
     constructor(scope: Construct, id: string, resource:any, config:any) {
@@ -16,11 +18,13 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
         const tgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### TGW [${tgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${tgwId}) Attachments:${resource.attachments.length} Peers:${this.countPeers(resource)}`
-        this.widgetSet.push(new TextWidget({
+        let textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        })
+        //this.widgetSet.push();
+        this.addWidgetRow(textWidget);
 
         const bytesOutMetric = new Metric({
             namespace: this.namespace,
@@ -150,20 +154,24 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
             height: 5
         });
 
-        this.widgetSet.push(new Row(bytesWidget,packetsWidget,droppedWidget));
+        //this.widgetSet.push(new Row(bytesWidget,packetsWidget,droppedWidget));
+        this.addWidgetRow(bytesWidget,packetsWidget,droppedWidget);
 
         for ( let attachment of resource.attachments ){
             const attachmentId = attachment.TransitGatewayAttachmentId
+            console.log(attachmentId);
             let vpcMarkup = '';
             if ( attachment.ResourceType === 'vpc'){
                 vpcMarkup = ` - [${attachment.ResourceId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#VpcDetails:VpcId=${attachment.ResourceId})`
             }
             let markDown = `**Attachment [${attachmentId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayAttachmentDetails:transitGatewayAttachmentId=${attachmentId}) Type:${attachment.ResourceType}${vpcMarkup}**`
-            this.widgetSet.push(new TextWidget({
+            let attachTextWidget = new TextWidget({
                 markdown: markDown,
                 width: 24,
                 height: 1
-            }));
+            })
+            //this.widgetSet.push();
+            this.addWidgetRow(attachTextWidget);
             const attBytesOutMetric = new Metric({
                 namespace: this.namespace,
                 metricName: 'BytesOut',
@@ -300,9 +308,18 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
                 height: 3
             });
 
-            this.widgetSet.push(new Row(attBytesWidget,attPacketsWidget,attDroppedWidget));
+            //this.widgetSet.push(new Row(attBytesWidget,attPacketsWidget,attDroppedWidget));
+            this.addWidgetRow(attBytesWidget,attPacketsWidget,attDroppedWidget)
         }
 
+    }
+
+    getAlarmSet(): [] {
+        return this.alarmSet;
+    }
+
+    getWidgetSets(): [] {
+        return this.widgetSet;
     }
 
     countPeers(resource:any){
@@ -315,11 +332,19 @@ export class TgwWidgetSet extends Construct implements WidgetSet{
         return peerCount;
     }
 
-    getWidgetSets(): [] {
-        return this.widgetSet;
+    addWidgetRow(...widgets:ConcreteWidget[]){
+        let count = 0
+        let row = new Row();
+        for (const widgetElement of widgets) {
+            count += 1;
+            row.addWidget(widgetElement);
+        }
+        this.widgetCount += count;
+        this.widgetSet.push(row);
     }
 
-    getAlarmSet(): [] {
-        return this.alarmSet;
+    getWidgetCount(): number {
+        return this.widgetCount;
     }
+
 }

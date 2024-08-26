@@ -2,7 +2,8 @@ import {
     AlarmStatusWidget,
     Dashboard,
     Spacer,
-    TextWidget
+    TextWidget,
+    TextWidgetBackground
 } from "aws-cdk-lib/aws-cloudwatch";
 import {AppsyncWidgetSet} from "./servicewidgetsets/appsync";
 import {DynamodbWidgetSet} from "./servicewidgetsets/dynamodb";
@@ -33,18 +34,25 @@ import {EFSWidgetSet} from "./servicewidgetsets/efs";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 import {NetworkFirewallWidgetSet} from "./servicewidgetsets/networkfirewall";
+import {DirectConnectVIFWidgetSet} from "./servicewidgetsets/directconnect_vif";
+import {DashboardManager} from "./dashboardmanager";
+import {DirectConnectConWidgetSet} from "./servicewidgetsets/directconnect_con";
+import {WidgetSet} from "./servicewidgetsets/widgetset";
+
+
 
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
-    MainDashboard:any;
     EC2Dashboard:any = null;
     LambdaDashboard:any = null;
-    NetworkDashboard:any = null;
     EdgeDashboard:any = null;
     groupedDashboards = new Map<string,any>();
     groupedLambdaDashboards = new Map<string,any>();
     estimatedCost:number = 0;
+    state:any = {};
+    networkDashboardManager:DashboardManager;
+    maxNetworkSequence:number = 0;
 
     alarmSet:any = [];
     config:any;
@@ -70,11 +78,21 @@ export class GraphFactory extends Construct {
 
         for (let region of regions) {
             console.log('Processing region ' + region);
-            this.widgetArray.push(new TextWidget({
+            if ( ! this.state['regions']){
+                this.state['regions'] = [region];
+            } else {
+                this.state['regions'].push(region);
+            }
+
+            this.state['currentRegion'] = region;
+
+            let regionWidget = new TextWidget({
                 markdown: "# Region: " + region,
                 width: 24,
                 height: 1
-            }))
+            });
+
+            this.widgetArray.push(regionWidget)
             let servicekeys = Object.keys(this.serviceArray[region]);
             let resourcecounter = 0;
             for (let servicekey of servicekeys) {
@@ -123,7 +141,8 @@ export class GraphFactory extends Construct {
                         this.widgetArray.push(new TextWidget({
                             markdown: "## AppSync",
                             width: 24,
-                            height: 1
+                            height: 1,
+                            background: TextWidgetBackground.TRANSPARENT
                         }))
                         let resourceCount = 0;
                         for (const resource of this.serviceArray[region][servicekey]) {
@@ -370,49 +389,75 @@ export class GraphFactory extends Construct {
                     }
 
                     case "tgw": {
-                        if (!this.NetworkDashboard) {
-                            this.NetworkDashboard = new Dashboard(this, config.BaseName + '-Network-Dashboard', {
-                                dashboardName: config.BaseName + '-Network-Dashboard'
-                            });
-                            this.estimatedCost += 3;
+                        if ( ! this.networkDashboardManager ){
+                            this.networkDashboardManager = new DashboardManager(this,`${config.BaseName}-Network`,this.config.MaxWidgetsPerDashboard);
                         }
-
                         const labelWidget = new TextWidget({
                             markdown: "## Transit Gateways",
                             width: 24,
                             height: 1
                         });
-                        this.NetworkDashboard.addWidgets(labelWidget)
-                        for (const resource of this.serviceArray[region][servicekey]) {
+                        this.networkDashboardManager.addWidget(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]){
                             const tgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
                             const tgw = new TgwWidgetSet(this, `tgw-${tgwId}-${region}-${this.config.BaseName}`, resource, this.config);
-                            for (const widget of tgw.getWidgetSets()) {
-                                this.NetworkDashboard.addWidgets(widget);
+                            this.networkDashboardManager.addWidgetSet(tgw);
+                            if ( this.networkDashboardManager.getSequence() > this.maxNetworkSequence ){
+                                this.maxNetworkSequence = this.networkDashboardManager.getSequence();
                             }
-                            this.alarmSet = this.alarmSet.concat(tgw.getAlarmSet());
+                        }
+                        break;
+                    }
+
+                    case "direct_connect": {
+                        if ( ! this.networkDashboardManager ){
+                            this.networkDashboardManager = new DashboardManager(this,`${config.BaseName}-Network`,this.config.MaxWidgetsPerDashboard);
+                        }
+                        const labelWidget = new TextWidget({
+                            markdown: "## Direct Connect",
+                            width: 24,
+                            height: 1
+                        });
+                        this.networkDashboardManager.addWidget(labelWidget);
+
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            let dxWidgetSet:WidgetSet;
+                            if ( resource.ResourceARN.includes(':dxcon/') ){
+                                const connId = resource.connectionId;
+                                dxWidgetSet = new DirectConnectConWidgetSet(this, `dx-${connId}-${region}-${this.config.BaseName}`, resource, this.config);
+                            } else {
+                                const vifId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
+                                dxWidgetSet = new DirectConnectVIFWidgetSet(this, `dx-${vifId}-${region}-${this.config.BaseName}`, resource, this.config);
+                            }
+
+                            this.networkDashboardManager.addWidgetSet(dxWidgetSet);
+                            if ( this.networkDashboardManager.getSequence() > this.maxNetworkSequence ){
+                                this.maxNetworkSequence = this.networkDashboardManager.getSequence();
+                            }
+                            this.alarmSet = this.alarmSet.concat(dxWidgetSet.getAlarmSet());
                             resourcecounter += 1;
                         }
                         break;
                     }
 
                     case "natgw": {
-                        if (!this.NetworkDashboard) {
-                            this.NetworkDashboard = new Dashboard(this, config.BaseName + '-Network-Dashboard', {
-                                dashboardName: config.BaseName + '-Network-Dashboard'
-                            });
-                            this.estimatedCost += 3;
+                        if ( ! this.networkDashboardManager ){
+                            this.networkDashboardManager = new DashboardManager(this,`${config.BaseName}-Network`,this.config.MaxWidgetsPerDashboard);
                         }
                         const labelWidget = new TextWidget({
                             markdown: "## NAT Gateways",
                             width: 24,
                             height: 1
                         });
-                        this.NetworkDashboard.addWidgets(labelWidget)
+                        this.networkDashboardManager.addWidget(labelWidget);
+
                         for (const resource of this.serviceArray[region][servicekey]) {
                             const natgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
                             const natgw = new NatgwWidgetSet(this, `natgw-${natgwId}-${region}-${this.config.BaseName}`, resource, this.config);
-                            for (const widget of natgw.getWidgetSets()) {
-                                this.NetworkDashboard.addWidgets(widget);
+                            this.networkDashboardManager.addWidgetSet(natgw);
+                            if ( this.networkDashboardManager.getSequence() > this.maxNetworkSequence ){
+                                this.maxNetworkSequence = this.networkDashboardManager.getSequence();
                             }
                             this.alarmSet = this.alarmSet.concat(natgw.getAlarmSet());
                             resourcecounter += 1;
@@ -421,32 +466,31 @@ export class GraphFactory extends Construct {
                     }
 
                     case "network_firewall": {
-                        if (!this.NetworkDashboard) {
-                            this.NetworkDashboard = new Dashboard(this, config.BaseName + '-Network-Dashboard', {
-                                dashboardName: config.BaseName + '-Network-Dashboard'
-                            });
-                            this.estimatedCost += 3;
+                        if ( ! this.networkDashboardManager ){
+                            this.networkDashboardManager = new DashboardManager(this,`${this.config.BaseName}-Network`,this.config.MaxWidgetsPerDashboard);
                         }
-
                         const labelWidget = new TextWidget({
                             markdown: "## Network Firewalls",
                             width: 24,
                             height: 1
                         });
-
-                        this.NetworkDashboard.addWidgets(labelWidget)
+                        this.networkDashboardManager.addWidget(labelWidget);
 
                         for (const resource of this.serviceArray[region][servicekey]) {
                             const firewallName = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
                             const firewall = new NetworkFirewallWidgetSet(this,`networkfirewall-${firewallName}-${region}-${this.config.BaseName}`, resource, this.config);
-                            for (const widget of firewall.getWidgetSets()){
-                                this.NetworkDashboard.addWidgets(widget);
+                            this.networkDashboardManager.addWidgetSet(firewall);
+
+                            if ( this.networkDashboardManager.getSequence() > this.maxNetworkSequence ){
+                                this.maxNetworkSequence = this.networkDashboardManager.getSequence();
                             }
+
                             this.alarmSet = this.alarmSet.concat(firewall.getAlarmSet());
                             resourcecounter += 1;
                         }
                         break;
                     }
+
 
                     case "sns": {
                         const labelWidget = new TextWidget({
@@ -548,6 +592,8 @@ export class GraphFactory extends Construct {
                 }
             }
         }
+        this.estimatedCost = this.estimatedCost + (this.maxNetworkSequence+1)*3;
+
         if (this.alarmSet.length > 0) {
             const height = 1 + Math.floor(this.alarmSet.length / 4) + (this.alarmSet.length % 4 != 0 ? 1 : 0)
             console.log(`Height of alarms is calculated to ${height}. Length is ${this.alarmSet.length}`)
@@ -718,6 +764,12 @@ export class GraphFactory extends Construct {
                     this.serviceArray[region]["network_firewall"] = [resource];
                 } else {
                     this.serviceArray[region]["network_firewall"].push(resource);
+                }
+            } else if (resource.ResourceARN.includes('arn:aws:directconnect:') && ( resource.ResourceARN.includes(':dxvif/') || resource.ResourceARN.includes(':dxcon/') )){
+                if (!this.serviceArray[region]["direct_connect"]){
+                    this.serviceArray[region]["direct_connect"] = [resource];
+                } else {
+                    this.serviceArray[region]["direct_connect"].push(resource);
                 }
             }
         }

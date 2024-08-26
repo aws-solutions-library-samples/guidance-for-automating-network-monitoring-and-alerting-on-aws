@@ -11,8 +11,8 @@ export interface IWidgetSet{
     namespace:string;
     widgetSet:any[];
     alarmSet:any[];
-    getWidgetSets():[];
-    getAlarmSet():[];
+    getWidgetSets():any[];
+    getAlarmSet():any[];
 }
 
 export abstract class WidgetSet extends Construct implements IWidgetSet{

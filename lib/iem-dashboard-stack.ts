@@ -17,6 +17,11 @@ export class IemDashboardStack extends Stack {
       console.log(`ERROR: ${config.ResourceFile} not found, run 'cd data; python resource_collector.py'`);
     }
 
+    if ( ! config.MaxWidgetsPerDashboard ){
+      console.log(`MaxWidgetsPerDashboard is not set in config. Setting it to 200!`);
+      config.MaxWidgetsPerDashboard = 200;
+    }
+
     const graphFactory = new GraphFactory(this,'GraphFactory',resources, config);
 
     if (graphFactory.getWidgets().length > 1) {

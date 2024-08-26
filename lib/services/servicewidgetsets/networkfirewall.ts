@@ -1,13 +1,14 @@
 import {Construct} from "constructs";
-import {WidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
+export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
     namespace: string = 'AWS/NetworkFirewall';
     widgetSet: any = [];
     alarmSet: any = [];
     config: any = {};
+    widgetCount:number = 0;
 
     constructor(scope: Construct, id: string, resource: any, config: any) {
         super(scope, id);
@@ -16,7 +17,6 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
         const region = resource.ResourceARN.split(':')[3];
         const account = resource.ResourceARN.split(':')[4];
         const vpcId = resource.Firewall['VpcId'];
-        console.log(vpcId);
         let azs = [
             `${region}a`,
             `${region}b`,
@@ -41,14 +41,11 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
 
         let attachments:any[] = [];
         if ( resource.FirewallStatus['SyncStates'] ){
-            console.log(resource.FirewallStatus['SyncStates'])
-            console.log(azs);
+
             let firstAZ = true;
             for (const az of azs ){
-                console.log(az);
 
                 if (resource.FirewallStatus['SyncStates'].hasOwnProperty(az)) {
-                    console.log(resource.FirewallStatus['SyncStates'][az]);
                     if ( firstAZ ){
                         markDown = `${markDown} AZs:`
                         firstAZ = false;
@@ -63,14 +60,13 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
             }
         }
 
-        console.log(attachments);
-
-
-        this.widgetSet.push(new TextWidget({
+        let textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const receivedPackets = new Metric({
             namespace: this.namespace,
@@ -213,14 +209,18 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
         });
 
 
-        this.widgetSet.push(new Row(receivedPacketsWidget,packetsWidget));
-        this.widgetSet.push(new Row(droppedPacketsWidget,tlsPassedRejectedWidget,tlsDroppedErrorsWidget));
+        //this.widgetSet.push(new Row(receivedPacketsWidget,packetsWidget));
+        //this.widgetSet.push(new Row(droppedPacketsWidget,tlsPassedRejectedWidget,tlsDroppedErrorsWidget));
+        this.addWidgetRow(receivedPacketsWidget,packetsWidget);
+        this.addWidgetRow(droppedPacketsWidget,tlsPassedRejectedWidget,tlsDroppedErrorsWidget);
+
         let vpceRow = new Row()
         if (attachments && attachments.length > 0) {
             const azCount = attachments.length;
             const widthPerAZ = Math.floor(24/azCount);
             for (let attachment of attachments) {
                 let widgetSize = Math.floor(widthPerAZ/2);
+                const endpointName = attachment['vpceEndpointName'];
                 const activeConnections = new Metric({
                     namespace: 'AWS/PrivateLinkEndpoints',
                     metricName: 'ActiveConnections',
@@ -252,7 +252,7 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
                 });
 
                 const connectionWidget = new GraphWidget({
-                    title: `${attachment['EndpointId']} Connections Active/New`,
+                    title: `${attachment['EndpointId']}/${endpointName} Connections Active/New`,
                     left:[activeConnections],
                     right:[newConnections],
                     period: Duration.minutes(1),
@@ -309,7 +309,7 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
                 });
 
                 const packetsWidget = new GraphWidget({
-                    title: `${attachment['EndpointId']} Bytes Processed/Packets Dropped/RST)`,
+                    title: `${attachment['EndpointId']}//${endpointName} Bytes Processed/Packets Dropped/RST)`,
                     left:[bytesProcessed],
                     right:[packetsDropped,rstPacketsReceived],
                     period: Duration.minutes(1),
@@ -319,6 +319,7 @@ export class NetworkFirewallWidgetSet extends Construct implements WidgetSet {
                 });
 
                 vpceRow.addWidget(packetsWidget);
+                this.widgetCount += 2;
 
             }
 

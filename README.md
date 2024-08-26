@@ -20,6 +20,7 @@ arbitrary number of AWS accounts.
 - Auto Scaling groups
 - On-Demand Capacity Reservations
 - Amazon CloudFront
+- AWS Direct Connect
 - Amazon DynamoDB
 - Amazon EBS (as part of EC2)
 - Amazon EC2 (support for t\* burstable instances, support for CloudWatch Agent)
@@ -135,6 +136,10 @@ will be in each widget set.
 
 `AlarmTopic` (String:optional) - When `AlarmTopic` contains a string with an ARN to a SNS topic, all alarms will be 
 created with an action to send notification to that SNS topic.
+
+`MaxWidgetsPerDashboard` (Integer:optional) - When `MaxWidgetsPerDashboard` is defined, it will limit the number of 
+widgets that are placed on the dashboard. Multiple dashboards may be created depending on the setting. This can be
+used to improve performance and usability of the dashboards. (Currently only supports Network dashboards)
 
 `AlarmDashboard.enabled` (boolean (true/false):optional) - When set to true deploys the alarm dashboard in the account.
 
