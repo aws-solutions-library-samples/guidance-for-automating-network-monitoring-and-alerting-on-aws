@@ -1,9 +1,9 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
+export class ApplicationELBWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = "AWS/ApplicationELB";
     widgetSet:any = [];
     alarmSet:any = [];
@@ -19,11 +19,13 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const elbID = resource.ResourceARN.split('/')[3]
         const elbCWName = 'app/' + elbName + '/' + elbID;
 
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: "**ELB (ALB) " + elbName+'**',
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
 
         /***
          * Metrics
@@ -31,7 +33,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const activeConnMetric = new Metric({
             namespace: this.namespace,
             metricName: 'ActiveConnectionCount',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap: {
                 LoadBalancer: elbCWName
             },
@@ -44,7 +46,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const newConnectionMetric = new Metric({
             namespace: this.namespace,
             metricName: 'NewConnectionCount',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
@@ -56,7 +58,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const consumedLCUMetric = new Metric({
             namespace: this.namespace,
             metricName: 'ConsumedLCUs',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
@@ -68,7 +70,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const fixedResponseCount = new Metric({
             namespace: this.namespace,
             metricName: 'HTTP_Fixed_Response_Count',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
@@ -80,7 +82,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const httpRedirectCount = new Metric({
             namespace: this.namespace,
             metricName: 'HTTP_Redirect_Count',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
@@ -92,7 +94,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const elb5xxMetric = new Metric({
             namespace: this.namespace,
             metricName: 'HTTPCode_ELB_5XX_Count',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
@@ -103,7 +105,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const backend5xxMetric = new Metric({
             namespace: this.namespace,
             metricName: 'HTTPCode_Target_5XX_Count',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap: {
                 LoadBalancer: elbCWName
             },
@@ -114,7 +116,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
         const rejectedConnectionMetric = new Metric({
             namespace: this.namespace,
             metricName: 'RejectedConnectionCount',
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             dimensionsMap: {
                 LoadBalancer: elbCWName
             },
@@ -141,7 +143,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
                     LoadBalancer: elbCWName
 
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period: Duration.minutes(1),
                 unit: Unit.COUNT,
                 region:region
@@ -155,7 +157,7 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
                     LoadBalancer: elbCWName
 
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period: Duration.minutes(1),
                 unit: Unit.COUNT,
                 region:region
@@ -249,9 +251,9 @@ export class ApplicationELBWidgetSet extends Construct implements IWidgetSet{
             width: 10,
         })
 
-        this.widgetSet.push(new Row(connectionsWidget,lcuWidget,responseWidget))
-        this.widgetSet.push(new Row(rejectedConnTargetResponseWidget,unHealthyHostWidget,errorsWidget))
-        this.alarmSet.push(elb5xxAlarm,backend5xxAlarm)
+        this.addWidgetRow(connectionsWidget,lcuWidget,responseWidget);
+        this.addWidgetRow(rejectedConnTargetResponseWidget,unHealthyHostWidget,errorsWidget);
+        this.alarmSet.push(elb5xxAlarm,backend5xxAlarm);
 
     }
 

@@ -1,9 +1,9 @@
-import {IWidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class CapacityReservationsWidgetSet extends Construct implements IWidgetSet{
+export class CapacityReservationsWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/EC2CapacityReservations';
     widgetSet:any = [];
     alarmSet: any = [];
@@ -27,7 +27,7 @@ export class CapacityReservationsWidgetSet extends Construct implements IWidgetS
                     CapacityReservationId: crId
                 },
                 region: region,
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period: Duration.minutes(1)
             });
             let availableMetric = new Metric({
@@ -38,7 +38,7 @@ export class CapacityReservationsWidgetSet extends Construct implements IWidgetS
                     CapacityReservationId: crId
                 },
                 region: region,
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period: Duration.minutes(1)
             })
 
@@ -61,21 +61,17 @@ export class CapacityReservationsWidgetSet extends Construct implements IWidgetS
             left: usedMetricsArray,
             right: availMetricsArray,
             region: region,
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             width: 24
         })
 
-        this.widgetSet.push(new Row(capWidget))
-
-
-
+        this.addWidgetRow(capWidget);
 
     }
 
     getWidgetSets(): [] {
         return this.widgetSet;
     }
-
 
 
     getAlarmSet(): [] {

@@ -1,10 +1,10 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import { MaximumExecutionFrequency } from "aws-cdk-lib/aws-config";
 
-export class EFSWidgetSet extends Construct implements IWidgetSet {
+export class EFSWidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string='AWS/EFS';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -14,11 +14,13 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
         const fsName = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### EFS - ${fsName}`
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const permittedThrougput = new Metric({
             namespace: this.namespace,
@@ -26,7 +28,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 FileSystemId: fsName
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -36,7 +38,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 FileSystemId: fsName
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period:Duration.minutes(1)
         });
 
@@ -46,7 +48,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 FileSystemId: fsName
             }, 
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
 
         });
@@ -57,7 +59,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 FileSystemId: fsName
             }, 
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period:Duration.minutes(1)
 
         });
@@ -68,7 +70,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 FileSystemId: fsName
             }, 
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period:Duration.minutes(1)
 
         });
@@ -103,7 +105,7 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
                 dimensionsMap: {
                     FileSystemId: fsName
                 },
-                statistic: Statistic.MINIMUM,
+                statistic: Stats.MINIMUM,
                 period:Duration.minutes(1)
             });
 
@@ -114,10 +116,10 @@ export class EFSWidgetSet extends Construct implements IWidgetSet {
                 width: 6
             });
 
-            this.widgetSet.push(new Row(performanceWidget, clientWidget, burstCreditsWidget, readWriteIOWidget));
+            this.addWidgetRow(performanceWidget, clientWidget, burstCreditsWidget, readWriteIOWidget);
         }
         else {
-            this.widgetSet.push(new Row(performanceWidget, clientWidget,readWriteIOWidget));
+            this.addWidgetRow(performanceWidget, clientWidget,readWriteIOWidget);
         }
 
     }

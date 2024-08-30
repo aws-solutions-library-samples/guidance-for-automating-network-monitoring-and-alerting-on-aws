@@ -38,6 +38,7 @@ import {DirectConnectVIFWidgetSet} from "./servicewidgetsets/directconnect_vif";
 import {DashboardManager} from "./dashboardmanager";
 import {DirectConnectConWidgetSet} from "./servicewidgetsets/directconnect_con";
 import {WidgetSet} from "./servicewidgetsets/widgetset";
+import {NetworkMonitorWidgetSet} from "./servicewidgetsets/networkmonitor";
 
 
 
@@ -491,6 +492,16 @@ export class GraphFactory extends Construct {
                         break;
                     }
 
+                    case "network_monitor": {
+                        for (const resource of this.serviceArray[region][servicekey]) {
+                            const monitorName = resource.monitorName;
+                            const monitor = new NetworkMonitorWidgetSet(this,`${monitorName}-${region}-${this.config.BaseName}`, resource, this.config);
+                            this.alarmSet.push(...monitor.getAlarmSet());
+                        }
+
+                        break;
+                    }
+
 
                     case "sns": {
                         const labelWidget = new TextWidget({
@@ -771,10 +782,16 @@ export class GraphFactory extends Construct {
                 } else {
                     this.serviceArray[region]["direct_connect"].push(resource);
                 }
+            } else if (resource.ResourceARN.includes('arn:aws:networkmonitor:') && resource.ResourceARN.includes(':monitor/') ){
+                if (!this.serviceArray[region]["network_monitor"]){
+                    this.serviceArray[region]["network_monitor"] = [resource];
+                } else {
+                    this.serviceArray[region]["network_monitor"].push(resource);
+                }
             }
         }
     }
-
+//"arn:aws:networkmonitor:eu-west-1:606289744762:monitor/EMEALab_Stack57_Monitor"
     private processEC2(region:string, servicekey:any){
         //Push instances to new detail dashboard
         for (const resource of this.serviceArray[region][servicekey]) {

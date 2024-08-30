@@ -3,7 +3,7 @@ import {IWidgetSet, WidgetSet} from "./widgetset";
 import {NetworkELBWidgetSet} from "./netELB";
 import {ApplicationELBWidgetSet} from "./appELB";
 
-export class ELBv2WidgetSet extends Construct implements IWidgetSet {
+export class ELBv2WidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string = 'AWS/ELB'
     widgetSet:any = []
     alarmSet:any = [];
@@ -26,7 +26,7 @@ export class ELBv2WidgetSet extends Construct implements IWidgetSet {
         const elbName = resource.Extras.LoadBalancerName;
         const region = resource.ResourceARN.split(':')[3];
         const networkWidgetSet = new NetworkELBWidgetSet(scope, `NLB-${elbName}-${region}-${this.config.BaseName}`, resource, this.config);
-        this.widgetSet.push(...networkWidgetSet.getWidgetSets());
+        this.addWidgetRow(...networkWidgetSet.getWidgetSets());
         this.alarmSet.push(...networkWidgetSet.getAlarmSet());
     }
 
@@ -34,7 +34,7 @@ export class ELBv2WidgetSet extends Construct implements IWidgetSet {
         const elbName = resource.Extras.LoadBalancerName;
         const region = resource.ResourceARN.split(':')[3];
         const applicationWidgetSet = new ApplicationELBWidgetSet(scope, `ALB-${elbName}-${region}-${this.config.BaseName}`, resource, this.config);
-        this.widgetSet.push(...applicationWidgetSet.getWidgetSets());
+        this.addWidgetRow(...applicationWidgetSet.getWidgetSets());
         this.alarmSet.push(...applicationWidgetSet.getAlarmSet());
     }
 

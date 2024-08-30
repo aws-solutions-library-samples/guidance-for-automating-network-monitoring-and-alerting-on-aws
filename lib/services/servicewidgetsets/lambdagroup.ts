@@ -1,11 +1,11 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
 import {Duration} from "aws-cdk-lib";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {SnsAction} from "aws-cdk-lib/aws-cloudwatch-actions";
 import * as sns from "aws-cdk-lib/aws-sns";
 
-export class LambdaGroupWidgetSet extends Construct implements IWidgetSet {
+export class LambdaGroupWidgetSet extends WidgetSet implements IWidgetSet {
     namespace: string = 'AWS/Lambda';
     widgetSet: any = [];
     alarmSet: any = [];
@@ -19,15 +19,17 @@ export class LambdaGroupWidgetSet extends Construct implements IWidgetSet {
         if ( resourceArray.length > 5 ){
             widgetHeight = 14
         }
-
-        this.widgetSet.push(new TextWidget({
-            markdown: "**Lambdas in " + region +' ' + id + '**',
+        let markDown = "**Lambdas in " + region +' ' + id + '**'
+        const textWidget = new TextWidget({
+            markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const invocationsMetricArray = this.getMetricArray(resourceArray,'Invocations');
-        const durationMetricArray = this.getMetricArray(resourceArray,'Duration',Duration.minutes(1),Statistic.AVERAGE);
+        const durationMetricArray = this.getMetricArray(resourceArray,'Duration',Duration.minutes(1),Stats.AVERAGE);
 
         const errorsMetricArray = this.getMetricArray(resourceArray,'Errors');
         for (const metric of errorsMetricArray) {
@@ -65,7 +67,7 @@ export class LambdaGroupWidgetSet extends Construct implements IWidgetSet {
             }
         }
 
-        const concurrentMetricArray = this.getMetricArray(resourceArray,'ConcurrentExecutions',Duration.minutes(1),Statistic.MAXIMUM);
+        const concurrentMetricArray = this.getMetricArray(resourceArray,'ConcurrentExecutions',Duration.minutes(1),Stats.MAXIMUM);
 
 
         const invocationsDuration = new GraphWidget({
@@ -94,14 +96,14 @@ export class LambdaGroupWidgetSet extends Construct implements IWidgetSet {
             height: widgetHeight
         });
 
-        this.widgetSet.push(new Row(invocationsDuration,errorsThrottles,concurrency));
+        this.addWidgetRow(invocationsDuration,errorsThrottles,concurrency);
 
     }
 
-    private getMetricArray(lambdas:any,metric:string,period?:Duration,statistic?:Statistic){
+    private getMetricArray(lambdas:any,metric:string,period?:Duration,statistic?:Stats){
         let metricArray:Metric[] = [];
         let metricPeriod = Duration.minutes(1);
-        let metricStatistic = Statistic.SUM
+        let metricStatistic:any = Stats.SUM
         if ( period ){
             metricPeriod = period;
         }

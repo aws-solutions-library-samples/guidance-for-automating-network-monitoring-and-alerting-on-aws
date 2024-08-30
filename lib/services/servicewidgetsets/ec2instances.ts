@@ -1,10 +1,10 @@
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {EbsWidgetSet} from "./ebs";
 import {Construct} from "constructs";
 
-export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
+export class Ec2InstancesWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string='AWS/EC2';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -44,11 +44,13 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
 
 
         let markDown = `### Instance${auxdata} [${instanceId}](https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#InstanceDetails:instanceId=${instanceId}) ${instanceName} ${instanceType}${burstmodeLabel}/${instanceAz}/Cores:${coreCount}/ThreadsPC:${threadsPerCore}`
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+        this.addWidgetRow(textWidget);
+
         const widget = new GraphWidget({
             title: 'Disk '+instanceId,
             region: region,
@@ -58,7 +60,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -66,7 +68,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -74,7 +76,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right: [new Metric({
@@ -83,7 +85,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -91,7 +93,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 12,
@@ -104,7 +106,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -140,7 +142,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -148,7 +150,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -157,7 +159,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -165,13 +167,13 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     InstanceId: instanceId
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             width: 6,
             height: 5
         });
-        this.widgetSet.push(new Row(cpuwidget,networkWidget,widget));
+        this.addWidgetRow(cpuwidget,networkWidget,widget);
 
         if ( burstable ){
             const CPUCreditUsageMetric = new Metric({
@@ -238,7 +240,7 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 width: 12,
                 height: 5
             });
-            this.widgetSet.push(new Row(creditWidget,surplusWidget));
+            this.addWidgetRow(creditWidget,surplusWidget);
         }
 
         if ( resource.CWAgent && resource.CWAgent === "True"){
@@ -334,13 +336,13 @@ export class Ec2InstancesWidgetSet extends Construct implements IWidgetSet{
                 }
             });
 
-            this.widgetSet.push(new Row(memoryUsageCpuIoWaitWidget,networkConnWidget,diskUtilWidget));
+            this.addWidgetRow(memoryUsageCpuIoWaitWidget,networkConnWidget,diskUtilWidget);
         }
 
         for (const volume of resource.Volumes) {
             let vol = new EbsWidgetSet(this,'EBSWidgetSet'+volume.VolumeId,volume);
             for (let w of vol.getWidgetSets()){
-                this.widgetSet.push(w);
+                this.addWidgetRow(w);
             }
         }
 

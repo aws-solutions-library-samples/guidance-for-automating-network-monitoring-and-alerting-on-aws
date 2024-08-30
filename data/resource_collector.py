@@ -188,6 +188,8 @@ def router(resource, config):
         resource = network_firewall_decorator(resource, config)
     elif 'arn:aws:directconnect:' in arn and ':dxvif/' in arn:
         resource = direct_connect_handler(resource, config)
+    elif 'arn:aws:networkmonitor:' in arn and ':monitor/' in arn:
+        resource = network_monitor_decorator(resource, config)
     return resource
 
 
@@ -374,6 +376,19 @@ def medialive_decorator(resource, config):
     return resource
 
 
+def network_monitor_decorator(resource, config):
+    print(f'This resource is Network Monitor {resource["ResourceARN"]}')
+    monitor_name = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    client = boto3.client('networkmonitor', config=config)
+
+    result = client.get_monitor(
+        monitorName=monitor_name
+    )
+    del result['ResponseMetadata']
+    resource = resource | result
+    return resource
+
+
 def odcr_decorator(resource, config):
     print(f'This resource is ODCR {resource["ResourceARN"]}')
     return resource
@@ -387,14 +402,14 @@ def dynamodb_decorator(resource, config):
         TableName=tablename
     )
     table = response['Table']
-    type = "provisioned"
+    billing_type = "provisioned"
     if 'BillingModeSummary' in table:
-        type = "ondemand"
+        billing_type = "ondemand"
 
     wcu = table['ProvisionedThroughput']['WriteCapacityUnits']
     rcu = table['ProvisionedThroughput']['ReadCapacityUnits']
 
-    resource['type'] = type
+    resource['type'] = billing_type
     resource['wcu'] = wcu
     resource['rcu'] = rcu
     return resource
@@ -402,10 +417,10 @@ def dynamodb_decorator(resource, config):
 
 def efs_decorator(resource, config):
     print(f'This resource is EFS {resource["ResourceARN"]}')
-    fsId = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
+    fs_id = resource['ResourceARN'].split('/')[len(resource['ResourceARN'].split('/'))-1]
     efs = boto3.client('efs', config=config)
     response = efs.describe_file_systems(
-        FileSystemId=fsId
+        FileSystemId=fs_id
     )
     
     resource['ThroughputMode'] = response['FileSystems'][0]['ThroughputMode']
@@ -448,9 +463,9 @@ def ec2_decorator(resource, config):
         ]
     )
     resource['Instance'] = response['Reservations'][0]['Instances'][0]
-    instanceType = resource['Instance']['InstanceType']
+    instance_type = resource['Instance']['InstanceType']
 
-    if 't2' in instanceType or 't3' in instanceType or 't4' in instanceType:
+    if 't2' in instance_type or 't3' in instance_type or 't4' in instance_type:
         response = ec2.describe_instance_credit_specifications(
             InstanceIds=[instanceid]
         )

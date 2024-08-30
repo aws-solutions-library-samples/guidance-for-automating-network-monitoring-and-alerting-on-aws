@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class SQSWidgetSet extends Construct implements IWidgetSet{
+export class SQSWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/SQS'
     widgetSet:any=[];
     alarmSet:any = [];
@@ -43,11 +43,13 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
 
 
         }
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
 
 
         const widget = new GraphWidget({
@@ -59,7 +61,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     QueueName: queueName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -68,7 +70,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap:{
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -85,7 +87,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -94,7 +96,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -109,7 +111,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap:{
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -118,7 +120,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap:{
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -135,7 +137,7 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -144,12 +146,12 @@ export class SQSWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap:{
                     QueueName: queueName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 6
         })
-        this.widgetSet.push(new Row(widget,sentReceivedWidget,delayWidget,widget2));
+        this.addWidgetRow(widget,sentReceivedWidget,delayWidget,widget2);
     }
 
     getWidgetSets(): [] {

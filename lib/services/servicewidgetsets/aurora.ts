@@ -1,10 +1,10 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {RdsWidgetSet} from "./rds";
 import {Construct} from "constructs";
 
-export class AuroraWidgetSet extends Construct  implements IWidgetSet{
+export class AuroraWidgetSet extends WidgetSet  implements IWidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/RDS';
     alarmSet:any = [];
@@ -22,7 +22,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
             markdown: '### Cluster ' + aurora + maz + ' ' + engine,
             width: 24
         })
-        this.widgetSet.push(new Row(title));
+        this.addWidgetRow(title);
         const widget = new GraphWidget({
             title: 'CpuUtilisation '+aurora + maz + ' ' + engine,
             region: region,
@@ -32,7 +32,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap: {
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 8
@@ -47,7 +47,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -55,7 +55,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -63,7 +63,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -71,7 +71,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -79,7 +79,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -87,7 +87,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -95,7 +95,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -103,7 +103,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -111,7 +111,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -120,7 +120,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -128,7 +128,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap:{
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })]
         });
@@ -141,7 +141,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap: {
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -150,7 +150,7 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap: {
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -158,12 +158,12 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 dimensionsMap: {
                     DBClusterIdentifier: aurora
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 8
         })
-        this.widgetSet.push(new Row(widget,latency,connsdisk));
+        this.addWidgetRow(widget,latency,connsdisk);
         if ( resource.DBClusterMembers && resource.DBClusterMembers.length > 0 ){
             let counter = 0;
             for (let member of resource.DBClusterMembers){
@@ -174,9 +174,10 @@ export class AuroraWidgetSet extends Construct  implements IWidgetSet{
                 member.ResourceARN = arnarray.join(':');
                 member.Engine = resource.Engine;
                 let wgt = new RdsWidgetSet(this,'RDSWidgetSet' + counter,member);
-                for ( let row of wgt.getWidgetSets()){
-                    this.widgetSet.push(row);
-                }
+                // for ( let row of wgt.getWidgetSets()){
+                //     this.widgetSet.push(row);
+                // }
+                this.addWidgetRow(...wgt.getWidgetSets());
                 counter++;
             }
         }

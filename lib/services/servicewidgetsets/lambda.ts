@@ -1,9 +1,9 @@
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class LambdaWidgetSet extends Construct implements IWidgetSet{
+export class LambdaWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string='AWS/Lambda';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -24,11 +24,13 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
         }
         let markDown = `### Lambda [${name}](https://${region}.console.aws.amazon.com/lambda/home?region=${region}#/functions/${functionName}?tab=monitoring) Mem:${memory} RT:${runtime}`
 
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
         const widget = new GraphWidget({
             title: 'Invocations '+functionName,
             region: region,
@@ -38,7 +40,7 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -47,7 +49,7 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             height: 5
@@ -58,7 +60,7 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 FunctionName: functionName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -80,7 +82,7 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[throttleMetric],
@@ -97,13 +99,13 @@ export class LambdaWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     FunctionName: functionName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             height: 5
         })
 
-        this.widgetSet.push(new Row(widget,widgetErrors,widgetConcurrent));
+        this.addWidgetRow(widget,widgetErrors,widgetConcurrent);
     }
 
     getWidgetSets(): [] {

@@ -1,6 +1,14 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {
+    GraphWidget,
+    Metric,
+    Row,
+    Stats,
+    TextWidget,
+    TextWidgetBackground,
+    TreatMissingData
+} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
 export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
@@ -16,11 +24,14 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
         const natgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### NATGW [${natgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${natgwId})`
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 1
-        }));
+            height: 1,
+            background: TextWidgetBackground.TRANSPARENT
+        });
+
+        this.addWidgetRow(textWidget);
 
         
         const activeConnectionCountMetric = new Metric({
@@ -29,7 +40,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId : natgwId
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period: Duration.minutes(1)
         });
         
@@ -40,7 +51,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -50,7 +61,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -60,7 +71,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
         
@@ -70,7 +81,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -80,7 +91,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -90,7 +101,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -100,7 +111,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -110,7 +121,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -120,7 +131,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -130,7 +141,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -140,7 +151,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -150,7 +161,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             dimensionsMap: {
                 NatGatewayId: natgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -216,7 +227,7 @@ export class NatgwWidgetSet extends WidgetSet implements IWidgetSet{
             height: 4
         })
 
-        this.widgetSet.push(new Row(connectionWidget,bytesTrafficWidget,packetsTrafficWidget,errorsWidget));
+        this.addWidgetRow(connectionWidget,bytesTrafficWidget,packetsTrafficWidget,errorsWidget);
 
 
     }

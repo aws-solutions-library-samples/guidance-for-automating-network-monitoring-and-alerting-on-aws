@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic,TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats,TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
+export class MediaPackageWidgetSet extends WidgetSet implements IWidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/MediaPackage'
     alarmSet:any = [];
@@ -16,11 +16,13 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
         let region = resource.ResourceARN.split(':')[3];
 
         let markDown = "**MediaPackage Channel  [" + ChannelId + '](https://'+region+'.console.aws.amazon.com/mediapackage/home?region='+region+'#/channels/'+ChannelId+')**';
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
         
         let ingressBytes = [];
         let ingressResponseTime = [];
@@ -37,7 +39,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                             Channel: ChannelId,
                             IngestEndpoint: ingestendpointId
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                 
             });
@@ -49,7 +51,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                             Channel: ChannelId,
                             IngestEndpoint: ingestendpointId
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                 
             });
@@ -65,7 +67,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                             Channel: ChannelId,
                             OriginEndpoint: originendpointId
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -80,7 +82,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                             Channel: ChannelId,
                             OriginEndpoint: originendpointId
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -94,7 +96,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                         dimensionsMap: {
                              StatusCodeRange: '2xx'
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -104,7 +106,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                         dimensionsMap: {
                              StatusCodeRange: '3xx'
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -114,7 +116,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                         dimensionsMap: {
                              StatusCodeRange: '4xx'
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -124,7 +126,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                         dimensionsMap: {
                              StatusCodeRange: '5xx'
                         },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period:Duration.minutes(1)
                     
         });
@@ -160,7 +162,7 @@ export class MediaPackageWidgetSet extends Construct implements IWidgetSet{
                 right: egressRequestCount,
                 width: 8
         });
-        this.widgetSet.push(new Row(IngressBytes,IngressResponseTime,EgressBytes,EgressResponseTime,EgressRequestCount));
+        this.addWidgetRow(IngressBytes,IngressResponseTime,EgressBytes,EgressResponseTime,EgressRequestCount);
     }
     
 

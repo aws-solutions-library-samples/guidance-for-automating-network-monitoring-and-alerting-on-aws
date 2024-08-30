@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
+export class EcsEC2WidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string = 'AWS/ECS';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -19,11 +19,13 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
         const runningTasks = service.runningCount;
         const instances = service.instances;
         let markDown = `***ECS EC2 Service [${serviceName}](https://${region}.console.aws.amazon.com/ecs/home?region=${region}#/clusters/${clusterName}/services/${serviceName}/details) [${clusterName}](https://${region}.console.aws.amazon.com/ecs/home?region=${region}#/clusters/${clusterName}/services) Tasks: ${runningTasks}***`;
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const CPUUEc2tilisationMetric = new Metric({
             namespace: this.namespace,
@@ -34,7 +36,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
                 ServiceName: serviceName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const CPUEC2UtilAlarm = CPUUEc2tilisationMetric.createAlarm(this,`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,{
@@ -56,7 +58,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
                 ServiceName: serviceName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const ServiceEc2CPUUtilisation = new GraphWidget({
@@ -67,21 +69,18 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             width: 24
         });
 
-        this.widgetSet.push(new Row(ServiceEc2CPUUtilisation));
+        this.addWidgetRow(ServiceEc2CPUUtilisation);
 
         for ( let instance of instances ){
             let markDown = `*Instance [${instance}](https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#InstanceDetails:instanceId=${instance})*`
-            this.widgetSet.push(new TextWidget({
+            const textWidget2 = new TextWidget({
                 markdown: markDown,
                 width: 24,
                 height: 1
-            }));
-            this.widgetSet.push(this.getInstanceWidget(instance,region));
-
+            });
+            this.addWidgetRow(textWidget2);
+            this.addWidgetRow(...this.getInstanceWidget(instance,region));
         }
-
-
-
     }
 
     /***
@@ -97,7 +96,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -117,7 +116,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -127,7 +126,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -137,7 +136,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -147,7 +146,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -157,7 +156,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -167,7 +166,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 InstanceId: instanceId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -207,7 +206,7 @@ export class EcsEC2WidgetSet extends Construct implements IWidgetSet {
             height: 3
         });
 
-        return new Row(cpuwidget,networkInOutWidget,ebsReadWriteBytesWidget,ebsReadWriteOpsWidget);
+        return [cpuwidget,networkInOutWidget,ebsReadWriteBytesWidget,ebsReadWriteOpsWidget];
     }
 
     getWidgetSets(): [] {

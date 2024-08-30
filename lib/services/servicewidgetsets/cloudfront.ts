@@ -1,8 +1,8 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 
-export class CloudfrontWidgetSet extends Construct implements IWidgetSet {
+export class CloudfrontWidgetSet extends WidgetSet implements IWidgetSet {
     namespace: string = 'AWS/CloudFront';
     widgetSet: any = [];
     alarmSet: any = [];
@@ -18,12 +18,12 @@ export class CloudfrontWidgetSet extends Construct implements IWidgetSet {
         const origins = resource['Origins']['Quantity']
 
         let markDown = `### Distribution [${distId}](https://us-east-1.console.aws.amazon.com/cloudfront/v3/home?region=eu-west-1#/distributions/${distId}) ${domainName} Aliases: ${aliases} Origins: ${origins}`
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 2
-        }));
-
+        });
+        this.addWidgetRow(textWidget);
         const requestsMetric = new Metric({
             namespace: this.namespace,
             metricName: 'Requests',
@@ -69,7 +69,6 @@ export class CloudfrontWidgetSet extends Construct implements IWidgetSet {
             }
         });
 
-
         const requestWidget = new GraphWidget({
             title: 'Traffic',
             left: [requestsMetric],
@@ -92,7 +91,7 @@ export class CloudfrontWidgetSet extends Construct implements IWidgetSet {
             width: 6,
             region: 'us-east-1'
         });
-        this.widgetSet.push(new Row(requestWidget,dataWidget,errorWidget));
+        this.addWidgetRow(requestWidget,dataWidget,errorWidget);
 
     }
 

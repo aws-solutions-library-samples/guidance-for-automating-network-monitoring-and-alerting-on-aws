@@ -1,10 +1,10 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget, TreatMissingData, Unit} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {ApplicationTargetGroup} from "aws-cdk-lib/aws-elasticloadbalancingv2";
 
-export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
+export class NetworkELBWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/NetworkELB';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -21,12 +21,14 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
         const elbID = resource.ResourceARN.split('/')[3]
         const elbCWName = 'net/' + elbName + '/' + elbID;
         const AZs = resource.Extras.AvailabilityZones;
-
-        this.widgetSet.push(new TextWidget({
-            markdown: "**ELB (NLB) " + elbName+'**',
+        let markDown = "**ELB (NLB) " + elbName+'**';
+        const textWidget = new TextWidget({
+            markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
 
         /***
          * Metrics
@@ -43,7 +45,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
                     LoadBalancer: elbCWName,
                     AvailabilityZone: zoneName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period: Duration.minutes(1),
                 unit: Unit.COUNT,
                 region: region
@@ -57,7 +59,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
                     LoadBalancer: elbCWName,
                     AvailabilityZone: zoneName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period: Duration.minutes(1),
                 unit: Unit.COUNT,
                 region: region
@@ -81,7 +83,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
                     LoadBalancer: elbCWName
 
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period: Duration.minutes(1),
                 unit: Unit.COUNT,
                 region:region
@@ -105,7 +107,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period: Duration.minutes(1),
             region:region
         })
@@ -116,7 +118,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period: Duration.minutes(1),
             region: region
         })
@@ -127,7 +129,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1),
             region: region
         });
@@ -138,7 +140,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1),
             region: region
         });
@@ -149,7 +151,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1),
             region: region
         });
@@ -160,7 +162,7 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 LoadBalancer: elbCWName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1),
             region: region
         });
@@ -237,8 +239,8 @@ export class NetworkELBWidgetSet extends Construct implements IWidgetSet{
 
 
 
-        this.widgetSet.push(new Row(flowsWidget,unHealthyHostWidget,lcuPeakBytesPerSecond));
-        this.widgetSet.push(new Row(packetsWidget,tcpClientRSTWidget,tcpELBRSTWidget,tcpTargetRSTWidget));
+        this.addWidgetRow(flowsWidget,unHealthyHostWidget,lcuPeakBytesPerSecond);
+        this.addWidgetRow(packetsWidget,tcpClientRSTWidget,tcpELBRSTWidget,tcpTargetRSTWidget);
 
     }
 

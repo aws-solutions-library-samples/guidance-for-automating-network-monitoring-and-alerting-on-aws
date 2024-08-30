@@ -1,9 +1,9 @@
-import {GraphWidget, MathExpression, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
-import {IWidgetSet} from "./widgetset";
+import {GraphWidget, MathExpression, Metric, Row, Stats, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class AppsyncWidgetSet extends Construct implements IWidgetSet{
+export class AppsyncWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/AppSync';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -27,7 +27,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     GraphQLAPIId: graphqlendpoint
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period:Duration.minutes(1)
             })],
             width: 8
@@ -43,7 +43,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     GraphQLAPIId: graphqlendpoint
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right: [new Metric({
@@ -52,7 +52,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     GraphQLAPIId: graphqlendpoint
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 8
@@ -64,7 +64,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 GraphQLAPIId: graphqlendpoint
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period:Duration.minutes(1)
         });
 
@@ -83,7 +83,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
             treatMissingData: TreatMissingData.MISSING
         })
 
-        this.widgetSet.push(new Row(widget,widget2,latencywidget));
+        this.addWidgetRow(widget,widget2,latencywidget);
         this.alarmSet.push(latencyAlarm)
     }
 
@@ -94,7 +94,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 Region: region
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         });
 
@@ -104,7 +104,7 @@ export class AppsyncWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap:{
                 Region: region
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         })
 

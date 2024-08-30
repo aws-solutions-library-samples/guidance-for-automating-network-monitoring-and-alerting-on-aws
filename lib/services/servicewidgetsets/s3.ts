@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class S3WidgetSet extends Construct implements IWidgetSet {
+export class S3WidgetSet extends WidgetSet implements IWidgetSet {
     alarmSet:any = [];
     namespace:string = 'AWS/S3';
     widgetSet:any = [];
@@ -27,13 +27,13 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
             markDown += `, Region: ${region}`
         }
 
-
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
 
+        this.addWidgetRow(textWidget);
 
         const widget = new GraphWidget({
             title: 'Numberz of Objects '+bucketName,
@@ -46,7 +46,7 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
                     BucketName: bucketName,
                     StorageType: "AllStorageTypes"
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 8
@@ -64,7 +64,7 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
                     BucketName: bucketName,
                     StorageType: "StandardStorage"
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 8
@@ -80,7 +80,7 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
                 dimensionsMap: {
                     BucketName: bucketName
                 },
-                statistic: Statistic.SUM
+                statistic: Stats.SUM
             })],
             right:[new Metric({
                 namespace: this.namespace,
@@ -89,7 +89,7 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
                 dimensionsMap:{
                     BucketName: bucketName
                 },
-                statistic: Statistic.SUM
+                statistic: Stats.SUM
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'PostRequests',
@@ -97,12 +97,12 @@ export class S3WidgetSet extends Construct implements IWidgetSet {
                 dimensionsMap:{
                     BucketName: bucketName
                 },
-                statistic: Statistic.SUM
+                statistic: Stats.SUM
             })],
             period: Duration.minutes(1),
             width: 8
         });
-        this.widgetSet.push(new Row(widget,storageWidget,requests));
+        this.addWidgetRow(widget,storageWidget,requests);
 
         // adding alarms if needed
         // this.alarmSet.push(new Alarm())

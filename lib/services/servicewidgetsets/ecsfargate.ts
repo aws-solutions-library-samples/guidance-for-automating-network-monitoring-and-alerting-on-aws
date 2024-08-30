@@ -4,13 +4,13 @@ import {
     GraphWidget,
     Metric,
     Row,
-    Statistic,
+    Stats,
     TextWidget,
     TreatMissingData
 } from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class EcsFargateWidgetSet extends Construct implements IWidgetSet{
+export class EcsFargateWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = "AWS/ECS";
     widgetSet:any = [];
     alarmSet:any = [];
@@ -24,11 +24,13 @@ export class EcsFargateWidgetSet extends Construct implements IWidgetSet{
         const serviceName = service.serviceName;
         const runningTasks = service.runningCount;
         let markDown = `***ECS Fargate Service [${serviceName}](https://${region}.console.aws.amazon.com/ecs/home?region=${region}#/clusters/${clusterName}/services/${serviceName}/details) [${clusterName}](https://${region}.console.aws.amazon.com/ecs/home?region=${region}#/clusters/${clusterName}/services) Tasks: ${runningTasks}***`;
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const CPUUtilisationMetric = new Metric({
             namespace: this.namespace,
@@ -39,7 +41,7 @@ export class EcsFargateWidgetSet extends Construct implements IWidgetSet{
                 ServiceName: serviceName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const CPUEC2UtilAlarm = CPUUtilisationMetric.createAlarm(this,`CPUUtilisationAlarm-${clusterName}-${serviceName}-${this.config.BaseName}`,{
@@ -59,7 +61,7 @@ export class EcsFargateWidgetSet extends Construct implements IWidgetSet{
                 ServiceName: serviceName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const ServiceCPUUtilisation = new GraphWidget({
@@ -68,11 +70,11 @@ export class EcsFargateWidgetSet extends Construct implements IWidgetSet{
             left: [CPUUtilisationMetric],
             right: [MemoryUtilizationMetric],
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             width: 24
         });
 
-        this.widgetSet.push(new Row(ServiceCPUUtilisation));
+        this.addWidgetRow(ServiceCPUUtilisation);
         this.alarmSet.push(CPUEC2UtilAlarm);
 
     }

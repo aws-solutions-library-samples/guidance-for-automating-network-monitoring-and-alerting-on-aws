@@ -1,10 +1,18 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, MathExpression, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {
+    GraphWidget,
+    MathExpression,
+    Metric,
+    Row,
+    Stats,
+    TextWidget,
+    TextWidgetBackground
+} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {ConcreteWidget} from "aws-cdk-lib/aws-cloudwatch/lib/widget";
 
-export class TgwWidgetSet extends Construct implements IWidgetSet{
+export class TgwWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = "AWS/TransitGateway";
     widgetSet:any = [];
     alarmSet:any = [];
@@ -18,11 +26,12 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
         const tgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### TGW [${tgwId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#TransitGatewayDetails:transitGatewayId=${tgwId}) Attachments:${resource.attachments.length} Peers:${this.countPeers(resource)}`
-        let textWidget = new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 1
-        })
+            height: 1,
+            background: TextWidgetBackground.TRANSPARENT
+        });
         //this.widgetSet.push();
         this.addWidgetRow(textWidget);
 
@@ -32,7 +41,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -42,7 +51,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -52,7 +61,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -62,7 +71,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -90,7 +99,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         });
 
@@ -100,7 +109,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         });
 
@@ -110,7 +119,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         });
 
@@ -120,7 +129,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 TransitGateway: tgwId
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period: Duration.minutes(1)
         });
 
@@ -168,7 +177,8 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
             let attachTextWidget = new TextWidget({
                 markdown: markDown,
                 width: 24,
-                height: 1
+                height: 1,
+                background: TextWidgetBackground.TRANSPARENT
             })
             //this.widgetSet.push();
             this.addWidgetRow(attachTextWidget);
@@ -179,7 +189,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -190,7 +200,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -201,7 +211,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -221,7 +231,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -241,7 +251,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period: Duration.minutes(1)
             });
 
@@ -252,7 +262,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period: Duration.minutes(1)
             });
 
@@ -263,7 +273,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period: Duration.minutes(1)
             });
 
@@ -274,7 +284,7 @@ export class TgwWidgetSet extends Construct implements IWidgetSet{
                     TransitGateway: tgwId,
                     TransitGatewayAttachment: attachmentId
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period: Duration.minutes(1)
             });
 

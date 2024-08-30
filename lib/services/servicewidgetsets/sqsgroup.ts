@@ -3,7 +3,7 @@ import {Construct} from "constructs";
 import {Duration} from "aws-cdk-lib";
 import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 
-export class SQSGroupWidgetSet extends Construct implements IWidgetSet {
+export class SQSGroupWidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string = 'AWS/SQS'
     widgetSet: any = [];
     alarmSet: any = [];
@@ -18,12 +18,14 @@ export class SQSGroupWidgetSet extends Construct implements IWidgetSet {
         if ( resourceArray.length > 5 ){
             widgetHeight = 14
         }
-
-        this.widgetSet.push(new TextWidget({
-            markdown: "**SQS queues in " + region + '**',
+        let markDown = "**SQS queues in " + region + '**';
+        const textWidget = new TextWidget({
+            markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
         let queuesremaining = 0;
         if ( resourceArray && resourceArray.length && resourceArray.length > 0 ){
             queuesremaining = resourceArray.length;
@@ -82,7 +84,7 @@ export class SQSGroupWidgetSet extends Construct implements IWidgetSet {
                 height: widgetHeight
             });
 
-            this.widgetSet.push(new Row(messageVisibility,messagesSentRecv,messagesDelayedAndOldestMessage,countDeletedEmptyReceives));
+            this.addWidgetRow(messageVisibility,messagesSentRecv,messagesDelayedAndOldestMessage,countDeletedEmptyReceives);
             queuesremaining -= queuesperwidget;
         }
 

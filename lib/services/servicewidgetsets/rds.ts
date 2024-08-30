@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class RdsWidgetSet extends Construct implements IWidgetSet{
+export class RdsWidgetSet extends WidgetSet implements IWidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/RDS'
     alarmSet:any = [];
@@ -30,7 +30,7 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -44,7 +44,7 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -53,7 +53,7 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -61,7 +61,7 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 12
@@ -75,7 +75,7 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -84,13 +84,13 @@ export class RdsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     DBInstanceIdentifier: rds
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 6
         });
 
-        this.widgetSet.push(new Row(widget,disk,connections));
+        this.addWidgetRow(widget,disk,connections);
     }
 
     getWidgetSets(): [] {

@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class EbsWidgetSet extends Construct implements IWidgetSet{
+export class EbsWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/EBS'
     widgetSet:any = [];
     alarmSet:any = [];
@@ -18,11 +18,13 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
         if ( iops ){
             markDown = "**EBS Volume [" + volid + '](https://'+region+'.console.aws.amazon.com/ec2/v2/home?region='+region+'#VolumeDetails:volumeId='+volid+')  (' + type + ' iops:' + iops + ')**'
         }
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+        this.addWidgetRow(textWidget);
+
         const widget = new GraphWidget({
             title: 'Disk '+volid + ' (' + type + ')',
             region: region,
@@ -32,7 +34,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -40,7 +42,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -49,7 +51,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -57,7 +59,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: type==="io1"|| type==="io2"?8:12,
@@ -73,7 +75,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -81,7 +83,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -90,7 +92,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -98,7 +100,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     VolumeId: volid
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: type==="io1"|| type==="io2"?8:12,
@@ -114,7 +116,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                     dimensionsMap: {
                         VolumeId: volid
                     },
-                    statistic: Statistic.AVERAGE,
+                    statistic: Stats.AVERAGE,
                     period:Duration.minutes(1)
                 })],
                 right:[new Metric({
@@ -123,7 +125,7 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                     dimensionsMap: {
                         VolumeId: volid
                     },
-                    statistic: Statistic.AVERAGE,
+                    statistic: Stats.AVERAGE,
                     period:Duration.minutes(1)
                 })],
                 width: 8,
@@ -133,9 +135,9 @@ export class EbsWidgetSet extends Construct implements IWidgetSet{
                     max:100
                 }
             });
-            this.widgetSet.push(new Row(widget,queues,iowidget));
+            this.addWidgetRow(widget,queues,iowidget);
         } else {
-            this.widgetSet.push(new Row(widget,queues));
+            this.addWidgetRow(widget,queues);
         }
 
     }

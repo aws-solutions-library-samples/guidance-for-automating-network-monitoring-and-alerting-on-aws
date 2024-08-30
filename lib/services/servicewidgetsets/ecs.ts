@@ -1,11 +1,11 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {EcsEC2WidgetSet} from "./ecsec2";
 import {EcsFargateWidgetSet} from "./ecsfargate";
 
-export class EcsWidgetSet extends Construct implements IWidgetSet {
+export class EcsWidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string = "AWS/ECS";
     alarmSet:any = [];
     widgetSet:any = [];
@@ -20,11 +20,13 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
         const runningTasks = cluster.runningTasksCount;
         const activeServices = cluster.activeServicesCount;
         let markDown = `### ECS Cluster [${clusterName}](https://${region}.console.aws.amazon.com/ecs/home?region=${region}#/clusters/${clusterName}) Tasks: ${runningTasks} Services: ${activeServices}`;
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const CPUUtilisationMetric = new Metric({
             namespace: this.namespace,
@@ -34,7 +36,7 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
                 ClusterName: clusterName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const CPUReservationMetric = new Metric({
@@ -45,7 +47,7 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
                 ClusterName: clusterName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const MemoryUtilizationMetric = new Metric({
@@ -56,7 +58,7 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
                 ClusterName: clusterName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const MemoryReservationMetric = new Metric({
@@ -67,7 +69,7 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
                 ClusterName: clusterName
             },
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE
+            statistic: Stats.AVERAGE
         });
 
         const ClusterCPUUtilisation = new GraphWidget({
@@ -76,7 +78,7 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
             left: [CPUUtilisationMetric],
             right: [CPUReservationMetric],
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             width: 12
         });
 
@@ -86,23 +88,23 @@ export class EcsWidgetSet extends Construct implements IWidgetSet {
             left: [MemoryUtilizationMetric],
             right: [MemoryReservationMetric],
             period: Duration.minutes(1),
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             width: 12
         });
 
-        this.widgetSet.push(new Row(ClusterCPUUtilisation,ClusterMemoryUtilisation));
+        this.addWidgetRow(ClusterCPUUtilisation,ClusterMemoryUtilisation);
 
         for (let service of resource.services){
             if ( service.launchType === "EC2" ){
                 const ec2serviceWidgetSet = new EcsEC2WidgetSet(this,`ECSEC2WidgetSet-${service.serviceName}-${region}-${this.config.BaseName}`,service, clusterName, this.config);
                 for ( let widget of ec2serviceWidgetSet.getWidgetSets()){
-                    this.widgetSet.push(widget);
+                    this.addWidgetRow(widget);
                 }
                 this.alarmSet = this.alarmSet.concat(ec2serviceWidgetSet.getAlarmSet());
             } else {
                 const fargateServiceWidgetSet = new EcsFargateWidgetSet(this,`FargateWidgetSet-${service.serviceName}-${region}-${this.config.BaseName}`, service, clusterName, this.config);
                 for ( let widget of fargateServiceWidgetSet.getWidgetSets()){
-                    this.widgetSet.push(widget);
+                    this.addWidgetRow(widget);
                 }
                 this.alarmSet = this.alarmSet.concat(fargateServiceWidgetSet.getAlarmSet());
             }

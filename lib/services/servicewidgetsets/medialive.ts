@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic,TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats,TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
+export class MediaLiveWidgetSet extends WidgetSet implements IWidgetSet{
     widgetSet:any = [];
     namespace:string = 'AWS/MediaLive'
     alarmSet:any = [];
@@ -14,11 +14,13 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
         let ChannelId = resource.id;
         let region = resource.ResourceARN.split(':')[3];
         let markDown = "**MediaLive Channel  [" + ChannelId + '](https://'+region+'.console.aws.amazon.com/medialive/home?region='+region+'#/channels/'+ChannelId+')**';
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
         
         let activeAlerts = [];
         let networkIn = [];
@@ -39,7 +41,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                     dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                     },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             });
             activeAlerts.push(metricActiveAlerts);
@@ -50,7 +52,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             });
             networkIn.push(metricNetworkIn);
@@ -61,7 +63,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             });
             networkOut.push(metricNetworkOut);
@@ -72,7 +74,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             });
             inputVideoFrameRate.push(metricInputVideoFrameRate);
@@ -83,7 +85,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             });
             fillMill.push(metricFillMsec);
@@ -94,7 +96,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                         ChannelId: ChannelId, Pipeline: pipelineId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             });
             inputLossSeconds.push(metricInputLossSec);
@@ -105,7 +107,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     Pipeline: pipelineId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             });
             droppedFrames.push(metricDroppedFrames);
@@ -116,7 +118,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     Pipeline: pipelineId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             });
             output4xxErros.push(metricOutput4xxErrors);
@@ -127,7 +129,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     Pipeline: pipelineId
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             });
             output5xxErros.push(metricOutput5xxErrors);
@@ -193,7 +195,7 @@ export class MediaLiveWidgetSet extends Construct implements IWidgetSet{
             left: output5xxErros,
             width: 6
         });
-        this.widgetSet.push(new Row(ActiveAlerts,NetworkIn,NetworkOut,InputVideoFrameRate,FillMsec,InputLossSeconds,DroppedFrames,Output4xxErros,Output5xxErros));
+        this.addWidgetRow(ActiveAlerts,NetworkIn,NetworkOut,InputVideoFrameRate,FillMsec,InputLossSeconds,DroppedFrames,Output4xxErros,Output5xxErros);
     }
     }
     getWidgetSets(): [] {

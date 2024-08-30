@@ -4,22 +4,25 @@
  * OnDemand Capacity Reservations or Alarms.
  */
 import {Construct} from "constructs";
-import {GraphWidget, Row} from "aws-cdk-lib/aws-cloudwatch";
+import {Row} from "aws-cdk-lib/aws-cloudwatch";
 import {ConcreteWidget} from "aws-cdk-lib/aws-cloudwatch/lib/widget";
 
 export interface IWidgetSet{
     namespace:string;
     widgetSet:any[];
     alarmSet:any[];
+    widgetCount:number;
+    getWidgetCount():number;
     getWidgetSets():any[];
     getAlarmSet():any[];
 }
 
 export abstract class WidgetSet extends Construct implements IWidgetSet{
     namespace:string;
-    widgetSet:any[];
-    alarmSet:any[];
+    widgetSet:any[] = [];
+    alarmSet:any[] = [];
     widgetCount:number = 0;
+    config:any = {};
 
     getAlarmSet(): any[] {
         return this.alarmSet;

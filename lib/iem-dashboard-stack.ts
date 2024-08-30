@@ -24,7 +24,7 @@ export class IemDashboardStack extends Stack {
 
     const graphFactory = new GraphFactory(this,'GraphFactory',resources, config);
 
-    if (graphFactory.getWidgets().length > 1) {
+    if (graphFactory.getWidgets().length > 1 || graphFactory.widgetArray.length > 0) {
       const dashboard = new Dashboard(this,config.BaseName,{
         dashboardName: config.BaseName + '-Dashboard'
       });

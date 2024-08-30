@@ -1,7 +1,8 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget, TextWidgetBackground} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
+import {ConcreteWidget} from "aws-cdk-lib/aws-cloudwatch/lib/widget";
 
 export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
     namespace: string = 'AWS/NetworkFirewall';
@@ -60,10 +61,11 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             }
         }
 
-        let textWidget = new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 1
+            height: 1,
+            background: TextWidgetBackground.TRANSPARENT
         });
 
         this.addWidgetRow(textWidget);
@@ -73,7 +75,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'ReceivedPackets',
             label: 'ReceivedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'ReceivedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -82,7 +84,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'PassedPackets',
             label: 'PassedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'PassedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -92,7 +94,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'RejectedPackets',
             label: 'RejectedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'RejectedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -101,7 +103,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'DroppedPackets',
             label: 'DroppedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'DroppedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -110,7 +112,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'InvalidDroppedPackets',
             label: 'InvalidDroppedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'InvalidDroppedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -119,7 +121,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'OtherDroppedPackets',
             label: 'OtherDroppedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'OtherDroppedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -128,7 +130,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'TLSPassedPackets',
             label: 'TLSPassedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'TLSPassedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -137,7 +139,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'TLSRejectedPackets',
             label: 'TLSRejectedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'TLSRejectedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -146,7 +148,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'TLSDroppedPackets',
             label: 'TLSDroppedPackets',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'TLSDroppedPackets',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -155,7 +157,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             metricName: 'TLSErrors',
             label: 'TLSErrors',
             dimensionsMap: this.getDimensionsByMetricName(resource['Metrics'],'TLSErrors',firewallName),
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -208,13 +210,10 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
             height: 4
         });
 
-
-        //this.widgetSet.push(new Row(receivedPacketsWidget,packetsWidget));
-        //this.widgetSet.push(new Row(droppedPacketsWidget,tlsPassedRejectedWidget,tlsDroppedErrorsWidget));
         this.addWidgetRow(receivedPacketsWidget,packetsWidget);
         this.addWidgetRow(droppedPacketsWidget,tlsPassedRejectedWidget,tlsDroppedErrorsWidget);
 
-        let vpceRow = new Row()
+        let vpceRow:ConcreteWidget[] = [];
         if (attachments && attachments.length > 0) {
             const azCount = attachments.length;
             const widthPerAZ = Math.floor(24/azCount);
@@ -232,7 +231,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                         "Subnet Id": attachment['SubnetId'],
                         "Service Name": attachment['ServiceName']
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period: Duration.minutes(1)
                 });
 
@@ -247,7 +246,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                         "Subnet Id": attachment['SubnetId'],
                         "Service Name": attachment['ServiceName']
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period: Duration.minutes(1)
                 });
 
@@ -261,7 +260,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                     height: 4
                 });
 
-                vpceRow.addWidget(connectionWidget);
+                vpceRow.push(connectionWidget);
 
                 const bytesProcessed = new Metric({
                     namespace: 'AWS/PrivateLinkEndpoints',
@@ -274,7 +273,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                         "Subnet Id": attachment['SubnetId'],
                         "Service Name": attachment['ServiceName']
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period: Duration.minutes(1)
                 });
 
@@ -289,7 +288,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                         "Subnet Id": attachment['SubnetId'],
                         "Service Name": attachment['ServiceName']
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period: Duration.minutes(1)
                 });
 
@@ -304,7 +303,7 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                         "Subnet Id": attachment['SubnetId'],
                         "Service Name": attachment['ServiceName']
                     },
-                    statistic: Statistic.SUM,
+                    statistic: Stats.SUM,
                     period: Duration.minutes(1)
                 });
 
@@ -318,13 +317,12 @@ export class NetworkFirewallWidgetSet extends WidgetSet implements IWidgetSet {
                     height: 4
                 });
 
-                vpceRow.addWidget(packetsWidget);
-                this.widgetCount += 2;
+                vpceRow.push(packetsWidget);
 
             }
 
         }
-        this.widgetSet.push(vpceRow);
+        this.addWidgetRow(...vpceRow);
 
     }
 

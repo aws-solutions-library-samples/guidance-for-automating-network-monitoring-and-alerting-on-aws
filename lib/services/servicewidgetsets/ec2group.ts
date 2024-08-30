@@ -3,7 +3,7 @@ import {
     MathExpression,
     Metric,
     Row,
-    Statistic,
+    Stats,
     TextWidget,
     TreatMissingData
 } from "aws-cdk-lib/aws-cloudwatch";
@@ -11,7 +11,7 @@ import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class Ec2InstanceGroupWidgetSet extends Construct implements IWidgetSet {
+export class Ec2InstanceGroupWidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string='AWS/EC2';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -39,7 +39,7 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements IWidgetSet {
             width: 12
         });
 
-        let cpuUtilMetricArray = this.getMetricArray(resource,'CPUUtilization',Duration.minutes(1),Statistic.MAXIMUM)
+        let cpuUtilMetricArray = this.getMetricArray(resource,'CPUUtilization',Duration.minutes(1),Stats.MAXIMUM)
         const averageCpuMetric = new MathExpression({
             expression: "AVG(METRICS())",
             label: "AVG CPU",
@@ -62,8 +62,8 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements IWidgetSet {
             treatMissingData: TreatMissingData.NOT_BREACHING
         })
 
-        let networkInMetricArray = this.getMetricArray(resource, 'NetworkIn',Duration.minutes(1),Statistic.MAXIMUM)
-        let networkOUtMetricArray = this.getMetricArray(resource,'NetworkOut',Duration.minutes(1),Statistic.MAXIMUM)
+        let networkInMetricArray = this.getMetricArray(resource, 'NetworkIn',Duration.minutes(1),Stats.MAXIMUM)
+        let networkOUtMetricArray = this.getMetricArray(resource,'NetworkOut',Duration.minutes(1),Stats.MAXIMUM)
         const netwidget = new GraphWidget({
             title: 'Network Utilisation',
             region: region,
@@ -77,10 +77,10 @@ export class Ec2InstanceGroupWidgetSet extends Construct implements IWidgetSet {
         this.widgetSet.push(new Row(ebsWriteBytesWidget,ebsReadBytesWidget));
     }
 
-    private getMetricArray(instances:any,metric:string,period?:Duration,statistic?:Statistic){
+    private getMetricArray(instances:any,metric:string,period?:Duration,statistic?:Stats){
         let metricarray:Metric[] = [];
         let metricperiod = Duration.minutes(1);
-        let metricstatistic = Statistic.SUM
+        let metricstatistic:any = Stats.SUM
         if ( period ){
             metricperiod = period;
         }

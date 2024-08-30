@@ -1,6 +1,6 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget, TextWidgetBackground} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
 export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
@@ -30,18 +30,10 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
             markdown: markDown,
             width: 24,
             height: 1,
+            background: TextWidgetBackground.TRANSPARENT
         });
 
         this.addWidgetRow(textWidget);
-
-        let azs = [
-            `${region}a`,
-            `${region}b`,
-            `${region}c`,
-            `${region}d`,
-            `${region}e`,
-            `${region}f`
-        ];
 
         const vif_egress_bps = new Metric({
             namespace: this.namespace,
@@ -52,7 +44,7 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
                 VirtualInterfaceId: virtualInterfaceId,
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -65,7 +57,7 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
                 VirtualInterfaceId: virtualInterfaceId,
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -78,7 +70,7 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
                 VirtualInterfaceId: virtualInterfaceId,
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -91,12 +83,12 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
                 VirtualInterfaceId: virtualInterfaceId,
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
         const bandwitdhWdiget = new GraphWidget({
-            title: `${vifName} Bytes Ingress/Egress)`,
+            title: `${vifName} Bytes Ingress/Egress`,
             left:[vif_ingress_bps],
             right:[vif_egress_bps],
             period: Duration.minutes(1),
@@ -106,7 +98,7 @@ export class DirectConnectVIFWidgetSet extends WidgetSet implements IWidgetSet {
         });
 
         const ppsWdiget = new GraphWidget({
-            title: `${vifName} Bytes Ingress/Egress)`,
+            title: `${vifName} PPS Ingress/Egress`,
             left:[vif_ingress_pps],
             right:[vif_egress_pps],
             period: Duration.minutes(1),

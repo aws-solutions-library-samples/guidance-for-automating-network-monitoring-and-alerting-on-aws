@@ -1,6 +1,6 @@
 import {Construct} from "constructs";
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget, TextWidgetBackground} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {DirectConnectVIFWidgetSet} from "./directconnect_vif";
 
@@ -27,6 +27,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
             markdown: markDown,
             width: 24,
             height: 1,
+            background: TextWidgetBackground.TRANSPARENT
         });
 
         this.addWidgetRow(textWidget);
@@ -39,7 +40,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -51,7 +52,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -63,7 +64,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -75,7 +76,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -87,7 +88,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -99,7 +100,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -111,7 +112,7 @@ export class DirectConnectConWidgetSet extends WidgetSet implements IWidgetSet {
                 ConnectionId: connectionId
 
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 

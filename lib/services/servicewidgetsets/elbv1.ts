@@ -1,9 +1,9 @@
 import {Construct} from "constructs";
-import {IWidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {IWidgetSet, WidgetSet} from "./widgetset";
+import {GraphWidget, Metric, Row, Stats, TextWidget, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class ELBv1WidgetSet extends Construct implements IWidgetSet {
+export class ELBv1WidgetSet extends WidgetSet implements IWidgetSet {
     namespace:string = 'AWS/ELB'
     widgetSet:any = []
     alarmSet:any = []
@@ -14,12 +14,14 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
         this.config = config;
         const elbName = resource.Extras.LoadBalancerName
         const region = resource.ResourceARN.split(':')[3];
-
-        this.widgetSet.push(new TextWidget({
-            markdown: "**ELB (Classic) " + elbName+'**',
+        let markDown = "**ELB (Classic) " + elbName+'**';
+        const textWidget = new TextWidget({
+            markdown: markDown,
             width: 24,
             height: 1
-        }))
+        });
+
+        this.addWidgetRow(textWidget);
 
         const spilloverCountMetric = new Metric({
             namespace: this.namespace,
@@ -27,7 +29,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 LoadBalancerName: elbName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(5)
         })
 
@@ -37,7 +39,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 LoadBalancerName: elbName
             },
-            statistic: Statistic.MAXIMUM,
+            statistic: Stats.MAXIMUM,
             period: Duration.minutes(5)
         })
 
@@ -47,7 +49,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap:{
                 LoadBalancerName: elbName
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.seconds(1)
         })
 
@@ -57,7 +59,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap:{
                 AvailabilityZone: region + 'a'
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.seconds(1)
         })
 
@@ -67,7 +69,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap:{
                 AvailabilityZone: region + 'b'
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.seconds(1)
         })
 
@@ -77,7 +79,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap:{
                 AvailabilityZone: region + 'c'
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.seconds(1)
         })
 
@@ -87,7 +89,7 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             dimensionsMap: {
                 LoadBalancerName: elbName
             },
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             period: Duration.minutes(5)
         })
 
@@ -106,7 +108,8 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             region: region,
             left: [surgeQueueLengthMetric],
             right:[spilloverCountMetric],
-            width: 10
+            width: 10,
+            height: 4
         })
 
         const requestCountWidget = new GraphWidget({
@@ -114,22 +117,20 @@ export class ELBv1WidgetSet extends Construct implements IWidgetSet {
             region: region,
             left: [totRequestCount],
             right:[requestAZ1,requestAZ2,requestAZ3],
-            width: 10
+            width: 10,
+            height: 4
         })
 
         const unhealthyCountWidget = new GraphWidget({
             title: 'Unhealthy hosts',
             region: region,
             left: [unhealthyHost],
-            width: 4
+            width: 4,
+            height: 4
         })
 
-        this.widgetSet.push(new Row(surgeCountWidget,requestCountWidget,unhealthyCountWidget))
-
-
-
+        this.addWidgetRow(surgeCountWidget,requestCountWidget,unhealthyCountWidget);
     }
-
 
     getWidgetSets(): [] {
         return this.widgetSet

@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class ASGWidgetSet extends Construct implements IWidgetSet{
+export class ASGWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string='AWS/EC2';
     widgetSet:any=[];
     alarmSet:any = [];
@@ -23,7 +23,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -31,7 +31,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -40,7 +40,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -48,7 +48,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -62,7 +62,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -71,7 +71,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -79,7 +79,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.MAXIMUM,
+                statistic: Stats.MAXIMUM,
                 period:Duration.minutes(1)
             })],
             width: 6
@@ -94,7 +94,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -102,7 +102,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -110,7 +110,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -118,7 +118,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -126,7 +126,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             })],
             width: 12
@@ -141,7 +141,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -149,7 +149,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             right:[new Metric({
@@ -158,7 +158,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -166,7 +166,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -174,7 +174,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -182,7 +182,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -190,7 +190,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -198,7 +198,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -206,7 +206,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -214,7 +214,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -222,7 +222,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -230,7 +230,7 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -238,13 +238,13 @@ export class ASGWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     AutoScalingGroupName: asgName
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: 24
         });
-        this.widgetSet.push(new Row(networkWidget,widget,cpuwidget));
-        this.widgetSet.push(new Row(asgWidget));
+        this.addWidgetRow(networkWidget,widget,cpuwidget);
+        this.addWidgetRow(asgWidget);
     }
     getWidgetSets(): [] {
         return this.widgetSet;

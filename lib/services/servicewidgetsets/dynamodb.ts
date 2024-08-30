@@ -1,9 +1,9 @@
-import {GraphWidget, MathExpression, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, MathExpression, Metric, Stats, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class DynamodbWidgetSet extends Construct implements IWidgetSet{
+export class DynamodbWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/DynamoDB';
     static namespace:string = 'AWS/DynamoDB';
 
@@ -57,7 +57,7 @@ export class DynamodbWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     TableName: tablename
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -65,7 +65,7 @@ export class DynamodbWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     TableName: tablename
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width:12
@@ -79,7 +79,7 @@ export class DynamodbWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     TableName: tablename
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -87,12 +87,12 @@ export class DynamodbWidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     TableName: tablename
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width:12
         })
-        this.widgetSet.push(new Row(widget,widget2));
+        this.addWidgetRow(widget,widget2);
     }
 
     getWidgetSets(){
@@ -109,19 +109,19 @@ export class DynamodbWidgetSet extends Construct implements IWidgetSet{
             left: [new Metric({
                 namespace: this.namespace,
                 metricName: 'MaxProvisionedTableReadCapacityUtilization',
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'MaxProvisionedTableWriteCapacityUtilization',
-                statistic: Statistic.AVERAGE
+                statistic: Stats.AVERAGE
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'AccountMaxTableLevelReads',
-                statistic: Statistic.AVERAGE
+                statistic: Stats.AVERAGE
             }),new Metric({
                 namespace: this.namespace,
                 metricName: 'AccountMaxTableLevelWrites',
-                statistic: Statistic.AVERAGE
+                statistic: Stats.AVERAGE
             })],
             width:24
         });

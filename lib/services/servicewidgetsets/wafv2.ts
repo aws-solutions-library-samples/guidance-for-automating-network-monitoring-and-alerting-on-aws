@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
 import {Construct} from "constructs";
-import {GraphWidget, Metric, Row, Statistic, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Stats, TextWidget} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 
-export class WafV2WidgetSet extends Construct implements IWidgetSet{
+export class WafV2WidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/WAFV2';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -17,11 +17,13 @@ export class WafV2WidgetSet extends Construct implements IWidgetSet{
         const webaclid = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length-1];
         const region = resource.ResourceARN.split(':')[3];
         let markDown = `### WebACL [${webacl}](https://us-east-1.console.aws.amazon.com/wafv2/homev2/web-acl/${webacl}/${webaclid}/overview?region=${region})`
-        this.widgetSet.push(new TextWidget({
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
-            height: 2
-        }));
+            height: 1
+        });
+
+        this.addWidgetRow(textWidget);
 
         const BlockedMetric = new Metric({
             namespace: this.namespace,
@@ -31,7 +33,7 @@ export class WafV2WidgetSet extends Construct implements IWidgetSet{
                 Region: region,
                 Rule: 'ALL'
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period: Duration.minutes(1)
         });
 
@@ -59,7 +61,7 @@ export class WafV2WidgetSet extends Construct implements IWidgetSet{
             width: 12
         });
 
-        this.widgetSet.push(new Row(blockedWidget,allowedWidget));
+        this.addWidgetRow(blockedWidget,allowedWidget);
     }
 
     getAlarmSet(): [] {

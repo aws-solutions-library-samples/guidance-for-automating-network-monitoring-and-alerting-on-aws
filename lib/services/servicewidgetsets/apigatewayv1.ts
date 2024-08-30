@@ -1,17 +1,17 @@
-import {IWidgetSet} from "./widgetset";
+import {IWidgetSet, WidgetSet} from "./widgetset";
 import {
     GraphWidget,
     MathExpression,
     Metric,
     Row,
-    Statistic,
+    Stats,
     TextWidget,
     TreatMissingData
 } from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
+export class ApiGatewayV1WidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/ApiGateway';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -41,11 +41,14 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
 
         }
 
-        this.widgetSet.push(new TextWidget({
+
+        const textWidget = new TextWidget({
             markdown: markDown,
             width: 24,
             height: 1
-        }));
+        });
+
+        this.addWidgetRow(textWidget);
 
         const trafficMetric = new Metric({
             namespace: this.namespace,
@@ -53,7 +56,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 ApiName: apigw
             },
-            statistic: Statistic.SAMPLE_COUNT,
+            statistic: Stats.SAMPLE_COUNT,
             period:Duration.minutes(1)
         })
 
@@ -71,7 +74,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 ApiName: apigw
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -81,7 +84,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
             dimensionsMap: {
                 ApiName: apigw
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -114,7 +117,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     ApiName: apigw
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             }),new Metric({
                 namespace: this.namespace,
@@ -122,7 +125,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     ApiName: apigw
                 },
-                statistic: Statistic.AVERAGE,
+                statistic: Stats.AVERAGE,
                 period:Duration.minutes(1)
             })],
             width: hasCachingEnabled?9:18
@@ -135,7 +138,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     ApiName: apigw
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -145,7 +148,7 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
                 dimensionsMap: {
                     ApiName: apigw
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period: Duration.minutes(1)
             });
 
@@ -179,9 +182,9 @@ export class ApiGatewayV1WidgetSet extends Construct implements IWidgetSet{
                 },
                 width: 9
             });
-            this.widgetSet.push(new Row(traffic,cacheInfo,errors));
+            this.addWidgetRow(traffic,cacheInfo,errors);
         } else {
-            this.widgetSet.push(new Row(traffic,errors));
+            this.addWidgetRow(traffic,errors);
         }
 
 

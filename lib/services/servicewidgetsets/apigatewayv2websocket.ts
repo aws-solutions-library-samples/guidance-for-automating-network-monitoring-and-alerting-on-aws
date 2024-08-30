@@ -1,9 +1,9 @@
 import {IWidgetSet, WidgetSet} from "./widgetset";
-import {GraphWidget, Metric, Row, Statistic, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
+import {GraphWidget, Metric, Row, Stats, TreatMissingData} from "aws-cdk-lib/aws-cloudwatch";
 import {Duration} from "aws-cdk-lib";
 import {Construct} from "constructs";
 
-export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidgetSet{
+export class ApiGatewayV2WebSocketWidgetSet extends WidgetSet implements IWidgetSet{
     namespace:string = 'AWS/ApiGateway';
     widgetSet:any = [];
     alarmSet:any = [];
@@ -24,7 +24,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
                 dimensionsMap: {
                     ApiId: apigw.apiid
                 },
-                statistic: Statistic.SAMPLE_COUNT,
+                statistic: Stats.SAMPLE_COUNT,
                 period:Duration.minutes(1)
             })],
             right: [new Metric({
@@ -42,7 +42,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
                 dimensionsMap: {
                     ApiId: apigw.apiid
                 },
-                statistic: Statistic.SUM,
+                statistic: Stats.SUM,
                 period:Duration.minutes(1)
             });
 
@@ -52,7 +52,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
             dimensionsMap: {
                 ApiId: apigw.apiid
             },
-            statistic: Statistic.SUM,
+            statistic: Stats.SUM,
             period:Duration.minutes(1)
         });
 
@@ -62,7 +62,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
             dimensionsMap: {
                 ApiId: apigw.apiid
             },
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             period:Duration.minutes(1)
         });
 
@@ -72,7 +72,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
             dimensionsMap: {
                 ApiId: apigw.apiid
             },
-            statistic: Statistic.AVERAGE,
+            statistic: Stats.AVERAGE,
             period:Duration.minutes(1)
         });
 
@@ -93,7 +93,7 @@ export class ApiGatewayV2WebSocketWidgetSet extends Construct implements IWidget
             treatMissingData: TreatMissingData.MISSING
         })
 
-        this.widgetSet.push(new Row(traffic,errors));
+        this.addWidgetRow(traffic,errors)
         this.alarmSet.push(integrationErrorAlarm);
     }
 
