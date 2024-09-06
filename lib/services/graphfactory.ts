@@ -41,7 +41,6 @@ import {WidgetSet} from "./servicewidgetsets/widgetset";
 import {NetworkMonitorWidgetSet} from "./servicewidgetsets/networkmonitor";
 
 
-
 export class GraphFactory extends Construct {
     serviceArray:any=[];
     widgetArray:any=[];
@@ -54,6 +53,17 @@ export class GraphFactory extends Construct {
     state:any = {};
     networkDashboardManager:DashboardManager;
     maxNetworkSequence:number = 0;
+    dashboardMap:Map<string,Array<string>> = new Map<string, Array<string>>(
+        [
+            ["Network", [ "tgw", "direct_connect", "network_firewall","natgw" ]],
+            ["Lambda", [ "lambda" ]],
+            ["EC2", [ "ec2" ]],
+            ["Edge", [ "wafv2", "cloudfront"]]
+        ]
+    )
+
+
+
 
     alarmSet:any = [];
     config:any;
@@ -77,6 +87,8 @@ export class GraphFactory extends Construct {
             console.log(`Not grouping resources by tag`);
         }
 
+        const buildMainDashboard = this.hasServicesOnMainDashboard();
+
         for (let region of regions) {
             console.log('Processing region ' + region);
             if ( ! this.state['regions']){
@@ -87,13 +99,16 @@ export class GraphFactory extends Construct {
 
             this.state['currentRegion'] = region;
 
-            let regionWidget = new TextWidget({
-                markdown: "# Region: " + region,
-                width: 24,
-                height: 1
-            });
+            if ( buildMainDashboard){
+                let regionWidget = new TextWidget({
+                    markdown: "# Region: " + region,
+                    width: 24,
+                    height: 1
+                });
 
-            this.widgetArray.push(regionWidget)
+                this.widgetArray.push(regionWidget)
+            }
+
             let servicekeys = Object.keys(this.serviceArray[region]);
             let resourcecounter = 0;
             for (let servicekey of servicekeys) {
@@ -403,6 +418,7 @@ export class GraphFactory extends Construct {
                         for (const resource of this.serviceArray[region][servicekey]){
                             const tgwId = resource.ResourceARN.split('/')[resource.ResourceARN.split('/').length - 1];
                             const tgw = new TgwWidgetSet(this, `tgw-${tgwId}-${region}-${this.config.BaseName}`, resource, this.config);
+                            this.alarmSet = this.alarmSet.concat(tgw.getAlarmSet());
                             this.networkDashboardManager.addWidgetSet(tgw);
                             if ( this.networkDashboardManager.getSequence() > this.maxNetworkSequence ){
                                 this.maxNetworkSequence = this.networkDashboardManager.getSequence();
@@ -1001,6 +1017,32 @@ export class GraphFactory extends Construct {
                 dashboard.addWidgets(widgetSetElement);
             }
         }
+    }
+
+    hasServicesOnMainDashboard():boolean{
+        let serviceFound:boolean = false;
+        for (const region in this.serviceArray) {
+            console.log(region)
+            for (const service in this.serviceArray[region]){
+                console.log(service);
+                console.debug(service);
+
+                for (const value of this.dashboardMap.values()){
+                    console.log(value);
+                    if ( ! value.includes(service)){
+                        console.log(`value.includes(service) evaluates ${value.includes(service)} for ${service} in ${value}`)
+                        serviceFound = true;
+                    } else {
+                        console.debug(`Service ${service} does not have separate dashboard`);
+                        console.log(`value.includes(service) evaluates ${value.includes(service)} for ${service} in ${value}`)
+                    }
+                }
+            }
+        }
+
+
+        console.log(`about to return ${! serviceFound}`);
+        return ! serviceFound;
     }
 
     hasTagKey(data:any[],tagkey:string){
