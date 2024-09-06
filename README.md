@@ -24,35 +24,35 @@ can also deploy a central alarm dashboard to monitor alarms across their AWS Org
 
 ### Supported services for monitoring
 
-| **AWS Service**                                                                                                                                         | **Description**                                 |
-|---------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| [Amazon API Gateway v1 (REST)](https://aws.amazon.com/api-gateway/){:target="\_blank"}                                                                  | REST                                            |
-| [Amazon API Gateway v2 (HTTP, WebSockets)](https://aws.amazon.com/api-gateway/){:target="\_blank"}                                                      | HTTP                                            |
-| [AWS AppSync](https://aws.amazon.com/appsync/){:target="\_blank"}                                                                                       | Connect apps to data and events                 |
-| [Amazon Aurora](https://aws.amazon.com/rds/aurora/){:target="\_blank"}                                                                                  | RDS service                                     |
-| [EC2 Auto Scaling groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html){:target="\_blank"}                            | EC2 auto-scaling                                |
-| [On-Demand Capacity Reservations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html){:target="\_blank"}                | On-demand capacity reservations                 |
-| [Amazon CloudFront](https://aws.amazon.com/cloudfront/){:target="\_blank"}                                                                              | Content delivery mechanism                      |
-| [Amazon DynamoDB](https://aws.amazon.com/pm/dynamodb){:target="\_blank"}                                                                                | Persistemt layer service                        |
-| [Amazon Elastic Block Storage - EBS (as part of EC2)](https://aws.amazon.com/ebs){:target="\_blank"}                                                    | Locally attached storage                        |
-| [Amazon Elsatic Compute Cloud - EC2 (support for t\* burstable instances, support for CloudWatch Agent)](https://aws.amazon.com/ec2){:target="\_blank"} | EC2 instances                                   |
-| [Amazon Elastic Load Balancer - ELB v1 (ELB Classic)](https://aws.amazon.com/elasticloadbalancing/){:target="\_blank"}                                  | Amazon ELastic Load Balancer                    |
-| [ELB v2 (ALB, NLB)](https://aws.amazon.com/elasticloadbalancing/){:target="\_blank"}                                                                    | Amazon Elastic Load Balancer                    |
-| [Amazon Elastic Container Services - ECS (EC2 and Fargate)](https://aws.amazon.com/ecs/){:target="\_blank"}                                             | Amazon Elastic Container Services               |
-| [Amazon Elastic File Storage - EFS](https://aws.amazon.com/ecs/){:target="\_blank"}                                                                     | Amazon Elastic File Storage                     |
-| [AWS Lambda](https://aws.amazon.com/lambda/){:target="\_blank"}                                                                                         | Lambda Function for event driven processing     |
-| [AWS Elemental MediaLive](https://aws.amazon.com/medialive/){:target="\_blank"}                                                                         | Video Encoding service                          |
-| [AWS Elemental MediaPackage](https://aws.amazon.com/mediapackage/){:target="\_blank"}                                                                   | Prpeare video for internet delivery             |
-| [AWS NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html){:target="\_blank"}                                             | NAT Gateway                                     |
-| [Relational Database Service](https://aws.amazon.com/rds/){:target="\_blank"}                                                                           | Relational Persistent layer service             |
-| [AWS Simple Storage Servicde - S3](https://aws.amazon.com/s3/){:target="\_blank"}                                                                       | Object Storage service                          |
-| [AWS Simple Notification Service - SNS](https://aws.amazon.com/sns/){:target="\_blank"}                                                                 | Simple Notification Service                     |
-| [AWS Simple Queue Service- SQS](https://aws.amazon.com/sqs/){:target="\_blank"}                                                                         | Simple Queue Service                            |
-| [AWS Transit Gateway](https://aws.amazon.com/transit-gateway/){:target="\_blank"}                                                                       | Transit Gateway Connection                      |
-| [AWS Web Application Firewall - WAF v2](https://docs.aws.amazon.com/waf/latest/APIReference/Welcome.html){:target="\_blank"}                            | Web Application Firewall                        |
-| [AWS Direct Connect](https://aws.amazon.com/directconnect/){:target="\_blank"}                                                                          | Direct Connect Hosted and Dedicated connections |
-| [AWS Network Firewall](https://aws.amazon.com/network-firewall/){:target="\_blank"}                                                                     | Network Firewall                                |
-{: .note }
+| **AWS Service**                                                                                                                                        | **Description**                                 |
+|--------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| [Amazon API Gateway v1 (REST)](https://aws.amazon.com/api-gateway/)                                                                  | REST                                            |
+| [Amazon API Gateway v2 (HTTP, WebSockets)](https://aws.amazon.com/api-gateway/)                                                     | HTTP                                            |
+| [AWS AppSync](https://aws.amazon.com/appsync/)                                                                                      | Connect apps to data and events                 |
+| [Amazon Aurora](https://aws.amazon.com/rds/aurora/)                                                                                 | RDS service                                     |
+| [EC2 Auto Scaling groups](https://docs.aws.amazon.com/autoscaling/ec2/userguide/auto-scaling-groups.html)                           | EC2 auto-scaling                                |
+| [On-Demand Capacity Reservations](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-capacity-reservations.html)               | On-demand capacity reservations                 |
+| [Amazon CloudFront](https://aws.amazon.com/cloudfront/)                                                                             | Content delivery mechanism                      |
+| [Amazon DynamoDB](https://aws.amazon.com/pm/dynamodb)                                                                               | Persistemt layer service                        |
+| [Amazon Elastic Block Storage - EBS (as part of EC2)](https://aws.amazon.com/ebs)                                                   | Locally attached storage                        |
+| [Amazon Elsatic Compute Cloud - EC2 (support for t\* burstable instances, support for CloudWatch Agent)](https://aws.amazon.com/ec2) | EC2 instances                                   |
+| [Amazon Elastic Load Balancer - ELB v1 (ELB Classic)](https://aws.amazon.com/elasticloadbalancing/)                                 | Amazon ELastic Load Balancer                    |
+| [ELB v2 (ALB, NLB)](https://aws.amazon.com/elasticloadbalancing/)                                                                   | Amazon Elastic Load Balancer                    |
+| [Amazon Elastic Container Services - ECS (EC2 and Fargate)](https://aws.amazon.com/ecs/)                                            | Amazon Elastic Container Services               |
+| [Amazon Elastic File Storage - EFS](https://aws.amazon.com/ecs/)                                                                    | Amazon Elastic File Storage                     |
+| [AWS Lambda](https://aws.amazon.com/lambda/)                                                                                        | Lambda Function for event driven processing     |
+| [AWS Elemental MediaLive](https://aws.amazon.com/medialive/)                                                                        | Video Encoding service                          |
+| [AWS Elemental MediaPackage](https://aws.amazon.com/mediapackage/)                                                                  | Prpeare video for internet delivery             |
+| [AWS NAT Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html)                                            | NAT Gateway                                     |
+| [Relational Database Service](https://aws.amazon.com/rds/)                                                                          | Relational Persistent layer service             |
+| [AWS Simple Storage Servicde - S3](https://aws.amazon.com/s3/)                                                                      | Object Storage service                          |
+| [AWS Simple Notification Service - SNS](https://aws.amazon.com/sns/)                                                                | Simple Notification Service                     |
+| [AWS Simple Queue Service- SQS](https://aws.amazon.com/sqs/)                                                                        | Simple Queue Service                            |
+| [AWS Transit Gateway](https://aws.amazon.com/transit-gateway/)                                                                      | Transit Gateway Connection                      |
+| [AWS Web Application Firewall - WAF v2](https://docs.aws.amazon.com/waf/latest/APIReference/Welcome.html)                           | Web Application Firewall                        |
+| [AWS Direct Connect](https://aws.amazon.com/directconnect/)                                                                         | Direct Connect Hosted and Dedicated connections |
+| [AWS Network Firewall](https://aws.amazon.com/network-firewall/)                                                                    | Network Firewall                                |
+
 This guidance focuses on automation of Network services monitoring  even though other AWS services listed above are supported by code as well.
 
 ### Central Alarm Dashboard features
@@ -103,10 +103,10 @@ The following table provides a sample cost breakdown for deploying this guidance
 
 | **AWS service**                                                                      | Dimensions                                                                                               | Cost \[USD\] |
 |--------------------------------------------------------------------------------------| -------------------------------------------------------------------------------------------------------- | ------------ |
-| [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/){:target="\_blank"}           | 1 Charged dashboard                                                                                      | \$ 3.00      |
-| [Amazon DynamoDB](https://aws.amazon.com/dynamodb/pricing/){:target="\_blank"}       | 1Gb data storage, Standard table class on-demand capacity, 1 million writes/month, 2 million reads/month | \$ 3.00      |
-| [AWS Lambda](https://aws.amazon.com/lambda/pricing/){:target="\_blank"}              | 618 400 requests per month with 3000 ms avg duration, 256 MB memory, 512 MB ephemeral storage            | \$ 7.85      |
-| [Amazon EventBridge](https://aws.amazon.com/eventbridge/pricing/){:target="\_blank"} | 1 million custom events per month and 1 million cross region events                                      | \$ 2.00      |
+| [Amazon CloudWatch](https://aws.amazon.com/cloudwatch/)           | 1 Charged dashboard                                                                                      | \$ 3.00      |
+| [Amazon DynamoDB](https://aws.amazon.com/dynamodb/pricing/)       | 1Gb data storage, Standard table class on-demand capacity, 1 million writes/month, 2 million reads/month | \$ 3.00      |
+| [AWS Lambda](https://aws.amazon.com/lambda/pricing/)              | 618 400 requests per month with 3000 ms avg duration, 256 MB memory, 512 MB ephemeral storage            | \$ 7.85      |
+| [Amazon EventBridge](https://aws.amazon.com/eventbridge/pricing/) | 1 million custom events per month and 1 million cross region events                                      | \$ 2.00      |
 | **Total estimated cost per month:**                                                  |                                                                                                          | **\$15.85**  |
 
 A sample cost breakdown for production scale load (10 000 Alarms, each triggering 10 times a month) can be found in this [AWS Pricing Calculator estimate](https://calculator.aws/#/estimate?id=10b6390878f085cdc97d169543459d8b669103e6) and is estimated around **$15.85 USD/month**
@@ -119,8 +119,7 @@ Any operating system (Windows, Linux, MacOS X) that supports running Python 3 an
 
 These deployment instructions are optimized to best work on Amazon Linux 2023. Deployment in another OS may require additional steps.
 
-{: .tip }
-For easiest and fastest deployment experience, we recommend running the deployment from [AWS CloudShell](https://aws.amazon.com/cloudshell/){:target="\_blank"}
+For easiest and fastest deployment experience, we recommend running the deployment from [AWS CloudShell](https://aws.amazon.com/cloudshell/)
 
 ### Third-party tools
 
