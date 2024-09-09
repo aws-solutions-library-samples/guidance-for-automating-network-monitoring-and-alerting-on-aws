@@ -20,11 +20,15 @@ Aspects.of(app).add(new AwsSolutionsChecks({verbose: true}));
 if ( config.MetricDashboards && ! config.MetricDashboards.enabled ){
     console.log('Not deploying metric dashboards');
 } else {
-    new IemDashboardStack(app, `${config.BaseName}-Stack`);
+    new IemDashboardStack(app, `${config.BaseName}-Stack`,{
+        description: " Network Monitoring and Alerting Automation on AWS (SO9508)"
+    });
 }
 
 if ( config.AlarmDashboard && config.AlarmDashboard.enabled ){
-    new AlarmDashboardStack(app,`${config.BaseName}-Alarm-Stack`);
+    new AlarmDashboardStack(app,`${config.BaseName}-Alarm-Stack`,{
+        description: " Network Monitoring and Alerting Automation on AWS (SO9508)"
+    });
 } else {
     console.log('Not deploying AlarmDashboard');
 }
