@@ -1022,26 +1022,18 @@ export class GraphFactory extends Construct {
     hasServicesOnMainDashboard():boolean{
         let serviceFound:boolean = false;
         for (const region in this.serviceArray) {
-            console.log(region)
             for (const service in this.serviceArray[region]){
-                console.log(service);
-                console.debug(service);
 
                 for (const value of this.dashboardMap.values()){
-                    console.log(value);
+
                     if ( ! value.includes(service)){
-                        console.log(`value.includes(service) evaluates ${value.includes(service)} for ${service} in ${value}`)
+                        //console.log(`value.includes(service) evaluates ${value.includes(service)} for ${service} in ${value}`)
                         serviceFound = true;
-                    } else {
-                        console.debug(`Service ${service} does not have separate dashboard`);
-                        console.log(`value.includes(service) evaluates ${value.includes(service)} for ${service} in ${value}`)
                     }
                 }
             }
         }
 
-
-        console.log(`about to return ${! serviceFound}`);
         return ! serviceFound;
     }
 

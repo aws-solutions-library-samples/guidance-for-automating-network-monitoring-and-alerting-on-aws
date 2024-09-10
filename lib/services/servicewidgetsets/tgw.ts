@@ -169,7 +169,6 @@ export class TgwWidgetSet extends WidgetSet implements IWidgetSet{
 
         for ( let attachment of resource.attachments ){
             const attachmentId = attachment.TransitGatewayAttachmentId
-            console.log(attachmentId);
             let vpcMarkup = '';
             if ( attachment.ResourceType === 'vpc'){
                 vpcMarkup = ` - [${attachment.ResourceId}](https://${region}.console.aws.amazon.com/vpc/home?region=${region}#VpcDetails:VpcId=${attachment.ResourceId})`
