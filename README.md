@@ -6,6 +6,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
+  - [Architecture](#architecture)
   - [Cost](#cost)
 2. [Prerequisites](#prerequisites)
   - [Operating System](#operating-system)
@@ -19,12 +20,47 @@
 
 ## Overview
 
-The project is an example of how to use [AWS Resource Groups Tagging API](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html){:target="_blank"} to retrieve a specific tag and then based on found resources pull additional information from respective service APIs to generate a configuration file (JSON) to build a CloudWatch Dashboard with \_reasonable_ metrics and alarms. Optionally users
+The project is an example of how to use [AWS Resource Groups Tagging API](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html) to retrieve a specific tag and then based on found resources pull additional information from respective service APIs to generate a configuration file (JSON) to build a CloudWatch Dashboard with \_reasonable_ metrics and alarms. Optionally users
 can also deploy a central alarm dashboard to monitor alarms across their AWS Organization, AWS Organization OU or arbitrary number of AWS accounts.
+
+### Architecture
+
+![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+
+_Figure 1: High level Deployment automation process for the Guidance_
+
+1. A group of AWS Cloud resources continuously store related metrics in the [Amazon CloudWatch](https://aws-preview.aka.amazon.com/cloudwatch/) data store.
+2. The user initiates the `Guidance Resource Collector` script that uses the config file.
+3. The Guidance Resource Collector fetches resources matching the config file from the [AWS Resource Groups Tagging API Reference](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html).
+4. The Guidance Resource Collector saves resource data in a JSON file.
+5. The user initiates the [AWS Cloud Development Kit (AWS CDK)](https://aws-preview.aka.amazon.com/cdk/) to synthesize an [AWS CloudFormation](https://aws-preview.aka.amazon.com/cloudformation/) template. The CloudFormation template is using AWS monitoring best practices.
+
+![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+
+_Figure 2: Deployment automation to generate and deploy the "Event Forwarder Stack" required for configuring the AWS accounts where the resources being monitored reside_
+
+1. The user runs the `cdk deploy` command to generate the CloudFormation template and deploy the infrastructure within the designated “monitoring” account.
+2. The user records the output of the deployment, which contains the [Amazon Resource Names (ARNs)](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html) of the central custom [Amazon EventBridge](https://aws-preview.aka.amazon.com/eventbridge/) event bus and the [AWS Lambda](https://aws-preview.aka.amazon.com/lambda/) function execution role.
+3. The user provides the ARNs obtained from the previous step to generate the CloudFormation template for the `Event Forwarder Stack` which is required for configuring the source accounts.
+4. The user deploys the CloudFormation template for the `Event Forwarder Stack` to the intended source accounts, either individually or across multiple accounts and Regions, using CloudFormation [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html).
+
+![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+
+_Figure 3: Flow of events when a CloudWatch alarm is triggered and processed by AWS Lambda functions_
+
+1. An AWS Cloud resource sends a metric that breaches a threshold defined in a CloudWatch alarm.
+2. When the alarm is triggered, CloudWatch emits a “CloudWatch Alarm State Change” event on the EventBridge default bus within the respective account.
+3. An EventBridge Rule on the default bus forwards the event to the central custom EventBridge event bus.
+4. An EventBridge Rule defined within the central event bus dispatches the event to the ”Event Handler” Lambda function that analyzes the event
+5. The ”Event Handler” Lambda function assumes an [AWS Identity and Access Management(IAM) role](https://aws-preview.aka.amazon.com/iam/) that has been deployed by the “Event Forwarder” CloudFormation stack set in the source account. It then queries the monitored resource and the CloudWatch alarm for additional details
+6. The “Event Handler” Lambda function consolidates the additional details with the event and stores the combined information in an [Amazon DynamoDB](https://aws-preview.aka.amazon.com/dynamodb/) alarms table.
+7. The CloudWatch dashboard, which includes custom CloudWatch widgets, triggers the execution of two Lambda functions—"View" and "List" — upon each dashboard would refresh.
+8. The “View” and “List” Lambda functions retrieve and filter the alarm data, then generate HTML code for rendering within the respective CloudWatch custom widgets.
+9. The “View” and “List” Lambda functions return the HTML code to the CloudWatch widgets, which then render it, including the relevant metrics, on the CloudWatch user interface.
 
 ### Supported services for monitoring
 
-| **AWS Service**                                                                                                                                        | **Description**                                 |
+| **AWS Service**                | **Description**                                 |
 |--------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
 | [Amazon API Gateway v1 (REST)](https://aws.amazon.com/api-gateway/)                                                                  | REST                                            |
 | [Amazon API Gateway v2 (HTTP, WebSockets)](https://aws.amazon.com/api-gateway/)                                                     | HTTP                                            |
