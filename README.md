@@ -164,11 +164,12 @@ For easiest and fastest deployment experience, we recommend running the deployme
 - CDK V2 (`npm -g install aws-cdk@latest`)
 
 ### aws cdk bootstrap
-This Guidance uses aws-cdk. If you are using aws-cdk for first time, please perform the below bootstrapping.
+This Guidance uses [aws-cdk](https://aws.amazon.com/cdk/). If you are using aws-cdk for first time, please perform the below bootstrapping.
 
-`cdk bootstrap`
-
-See more here: (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html). 
+```bash
+cdk bootstrap
+```
+See more here: https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html. 
 
 In case you don't want to bootstrap read [Deploying without boostraping CDK](BOOTSTRAP.md).
 
@@ -178,37 +179,52 @@ In case you don't want to bootstrap read [Deploying without boostraping CDK](BOO
 
 ### Getting and preparing the code
 
-1. Check out the project. `git clone https://github.com/aws-samples/tag-based-cloudwatch-dashboard.git`
-2. Change current directory to project directory. `cd tag-based-cloudwatch-dashboard`
-3. Run `npm ci` to install dependencies.
+1. Check out the project. 
+```bash
+git clone https://github.com/aws-solutions-library-samples/guidance-for-automating-network-monitoring-and-alerting-on-aws.git
+```
+3. Change current directory to project directory:
+ ```bash
+cd guidance-for-automating-network-monitoring-and-alerting-on-aws
+```
+4. Run `npm ci` to install dependencies.
 
 ### Configuring the dashboards
 1. Open the configuration file `lib/config.json` in your editor of choice.
-2. Set TagKey to tag key you want to use and TagValues to an array of values. Dashboard will collect all resources tagged
+2. Set `TagKey` to tag key you want to use and `TagValues` to an array of values. Dashboard will collect all resources tagged
    with that key and the specified values.
-3. Set Regions to include the regions that contain resources you want to monitor.
-4. **OPTIONAL** if you want to deploy central alarm dashboard set `AlarmDashboard.enabled` to true and provide your AWS
+3. Set `Regions` to include the regions that contain resources you want to monitor.
+4. **OPTIONAL** if you want to deploy central alarm dashboard - set `AlarmDashboard.enabled` to `true` and provide your AWS
    Organizations id in `AlarmDashboard.organizationId`.
 5. **OPTIONAL** if you don't want to use metric dashboards you can disable creation of those by setting
    `MetricDashboards.enabled` to false. See _Configuration properties in lib/config.json_ above for more information.
-6. **OPTIONAL:** Edit `BaseName`-property in `lib/config.json` to change the name of your dashboard and CloudFormation stack. In case you plan to deploy multiple sets of dashboards for different applications in the same account, ensure all subsequent deploys have different `BaseName`.
+6. **OPTIONAL:** Edit `BaseName` property value in `lib/config.json` to change the name of your dashboard and CloudFormation stack. In case you plan to deploy multiple sets of dashboards for different applications in the same account, ensure all subsequent deploys have different `BaseName`.
 7. Save the configuration file.
 
 ### Deploying the dashboards
 
-1. If the deployment of the metric dashboards have been enabled, run `cd data; python3 resource_collector.py` to create
+1. If the deployment of the metric dashboards have been enabled, run the following command to create
    the resource configuration file (`resources.json` in the `data` directory).
+```bash
+cd data;
+python3 resource_collector.py
+```
 2. Run `cd ..` to change directory to project root.
 3. Run `cdk synth` to generate CF template or use `cdk deploy --all` to deploy directly to your AWS account.
 4. In case central alarm dashboard is enabled in the configuration, take note of deployment output,
    `*.CustomEventBusArn` and `*.CustomDynamoDBFunctionRoleArn` and copy those ARNs to use in the next stage.
 
 ### Enabling source accounts to share alarms
-_This only applies in case `AlarmDashboard.enabled` is set_
+_This only applies in case `AlarmDashboard.enabled` property is set in the `lib/config.json` file_
 
-1. Run command `cd stack_sets` to change directory which contains `event_forwarder_template.yaml`.
-2. Run command `sh create_stackset.sh ARN_OF_CUSTOM_EVENT_BUS ARN_OF_THE_LAMBDA_FUNCTION_ROLE_ARN`, replace the
-   placeholder with the ARNs from the previous step.
+1. Run the following command to change directory which contains `event_forwarder_template.yaml`:
+```bash
+cd stack_sets
+```
+2. Run command the following command, replace the placeholder with the ARNs from the previous step:
+```bash
+sh create_stackset.sh ARN_OF_CUSTOM_EVENT_BUS ARN_OF_THE_LAMBDA_FUNCTION_ROLE_ARN
+```
 3. Deploy the generated `event_forwarder.yaml`-template manually to each of the source accounts and each region you wish
    to enable through CloudFormation or deploy it automatically to an AWS Organization, OU or list of accounts through
    service managed stack-sets from your management account or stack-set delegate account.
@@ -222,15 +238,18 @@ won't get deployed in the management account.
 
 ## Deployment Validation
 
-1. Open CloudFormation console and verify the status of the template with the name starting with the ${BaseName}-Stack, where BaseName is value of BaseName in `lib/config.json`!
-2. If AlarmDashboard was deployed check that stack with name ${BaseName}-Alarm-Stack exists!
-3. Open CloudWatch console and click on Dashboards. Verify that you have a dashboard with name ${BaseName}-Dashboard!
-4. If Alarm Dashboard was deployed, check that dashboard with name ${BaseName}-Alarm-Dashboard exists!
-5. Validate that deployment is correct by observing metrics and alarms on the dashboard. (For alarms you might want to manually trigger an alarm using command: `aws cloudwatch set-alarm-state --alarm-name ${alarm} --state-value ALARM --state-reason testing --region=$region`)
+1. Open CloudFormation console and verify the status of the template with the name starting with the `${BaseName}-Stack`, where BaseName is value of BaseName in `lib/config.json`!
+2. If AlarmDashboard was deployed check that stack with name `${BaseName}-Alarm-Stack` exists!
+3. Open CloudWatch console and click on Dashboards. Verify that you have a dashboard with name `${BaseName}-Dashboard`!
+4. If Alarm Dashboard was deployed, check that dashboard with name `${BaseName}-Alarm-Dashboard` exists!
+5. Validate that deployment is correct by observing metrics and alarms on the dashboard. (For alarms you might want to manually trigger an alarm using following command): 
+```bash
+aws cloudwatch set-alarm-state --alarm-name ${alarm} --state-value ALARM --state-reason testing --region=$region`)
+```
 
 ## Running the Guidance
 
-1. The Metric dashboard is a standard CloudWatch dashboard. Go to CloudWatch console, select Dashboards and click on the link to open it!
+1. The Metric dashboard is a standard CloudWatch dashboard. Go to [CloudWatch](https://us-west-2.console.aws.amazon.com/cloudwatch/home?region=us-west-2) console, select Dashboards and click on the link to open it!
 2. The Alarm Dashboard is serverless event-driven dashboard. You can access it through CloudWatch console as Metric Dashboards.
 
 ## Next Steps
@@ -240,7 +259,10 @@ won't get deployed in the management account.
 
 ## Cleanup
 
-To delete this guidance run following command in the root of the project: `cdk destroy --all`.
+To delete this guidance run following command in the root of the project: 
+```
+cdk destroy --all
+```
 
 ## FAQ, known issues, additional considerations, and limitations
 
