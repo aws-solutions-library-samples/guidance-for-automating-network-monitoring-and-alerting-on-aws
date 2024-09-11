@@ -25,7 +25,7 @@ can also deploy a central alarm dashboard to monitor alarms across their AWS Org
 
 ### Architecture
 
-![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+![Architecture Diagram](./screenshots/automating-networking-monitoring-and-alerting-on-aws-overview.png)
 
 _Figure 1: High level Deployment automation process for the Guidance_
 
@@ -35,7 +35,7 @@ _Figure 1: High level Deployment automation process for the Guidance_
 4. The Guidance Resource Collector saves resource data in a JSON file.
 5. The user initiates the [AWS Cloud Development Kit (AWS CDK)](https://aws-preview.aka.amazon.com/cdk/) to synthesize an [AWS CloudFormation](https://aws-preview.aka.amazon.com/cloudformation/) template. The CloudFormation template is using AWS monitoring best practices.
 
-![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+![Architecture Diagram](./screenshots/automating-networking-monitoring-and-alerting-on-aws-monitoring.png)
 
 _Figure 2: Deployment automation to generate and deploy the "Event Forwarder Stack" required for configuring the AWS accounts where the resources being monitored reside_
 
@@ -44,9 +44,9 @@ _Figure 2: Deployment automation to generate and deploy the "Event Forwarder Sta
 3. The user provides the ARNs obtained from the previous step to generate the CloudFormation template for the `Event Forwarder Stack` which is required for configuring the source accounts.
 4. The user deploys the CloudFormation template for the `Event Forwarder Stack` to the intended source accounts, either individually or across multiple accounts and Regions, using CloudFormation [StackSets](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html).
 
-![Architecture Diagram](./assets/images/guidance_eks-sso-integration-ref-archv1.jpg)
+![Architecture Diagram](./screenshots/automating-networking-monitoring-and-alerting-on-aws-alerting.png)
 
-_Figure 3: Flow of events when a CloudWatch alarm is triggered and processed by AWS Lambda functions_
+_Figure 3: Flow of events when a CloudWatch alert is triggered and processed by AWS Lambda functions_
 
 1. An AWS Cloud resource sends a metric that breaches a threshold defined in a CloudWatch alarm.
 2. When the alarm is triggered, CloudWatch emits a “CloudWatch Alarm State Change” event on the EventBridge default bus within the respective account.
@@ -173,6 +173,8 @@ See more here: (https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html).
 In case you don't want to bootstrap read [Deploying without boostraping CDK](BOOTSTRAP.md).
 
 ## Deployment Steps
+
+**Please refer to [FULL IMPLEMENTATION GUIDE](https://implementationguides.kits.eventoutfitters.aws.dev/nw-maa-0219/networking/network-monitoring-and-alerting-automation.html) for detailed instructions and deployment options.** 
 
 ### Getting and preparing the code
 
