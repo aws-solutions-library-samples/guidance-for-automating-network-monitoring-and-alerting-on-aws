@@ -1,4 +1,4 @@
-# Guidance for Network Monitoring and Alerting Automation on AWS
+# Guidance for Automating Networking Monitoring and Alerting on AWS
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![AWS Provider](https://img.shields.io/badge/provider-AWS-orange?logo=amazon-aws&color=ff9900)](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)
@@ -20,7 +20,7 @@
 
 ## Overview
 
-The project is an example of how to use [AWS Resource Groups Tagging API](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html) to retrieve a specific tag and then based on found resources pull additional information from respective service APIs to generate a configuration file (JSON) to build a CloudWatch Dashboard with \_reasonable_ metrics and alarms. Optionally users
+The guidance provides an example of how to use [AWS Resource Groups Tagging API](https://docs.aws.amazon.com/resourcegroupstagging/latest/APIReference/overview.html) to retrieve a specific tag and then based on found resources pull additional information from respective service APIs to generate a configuration file (JSON) to build a CloudWatch Dashboard with \_reasonable_ metrics and alarms. Optionally users
 can also deploy a central alarm dashboard to monitor alarms across their AWS Organization, AWS Organization OU or arbitrary number of AWS accounts.
 
 ### Architecture
