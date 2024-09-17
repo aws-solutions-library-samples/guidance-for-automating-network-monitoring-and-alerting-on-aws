@@ -12,11 +12,12 @@
   - [Operating System](#operating-system)
   - [Third-Party Tools](#third-party-tools)
 3. [Deployment Steps](#deployment-steps)
+<!--
 4. [Deployment Validation](#deployment-validation)
 5. [Running the Guidance](#running-the-guidance)
 6. [Next Steps](#next-steps)
 7. [Cleanup](#cleanup)
-
+-->
 
 ## Overview
 
@@ -175,8 +176,9 @@ In case you don't want to bootstrap read [Deploying without boostraping CDK](BOO
 
 ## Deployment Steps
 
-**Please refer to [FULL IMPLEMENTATION GUIDE](https://implementationguides.kits.eventoutfitters.aws.dev/nw-maa-0219/networking/network-monitoring-and-alerting-automation.html) for detailed instructions and deployment options.** 
+**Please refer to [FULL IMPLEMENTATION GUIDE](https://aws-solutions-library-samples.github.io/networking/automating-networking-monitoring-and-alerting-on-aws.html) for detailed deployment instructions and options.** 
 
+<!--
 ### Getting and preparing the code
 
 1. Check out the project. 
@@ -263,6 +265,7 @@ To delete this guidance run following command in the root of the project:
 ```
 cdk destroy --all
 ```
+-->
 
 ## FAQ, known issues, additional considerations, and limitations
 
